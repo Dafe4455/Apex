@@ -773,9 +773,9 @@ export default function DashboardPage() {
                   <td className="t-tx-amt">${fmt(tx.amount, 0)}</td>
                   <td>{new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                   <td>
-                    <span className={`t-badge ${tx.status === 'COMPLETED' || tx.status === 'Completed' ? 'ok' : tx.status === 'PENDING' || tx.status === 'Pending' ? 'pnd' : 'err'}`}>
-                      {tx.status}
-                    </span>
+                    <span className={`t-badge ${tx.status === 'COMPLETED' ? 'ok' : tx.status === 'PENDING' ? 'pnd' : 'err'}`}>
+  {tx.status}
+</span>
                   </td>
                 </tr>
               ))}
