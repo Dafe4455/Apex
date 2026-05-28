@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { auth } from "@root/auth";
 import { NextResponse } from "next/server";
 
 const publicRoutes = ["/", "/login", "/signup"];
