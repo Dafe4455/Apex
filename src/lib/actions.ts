@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { signIn } from "@/auth";
+import { signIn } from "@root/auth";
 import { AuthError } from "next-auth";
 
 const signupSchema = z.object({
