@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 
-// ── Types ──────────────────────────────────────────
 type Transaction = {
   id: string;
   type: 'Deposit' | 'Withdrawal' | 'Trade';
@@ -17,11 +16,10 @@ type Transaction = {
 type MarketAsset = {
   symbol: string;
   name: string;
-  price: number;
-  changePercent: number;
+  price: number | null;
+  changePercent: number | null;
 };
 
-// ── Sparkline ──────────────────────────────────────
 function Sparkline({ positive = true }: { positive?: boolean }) {
   const pts = positive
     ? '0,28 10,20 20,24 30,12 40,16 50,4 60,8 72,0'
@@ -35,19 +33,14 @@ function Sparkline({ positive = true }: { positive?: boolean }) {
   );
 }
 
-// ── Status badge ───────────────────────────────────
 function StatusBadge({ status }: { status: string }) {
-  const map: Record<string, string> = {
-    COMPLETED: 'status-completed',
-    Completed: 'status-completed',
-    PENDING:   'status-pending',
-    Pending:   'status-pending',
-    FAILED:    'status-failed',
-  };
-  return <span className={`db-status ${map[status] ?? 'status-default'}`}>{status}</span>;
+  const cls =
+    status === 'COMPLETED' || status === 'Completed' ? 'status-completed'
+    : status === 'PENDING'  || status === 'Pending'  ? 'status-pending'
+    : 'status-failed';
+  return <span className={`db-status ${cls}`}>{status}</span>;
 }
 
-// ── Metric Card ────────────────────────────────────
 function MetricCard({
   label, value, sub, delta, positive, children, accent,
 }: {
@@ -70,7 +63,13 @@ function MetricCard({
   );
 }
 
-// ── Page ───────────────────────────────────────────
+function fmt(n: number | null | undefined, decimals = 2) {
+  return (n ?? 0).toLocaleString('en-US', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
 export default function DashboardPage() {
   const { data: session } = useSession();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -79,7 +78,6 @@ export default function DashboardPage() {
   const [balanceOpen, setBalanceOpen]   = useState(false);
   const [time, setTime]                 = useState('');
 
-  // clock
   useEffect(() => {
     const tick = () =>
       setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
@@ -88,7 +86,6 @@ export default function DashboardPage() {
     return () => clearInterval(id);
   }, []);
 
-  // market prices
   useEffect(() => {
     const load = async () => {
       try {
@@ -102,7 +99,6 @@ export default function DashboardPage() {
     return () => clearInterval(id);
   }, []);
 
-  // user data
   useEffect(() => {
     const load = async () => {
       try {
@@ -117,7 +113,7 @@ export default function DashboardPage() {
     load();
   }, []);
 
-  const balance       = 24_850.00;   // replace with real data
+  const balance       = 24_850.00;
   const changePercent = 3.42;
   const changePos     = changePercent >= 0;
   const profit        = 842.30;
@@ -143,10 +139,7 @@ export default function DashboardPage() {
           --sans: 'Manrope', sans-serif;
         }
 
-        /* ── GREETING ── */
-        .db-greeting {
-          margin-bottom: 32px;
-        }
+        .db-greeting { margin-bottom: 32px; }
         .db-greeting-tag {
           font-family: var(--mono);
           font-size: 0.62rem;
@@ -183,9 +176,7 @@ export default function DashboardPage() {
           cursor: pointer;
           transition: box-shadow 0.2s;
         }
-        .db-balance-card:hover {
-          box-shadow: 0 20px 60px rgba(26,21,18,0.15);
-        }
+        .db-balance-card:hover { box-shadow: 0 20px 60px rgba(26,21,18,0.15); }
         .db-balance-card::before {
           content: '';
           position: absolute;
@@ -250,7 +241,6 @@ export default function DashboardPage() {
           border: 1px solid #2a2420;
         }
         .db-balance-btn.ghost:hover { border-color: #444; color: var(--cream); }
-
         .db-balance-footer {
           display: flex;
           align-items: center;
@@ -270,20 +260,18 @@ export default function DashboardPage() {
           width: 6px; height: 6px;
           background: #4ade80;
           border-radius: 50%;
-          animation: pulse 2s ease infinite;
+          animation: dbpulse 2s ease infinite;
         }
-        @keyframes pulse {
+        @keyframes dbpulse {
           0%,100% { opacity: 1; transform: scale(1); }
           50%      { opacity: 0.5; transform: scale(0.8); }
         }
-
-        /* expand area */
         .db-balance-expand {
           overflow: hidden;
           transition: max-height 0.35s ease;
         }
 
-        /* ── METRICS GRID ── */
+        /* ── METRICS ── */
         .db-metrics {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
@@ -293,7 +281,7 @@ export default function DashboardPage() {
         }
         .db-metric-card {
           background: var(--cream);
-          padding: 24px 24px;
+          padding: 24px;
           transition: background 0.15s;
           position: relative;
           overflow: hidden;
@@ -344,10 +332,7 @@ export default function DashboardPage() {
           letter-spacing: 0.04em;
         }
 
-        /* ── MARKET ROW ── */
-        .db-market-section {
-          margin-bottom: 24px;
-        }
+        /* ── SECTION HEADER ── */
         .db-section-header {
           display: flex;
           justify-content: space-between;
@@ -381,6 +366,8 @@ export default function DashboardPage() {
         }
         .db-section-link:hover { opacity: 0.7; }
 
+        /* ── MARKET GRID ── */
+        .db-market-section { margin-bottom: 24px; }
         .db-market-grid {
           display: grid;
           grid-template-columns: repeat(4, 1fr);
@@ -405,7 +392,6 @@ export default function DashboardPage() {
           margin-bottom: 2px;
         }
         .db-market-name {
-          font-family: var(--sans);
           font-size: 0.72rem;
           color: var(--ink-light);
           margin-bottom: 12px;
@@ -425,75 +411,6 @@ export default function DashboardPage() {
         }
         .db-market-chg.up { color: #16a34a; }
         .db-market-chg.dn { color: var(--red); }
-
-        /* ── TRANSACTIONS ── */
-        .db-tx-section { margin-bottom: 24px; }
-        .db-tx-table-wrap {
-          background: var(--cream);
-          border: 1px solid var(--cream-darker);
-          overflow-x: auto;
-        }
-        .db-tx-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-family: var(--sans);
-        }
-        .db-tx-table th {
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: var(--ink-light);
-          padding: 14px 20px;
-          text-align: left;
-          border-bottom: 1px solid var(--cream-darker);
-          font-weight: 500;
-        }
-        .db-tx-table td {
-          padding: 14px 20px;
-          font-size: 0.82rem;
-          color: var(--ink-mid);
-          border-bottom: 1px solid var(--cream-darker);
-        }
-        .db-tx-table tr:last-child td { border-bottom: none; }
-        .db-tx-table tr:hover td { background: var(--cream-dark); }
-        .db-tx-type {
-          font-family: var(--mono);
-          font-size: 0.72rem;
-          font-weight: 500;
-        }
-        .db-tx-type.deposit { color: #16a34a; }
-        .db-tx-type.withdrawal { color: var(--red); }
-        .db-tx-type.trade { color: var(--ink-mid); }
-        .db-tx-amount {
-          font-family: var(--mono);
-          font-size: 0.78rem;
-          color: var(--ink);
-          font-weight: 500;
-        }
-        .db-tx-asset {
-          font-family: var(--mono);
-          font-size: 0.72rem;
-          color: var(--ink-light);
-        }
-        .db-tx-date {
-          font-family: var(--mono);
-          font-size: 0.68rem;
-          color: var(--ink-light);
-        }
-
-        .db-status {
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          padding: 3px 8px;
-          border: 1px solid;
-        }
-        .status-completed { color: #16a34a; background: rgba(22,163,74,0.06); border-color: rgba(22,163,74,0.2); }
-        .status-pending   { color: #d97706; background: rgba(217,119,6,0.06);  border-color: rgba(217,119,6,0.2); }
-        .status-failed    { color: var(--red); background: rgba(201,23,10,0.06); border-color: rgba(201,23,10,0.2); }
 
         /* ── QUICK ACTIONS ── */
         .db-quick-actions {
@@ -550,36 +467,88 @@ export default function DashboardPage() {
           font-weight: 300;
         }
 
-        /* ── LOADING ── */
+        /* ── TRANSACTIONS ── */
+        .db-tx-section { margin-bottom: 24px; }
+        .db-tx-table-wrap {
+          background: var(--cream);
+          border: 1px solid var(--cream-darker);
+          overflow-x: auto;
+        }
+        .db-tx-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .db-tx-table th {
+          font-family: var(--mono);
+          font-size: 0.6rem;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: var(--ink-light);
+          padding: 14px 20px;
+          text-align: left;
+          border-bottom: 1px solid var(--cream-darker);
+          font-weight: 500;
+        }
+        .db-tx-table td {
+          padding: 14px 20px;
+          font-size: 0.82rem;
+          color: var(--ink-mid);
+          border-bottom: 1px solid var(--cream-darker);
+        }
+        .db-tx-table tr:last-child td { border-bottom: none; }
+        .db-tx-table tr:hover td { background: var(--cream-dark); }
+        .db-tx-type {
+          font-family: var(--mono);
+          font-size: 0.72rem;
+          font-weight: 500;
+        }
+        .db-tx-type.deposit    { color: #16a34a; }
+        .db-tx-type.withdrawal { color: var(--red); }
+        .db-tx-type.trade      { color: var(--ink-mid); }
+        .db-tx-amount {
+          font-family: var(--mono);
+          font-size: 0.78rem;
+          color: var(--ink);
+          font-weight: 500;
+        }
+        .db-tx-asset { font-family: var(--mono); font-size: 0.72rem; color: var(--ink-light); }
+        .db-tx-date  { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-light); }
+
+        .db-status {
+          font-family: var(--mono);
+          font-size: 0.6rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          padding: 3px 8px;
+          border: 1px solid;
+        }
+        .status-completed { color: #16a34a; background: rgba(22,163,74,0.06);   border-color: rgba(22,163,74,0.2); }
+        .status-pending   { color: #d97706; background: rgba(217,119,6,0.06);   border-color: rgba(217,119,6,0.2); }
+        .status-failed    { color: var(--red); background: rgba(201,23,10,0.06); border-color: rgba(201,23,10,0.2); }
+
         .db-loading {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 60px;
+          display: flex; align-items: center; justify-content: center; padding: 60px;
         }
         .db-spinner {
           width: 20px; height: 20px;
           border: 1.5px solid var(--cream-darker);
           border-top-color: var(--red);
           border-radius: 50%;
-          animation: spin 0.7s linear infinite;
+          animation: dbspin 0.7s linear infinite;
         }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
+        @keyframes dbspin { to { transform: rotate(360deg); } }
         .db-empty {
-          padding: 40px;
-          text-align: center;
-          font-family: var(--mono);
-          font-size: 0.72rem;
-          letter-spacing: 0.1em;
-          color: var(--ink-light);
-          text-transform: uppercase;
+          padding: 40px; text-align: center;
+          font-family: var(--mono); font-size: 0.72rem;
+          letter-spacing: 0.1em; color: var(--ink-light); text-transform: uppercase;
         }
 
         @media (max-width: 768px) {
-          .db-metrics { grid-template-columns: 1fr 1fr; }
-          .db-market-grid { grid-template-columns: 1fr 1fr; }
-          .db-quick-actions { grid-template-columns: 1fr; }
+          .db-metrics        { grid-template-columns: 1fr 1fr; }
+          .db-market-grid    { grid-template-columns: 1fr 1fr; }
+          .db-quick-actions  { grid-template-columns: 1fr; }
+          .db-balance-top    { flex-direction: column; gap: 16px; }
         }
       `}</style>
 
@@ -597,15 +566,13 @@ export default function DashboardPage() {
           <div className="db-balance-top">
             <div>
               <p className="db-balance-label">Net Asset Value — USD</p>
-              <p className="db-balance-amount">
-                ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-              </p>
+              <p className="db-balance-amount">${fmt(balance)}</p>
               <p className={`db-balance-change ${changePos ? 'pos' : 'neg'}`}>
-                {changePos ? '▲' : '▼'} {changePos ? '+' : ''}{changePercent.toFixed(2)}% this period
+                {changePos ? '▲' : '▼'} {changePos ? '+' : ''}{fmt(changePercent)}% this period
               </p>
             </div>
             <div className="db-balance-actions" onClick={(e) => e.stopPropagation()}>
-              <Link href="/dashboard/deposit" className="db-balance-btn primary">Deposit</Link>
+              <Link href="/dashboard/deposit"  className="db-balance-btn primary">Deposit</Link>
               <Link href="/dashboard/withdraw" className="db-balance-btn ghost">Withdraw</Link>
             </div>
           </div>
@@ -624,8 +591,10 @@ export default function DashboardPage() {
 
           {/* Expandable transactions */}
           <div className="db-balance-expand" style={{ maxHeight: balanceOpen ? 400 : 0 }}>
-            <div style={{ paddingTop: 20, marginTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)' }}
-              onClick={(e) => e.stopPropagation()}>
+            <div
+              style={{ paddingTop: 20, marginTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)' }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <p style={{ fontFamily: 'var(--mono)', fontSize: '0.6rem', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#555', marginBottom: 12 }}>
                 Recent Transactions
               </p>
@@ -645,7 +614,7 @@ export default function DashboardPage() {
                       <tr key={tx.id}>
                         <td style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: tx.type === 'Deposit' ? '#4ade80' : '#fb7185', paddingBottom: 8, paddingRight: 16 }}>{tx.type}</td>
                         <td style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: '#888', paddingBottom: 8, paddingRight: 16 }}>{tx.asset || 'USD'}</td>
-                        <td style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: '#c8bfb5', paddingBottom: 8, paddingRight: 16 }}>${tx.amount.toLocaleString()}</td>
+                        <td style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: '#c8bfb5', paddingBottom: 8, paddingRight: 16 }}>${fmt(tx.amount, 0)}</td>
                         <td style={{ paddingBottom: 8 }}>
                           <span className={`db-status ${statusClass(tx.status)}`}>{tx.status}</span>
                         </td>
@@ -663,24 +632,21 @@ export default function DashboardPage() {
       <div className="db-metrics">
         <MetricCard
           label="Realised Profit"
-          value={`$${profit.toLocaleString('en-US', { minimumFractionDigits: 2 })}`}
-          delta={`+${changePercent.toFixed(2)}%`}
+          value={`$${fmt(profit)}`}
+          delta={`+${fmt(changePercent)}%`}
           positive={changePos}
           sub="Current period"
           accent
         >
           <div style={{ marginTop: 10 }}><Sparkline positive={changePos} /></div>
         </MetricCard>
-
         <MetricCard label="Open Positions" value="3" sub="2 profitable · 1 at loss" />
-
         <MetricCard label="Risk Profile" value="Conservative" sub="Volatility: 0.4%">
           <div style={{ display: 'flex', gap: 3, marginTop: 8 }}>
             {[1,2,3,4,5].map((i) => (
               <div key={i} style={{
                 height: 2, flex: 1,
                 background: i < 3 ? '#16a34a' : 'var(--cream-darker)',
-                transition: 'background 0.2s',
               }} />
             ))}
           </div>
@@ -725,21 +691,21 @@ export default function DashboardPage() {
             ? ['BTC', 'ETH', 'NVDA', 'GOLD'].map((sym) => (
                 <div key={sym} className="db-market-card">
                   <div className="db-market-sym">{sym}</div>
-                  <div className="db-market-name" style={{ color: 'var(--cream-darker)' }}>——</div>
+                  <div className="db-market-name" style={{ color: 'var(--cream-darker)' }}>Loading...</div>
                   <div className="db-market-price" style={{ color: 'var(--cream-darker)' }}>——</div>
                 </div>
               ))
             : markets.slice(0, 4).map((a) => {
-                const pos = a.changePercent >= 0;
+                const price = a.price ?? 0;
+                const chg   = a.changePercent ?? 0;
+                const pos   = chg >= 0;
                 return (
                   <Link key={a.symbol} href={`/dashboard/trade?asset=${a.symbol}`} className="db-market-card">
                     <div className="db-market-sym">{a.symbol}</div>
                     <div className="db-market-name">{a.name}</div>
-                    <div className="db-market-price">
-                      ${a.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </div>
+                    <div className="db-market-price">${fmt(price)}</div>
                     <div className={`db-market-chg ${pos ? 'up' : 'dn'}`}>
-                      {pos ? '+' : ''}{a.changePercent.toFixed(2)}%
+                      {pos ? '+' : ''}{fmt(chg)}%
                     </div>
                   </Link>
                 );
@@ -761,21 +727,15 @@ export default function DashboardPage() {
             <table className="db-tx-table">
               <thead>
                 <tr>
-                  <th>Type</th>
-                  <th>Asset</th>
-                  <th>Amount</th>
-                  <th>Date</th>
-                  <th>Status</th>
+                  <th>Type</th><th>Asset</th><th>Amount</th><th>Date</th><th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {transactions.slice(0, 8).map((tx) => (
                   <tr key={tx.id}>
-                    <td>
-                      <span className={`db-tx-type ${tx.type.toLowerCase()}`}>{tx.type}</span>
-                    </td>
+                    <td><span className={`db-tx-type ${tx.type.toLowerCase()}`}>{tx.type}</span></td>
                     <td><span className="db-tx-asset">{tx.asset || 'USD'}</span></td>
-                    <td><span className="db-tx-amount">${tx.amount.toLocaleString()}</span></td>
+                    <td><span className="db-tx-amount">${fmt(tx.amount, 0)}</span></td>
                     <td>
                       <span className="db-tx-date">
                         {new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
