@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
+type Transaction = {
+  id: string;
+  type: 'Deposit' | 'Withdrawal' | 'Trade';
+  asset: string;
+  amount: number;
+  status: 'COMPLETED' | 'PENDING' | 'FAILED';
+  createdAt: string;
+};
 /* ─── tiny helpers ─── */
 function fmt(n: number | null | undefined, d = 2) {
   return (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -58,7 +65,7 @@ function Badge({ status }: { status: 'COMPLETED' | 'PENDING' | 'FAILED' }) {
 export default function DashboardPage() {
   const [time, setTime] = useState('');
   const [balanceOpen, setBalanceOpen] = useState(false);
-  const [transactions] = useState([]);
+  const [transactions] = useState<Transaction[]>([]);
   const [loading] = useState(false);
 
   useEffect(() => {
