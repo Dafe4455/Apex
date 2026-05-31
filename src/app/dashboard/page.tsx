@@ -188,7 +188,7 @@ export default function DashboardPage() {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          padding: 18px 18px 12px;
+          padding: 18px 12px 12px;
         }
 
         .d-greeting {
@@ -233,7 +233,7 @@ export default function DashboardPage() {
           display: grid;
           grid-template-columns: 1fr auto;
           gap: 10px;
-          padding: 0 18px 10px;
+          padding: 0 12px 10px;
           align-items: stretch;
         }
 
@@ -356,7 +356,7 @@ export default function DashboardPage() {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 8px;
-          padding: 0 18px 10px;
+          padding: 0 12px 10px;
         }
 
         .metric-card {
@@ -435,7 +435,7 @@ export default function DashboardPage() {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr 1fr;
           gap: 8px;
-          padding: 0 18px 10px;
+          padding: 0 12px 10px;
         }
 
         .bm-card {
@@ -464,7 +464,7 @@ export default function DashboardPage() {
         .bm-dot.red { color: var(--red); }
 
         /* ── ASSET TABLE ── */
-        .asset-section { padding: 0 18px 20px; }
+        .asset-section { padding: 0 12px 20px; }
 
         .section-head {
           display: flex; align-items: center; justify-content: space-between;
@@ -570,7 +570,7 @@ export default function DashboardPage() {
           transition: max-height 0.35s ease;
         }
         .tx-drawer-inner {
-          padding: 14px 18px 6px;
+          padding: 14px 12px 6px;
           border-top: 1px solid var(--bg-2);
         }
       `}</style>
