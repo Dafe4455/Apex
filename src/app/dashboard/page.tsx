@@ -58,7 +58,7 @@ function Badge({ status }: { status: 'COMPLETED' | 'PENDING' | 'FAILED' }) {
 export default function DashboardPage() {
   const [time, setTime] = useState('');
   const [balanceOpen, setBalanceOpen] = useState(false);
-  const [transactions] = useState([]);
+  const [transactions] = useState<Transaction[]>([]);
   const [loading] = useState(false);
 
   useEffect(() => {
