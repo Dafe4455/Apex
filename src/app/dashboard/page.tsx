@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+
 type Transaction = {
   id: string;
   type: 'Deposit' | 'Withdrawal' | 'Trade';
@@ -9,6 +10,16 @@ type Transaction = {
   status: 'COMPLETED' | 'PENDING' | 'FAILED';
   createdAt: string;
 };
+
+type DepositMethod = {
+  id: string;
+  label: string;
+  icon: string;
+  address: string;
+  network?: string;
+  note?: string;
+};
+
 /* ─── tiny helpers ─── */
 function fmt(n: number | null | undefined, d = 2) {
   return (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -66,6 +77,36 @@ export default function DashboardPage() {
   const [time, setTime] = useState('');
   const [balanceOpen, setBalanceOpen] = useState(false);
   const [transactions] = useState<Transaction[]>([]);
+  const [sheet, setSheet] = useState<'deposit' | 'withdraw' | null>(null);
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [depositMethods, setDepositMethods] = useState<DepositMethod[]>([]);
+  const [methodsLoading, setMethodsLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const closeSheet = () => { setSheet(null); setAmount(''); setSubmitted(false); setCopied(false); };
+
+  const openDeposit = async () => {
+    setSheet('deposit');
+    setMethodsLoading(true);
+    try {
+      const res = await fetch('/api/admin/deposit-methods');
+      if (res.ok) {
+        const data = await res.json();
+        setDepositMethods(data);
+        if (data.length > 0) setMethod(data[0].id);
+      }
+    } catch {}
+    finally { setMethodsLoading(false); }
+  };
+
+  const copyAddress = (address: string) => {
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const [loading] = useState(false);
 
   useEffect(() => {
@@ -188,7 +229,7 @@ export default function DashboardPage() {
           display: flex;
           align-items: flex-start;
           justify-content: space-between;
-          padding: 18px 12px 12px;
+          padding: 18px 18px 12px;
         }
 
         .d-greeting {
@@ -233,7 +274,7 @@ export default function DashboardPage() {
           display: grid;
           grid-template-columns: 1fr auto;
           gap: 10px;
-          padding: 0 12px 10px;
+          padding: 0 18px 10px;
           align-items: stretch;
         }
 
@@ -356,7 +397,7 @@ export default function DashboardPage() {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 8px;
-          padding: 0 12px 10px;
+          padding: 0 18px 10px;
         }
 
         .metric-card {
@@ -435,7 +476,7 @@ export default function DashboardPage() {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr 1fr;
           gap: 8px;
-          padding: 0 12px 10px;
+          padding: 0 18px 10px;
         }
 
         .bm-card {
@@ -464,7 +505,7 @@ export default function DashboardPage() {
         .bm-dot.red { color: var(--red); }
 
         /* ── ASSET TABLE ── */
-        .asset-section { padding: 0 12px 20px; }
+        .asset-section { padding: 0 18px 20px; }
 
         .section-head {
           display: flex; align-items: center; justify-content: space-between;
@@ -570,8 +611,134 @@ export default function DashboardPage() {
           transition: max-height 0.35s ease;
         }
         .tx-drawer-inner {
-          padding: 14px 12px 6px;
+          padding: 14px 18px 6px;
           border-top: 1px solid var(--bg-2);
+        }
+        /* ── BOTTOM SHEET ── */
+        .sheet-overlay {
+          position: fixed; inset: 0; background: rgba(28,26,23,0.5);
+          z-index: 200; backdrop-filter: blur(2px);
+          animation: fadeIn 0.2s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .sheet {
+          position: fixed; bottom: 0; left: 0; right: 0;
+          background: #f0ece6; border-radius: 24px 24px 0 0;
+          padding: 0 20px 40px; z-index: 201;
+          animation: slideUp 0.3s cubic-bezier(0.32,0.72,0,1);
+          max-width: 480px; margin: 0 auto;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes dspin { to { transform: rotate(360deg); } }
+
+        .sheet-handle {
+          width: 36px; height: 4px; background: var(--bg-3);
+          border-radius: 2px; margin: 12px auto 20px;
+        }
+
+        .sheet-title {
+          font-size: 1.1rem; font-weight: 700; color: var(--ink);
+          letter-spacing: -0.02em; margin-bottom: 4px;
+        }
+
+        .sheet-sub {
+          font-size: 0.68rem; font-weight: 300; color: var(--ink-faint);
+          margin-bottom: 24px;
+        }
+
+        .sheet-label {
+          font-size: 0.6rem; font-weight: 600; color: var(--ink-faint);
+          text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px;
+        }
+
+        .sheet-amount-row {
+          display: flex; align-items: center;
+          background: var(--card); border: 1.5px solid var(--bg-2);
+          border-radius: 12px; padding: 14px 16px; margin-bottom: 16px;
+          transition: border-color 0.15s;
+        }
+        .sheet-amount-row:focus-within { border-color: var(--orange); }
+
+        .sheet-currency {
+          font-size: 1.2rem; font-weight: 600; color: var(--ink-dim);
+          margin-right: 8px;
+        }
+
+        .sheet-input {
+          flex: 1; border: none; background: transparent; outline: none;
+          font-family: var(--sans); font-size: 1.4rem; font-weight: 700;
+          color: var(--ink); letter-spacing: -0.02em;
+        }
+        .sheet-input::placeholder { color: var(--bg-3); }
+
+        .sheet-quick {
+          display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;
+        }
+
+        .sheet-quick-btn {
+          background: var(--card); border: 1px solid var(--bg-2);
+          border-radius: 8px; padding: 6px 14px;
+          font-family: var(--sans); font-size: 0.7rem; font-weight: 500;
+          color: var(--ink-dim); cursor: pointer; transition: all 0.12s;
+        }
+        .sheet-quick-btn:hover, .sheet-quick-btn.active {
+          background: var(--orange); border-color: var(--orange); color: #fff;
+        }
+
+        .sheet-methods {
+          display: grid; grid-template-columns: 1fr 1fr 1fr;
+          gap: 8px; margin-bottom: 24px;
+        }
+
+        .sheet-method {
+          background: var(--card); border: 1.5px solid var(--bg-2);
+          border-radius: 10px; padding: 10px 8px; text-align: center;
+          cursor: pointer; transition: all 0.12s;
+        }
+        .sheet-method.active { border-color: var(--orange); background: var(--orange-l); }
+
+        .sheet-method-icon { font-size: 1.2rem; margin-bottom: 4px; }
+
+        .sheet-method-lbl {
+          font-size: 0.58rem; font-weight: 600; color: var(--ink-dim);
+          text-transform: uppercase; letter-spacing: 0.06em;
+        }
+        .sheet-method.active .sheet-method-lbl { color: var(--orange); }
+
+        .sheet-submit {
+          width: 100%; background: var(--orange); color: #fff; border: none;
+          border-radius: 12px; padding: 15px;
+          font-family: var(--sans); font-size: 0.85rem; font-weight: 700;
+          cursor: pointer; transition: opacity 0.15s; letter-spacing: 0.01em;
+        }
+        .sheet-submit:hover { opacity: 0.88; }
+        .sheet-submit:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .sheet-submit.withdraw {
+          background: var(--ink);
+        }
+
+        .sheet-success {
+          display: flex; flex-direction: column; align-items: center;
+          padding: 20px 0 10px; text-align: center;
+        }
+
+        .sheet-success-ico {
+          width: 60px; height: 60px; border-radius: 50%;
+          background: var(--green-l); border: 2px solid var(--green);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 1.6rem; margin-bottom: 16px;
+        }
+
+        .sheet-success-title {
+          font-size: 1.1rem; font-weight: 700; color: var(--ink);
+          margin-bottom: 6px;
+        }
+
+        .sheet-success-sub {
+          font-size: 0.72rem; font-weight: 300; color: var(--ink-faint);
+          margin-bottom: 24px;
         }
       `}</style>
 
@@ -606,8 +773,8 @@ export default function DashboardPage() {
               <Sparkline positive width={120} height={28} />
             </div>
             <div className="bal-actions">
-              <button className="btn-dep">+ Deposit</button>
-              <button className="btn-wd">Withdraw</button>
+              <button className="btn-dep" onClick={openDeposit}>+ Deposit</button>
+              <button className="btn-wd" onClick={() => setSheet('withdraw')}>Withdraw</button>
               <button className="btn-tx" onClick={() => setBalanceOpen(v => !v)}>
                 {balanceOpen ? '↑ Hide' : '📋 History'}
               </button>
@@ -771,6 +938,156 @@ export default function DashboardPage() {
         </div>
 
       </div>
+
+      {/* ── BOTTOM SHEETS ── */}
+      {sheet && (
+        <>
+          <div className="sheet-overlay" onClick={closeSheet} />
+          <div className="sheet">
+            <div className="sheet-handle" />
+
+            {submitted ? (
+              <div className="sheet-success">
+                <div className="sheet-success-ico">✓</div>
+                <p className="sheet-success-title">
+                  {sheet === 'deposit' ? 'Deposit Submitted' : 'Withdrawal Submitted'}
+                </p>
+                <p className="sheet-success-sub">
+                  ${amount} will be {sheet === 'deposit' ? 'credited to' : 'debited from'} your account shortly.
+                </p>
+                <button className="sheet-submit" onClick={closeSheet}>Done</button>
+              </div>
+            ) : sheet === 'deposit' ? (
+              <>
+                <p className="sheet-title">Deposit Funds</p>
+                <p className="sheet-sub">Send funds to one of the addresses below</p>
+
+                {methodsLoading ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 0', gap: 12 }}>
+                    <div style={{ width: 28, height: 28, border: '2.5px solid var(--bg-2)', borderTopColor: 'var(--orange)', borderRadius: '50%', animation: 'dspin 0.7s linear infinite' }} />
+                    <p style={{ fontSize: '0.68rem', color: 'var(--ink-faint)', fontWeight: 300 }}>Loading deposit methods…</p>
+                  </div>
+                ) : depositMethods.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                    <p style={{ fontSize: '2rem', marginBottom: 12 }}>🔧</p>
+                    <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)', marginBottom: 6 }}>No deposit methods available</p>
+                    <p style={{ fontSize: '0.68rem', fontWeight: 300, color: 'var(--ink-faint)' }}>The admin has not configured any deposit addresses yet. Please check back later or contact support.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Method tabs */}
+                    <div style={{ display: 'flex', gap: 8, marginBottom: 20, overflowX: 'auto', paddingBottom: 4 }}>
+                      {depositMethods.map(m => (
+                        <button
+                          key={m.id}
+                          onClick={() => setMethod(m.id)}
+                          style={{
+                            flexShrink: 0, padding: '7px 14px', borderRadius: 20,
+                            border: method === m.id ? 'none' : '1px solid var(--bg-2)',
+                            background: method === m.id ? 'var(--orange)' : 'var(--card)',
+                            color: method === m.id ? '#fff' : 'var(--ink-dim)',
+                            fontFamily: 'var(--sans)', fontSize: '0.7rem', fontWeight: 600,
+                            cursor: 'pointer', transition: 'all 0.15s',
+                          }}
+                        >
+                          {m.icon} {m.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Active method address card */}
+                    {depositMethods.filter(m2 => m2.id === method).map(m2 => (
+                      <div key={m2.id}>
+                        {m2.network && (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--blue-l, #e4eaf8)', borderRadius: 6, padding: '3px 10px', marginBottom: 12 }}>
+                            <span style={{ fontSize: '0.58rem', fontWeight: 700, color: '#1a3d8a', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Network: {m2.network}</span>
+                          </div>
+                        )}
+
+                        <p style={{ fontSize: '0.6rem', fontWeight: 600, color: 'var(--ink-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Deposit Address</p>
+
+                        <div style={{ background: 'var(--card)', border: '1.5px solid var(--bg-2)', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}>
+                          <p style={{ fontFamily: 'var(--mono)', fontSize: '0.7rem', color: 'var(--ink)', wordBreak: 'break-all', lineHeight: 1.6, marginBottom: 12 }}>{m2.address}</p>
+                          <button
+                            onClick={() => copyAddress(m2.address)}
+                            style={{
+                              width: '100%', padding: '9px', borderRadius: 8, border: 'none',
+                              background: copied ? 'var(--green-l)' : 'var(--bg-2)',
+                              color: copied ? 'var(--green)' : 'var(--ink-dim)',
+                              fontFamily: 'var(--sans)', fontSize: '0.72rem', fontWeight: 600,
+                              cursor: 'pointer', transition: 'all 0.2s',
+                            }}
+                          >
+                            {copied ? '✓ Copied!' : '📋 Copy Address'}
+                          </button>
+                        </div>
+
+                        {m2.note && (
+                          <div style={{ display: 'flex', gap: 8, background: 'var(--gold-l)', border: '1px solid #e8d48a', borderRadius: 10, padding: '10px 14px', marginBottom: 20 }}>
+                            <span style={{ fontSize: '0.9rem' }}>⚠️</span>
+                            <p style={{ fontSize: '0.65rem', color: 'var(--gold)', fontWeight: 400, lineHeight: 1.5 }}>{m2.note}</p>
+                          </div>
+                        )}
+
+                        <p style={{ fontSize: '0.6rem', fontWeight: 600, color: 'var(--ink-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Amount Sent (USD)</p>
+                        <div className="sheet-amount-row" style={{ marginBottom: 20 }}>
+                          <span className="sheet-currency">$</span>
+                          <input className="sheet-input" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} />
+                        </div>
+
+                        <div className="sheet-quick" style={{ marginBottom: 20 }}>
+                          {['100', '500', '1000', '5000'].map(q => (
+                            <button key={q} className={`sheet-quick-btn${amount === q ? ' active' : ''}`} onClick={() => setAmount(q)}>${q}</button>
+                          ))}
+                        </div>
+
+                        <button className="sheet-submit" disabled={!amount || Number(amount) <= 0} onClick={() => setSubmitted(true)}>
+                          I've Sent ${amount || '0'}
+                        </button>
+                      </div>
+                    ))}
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <p className="sheet-title">Withdraw Funds</p>
+                <p className="sheet-sub">Transfer funds to your bank account</p>
+
+                <p className="sheet-label">Amount (USD)</p>
+                <div className="sheet-amount-row">
+                  <span className="sheet-currency">$</span>
+                  <input className="sheet-input" type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} />
+                </div>
+
+                <div className="sheet-quick">
+                  {['100', '500', '1000', '5000'].map(q => (
+                    <button key={q} className={`sheet-quick-btn${amount === q ? ' active' : ''}`} onClick={() => setAmount(q)}>${q}</button>
+                  ))}
+                </div>
+
+                <p className="sheet-label" style={{ marginTop: 16 }}>Withdrawal Method</p>
+                <div className="sheet-methods">
+                  {[
+                    { id: 'bank', icon: '🏦', label: 'Bank' },
+                    { id: 'card', icon: '💳', label: 'Card' },
+                    { id: 'crypto', icon: '₿', label: 'Crypto' },
+                  ].map(m => (
+                    <div key={m.id} className={`sheet-method${method === m.id ? ' active' : ''}`} onClick={() => setMethod(m.id)}>
+                      <div className="sheet-method-icon">{m.icon}</div>
+                      <div className="sheet-method-lbl">{m.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <button className="sheet-submit withdraw" disabled={!amount || Number(amount) <= 0} onClick={() => setSubmitted(true)}>
+                  Withdraw ${amount || '0'}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
     </>
   );
 }
