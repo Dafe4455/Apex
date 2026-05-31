@@ -1,16 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-type Transaction = {
-  id: string;
-  type: 'Deposit' | 'Withdrawal' | 'Trade';
-  asset: string;
-  amount: number;
-  status: 'COMPLETED' | 'PENDING' | 'FAILED';
-  createdAt: string;
-};
+
 /* ─── tiny helpers ─── */
-function fmt(n: number | null | undefined, d = 2) { 
+function fmt(n: number | null | undefined, d = 2) {
   return (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
@@ -47,7 +40,7 @@ function Sparkline({ positive = true, width = 80, height = 32 }) {
 }
 
 /* ─── Badge ─── */
-function Badge({ status }: { status: 'COMPLETED' | 'PENDING' | 'FAILED' }) {
+function Badge({ status }) {
   const map = { COMPLETED: ['#e4f2ea', '#2e7d4f'], PENDING: ['#fdf3d0', '#8a6800'], FAILED: ['#faeaea', '#b83232'] };
   const [bg, col] = map[status] ?? map.COMPLETED;
   return (
@@ -65,7 +58,7 @@ function Badge({ status }: { status: 'COMPLETED' | 'PENDING' | 'FAILED' }) {
 export default function DashboardPage() {
   const [time, setTime] = useState('');
   const [balanceOpen, setBalanceOpen] = useState(false);
-  const [transactions] = useState<Transaction[]>([]);
+  const [transactions] = useState([]);
   const [loading] = useState(false);
 
   useEffect(() => {
@@ -286,10 +279,11 @@ export default function DashboardPage() {
         .btn-wd:hover { background: var(--bg-3); }
 
         .btn-tx {
-          background: transparent; color: var(--ink-faint); border: none;
-          font-family: var(--sans); font-size: 0.65rem; cursor: pointer;
-          padding: 8px 4px; text-decoration: underline; text-underline-offset: 2px;
+          background: var(--bg-2); color: var(--ink-dim); border: 1px solid var(--bg-3);
+          font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer;
+          padding: 8px 14px; border-radius: 8px; transition: background 0.15s;
         }
+        .btn-tx:hover { background: var(--bg-3); }
 
         /* Risk card */
         .risk-card {
@@ -576,15 +570,6 @@ export default function DashboardPage() {
 
       <div className="dash-wrap">
 
-        {/* ── TOP NAV ── */}
-        <div className="top-bar">
-          <div className="hamburger">
-            <span /><span /><span />
-          </div>
-          <div className="top-bar-logo">APEX<span>•</span>MARKETS</div>
-          <div style={{ width: 24 }} />
-        </div>
-
         {/* ── HEADER ── */}
         <div className="d-header">
           <div>
@@ -601,8 +586,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* ── BALANCE + RISK ── */}
-        <div className="balance-risk-row">
+        {/* ── BALANCE ── */}
+        <div style={{ padding: '0 18px 10px' }}>
           <div className="balance-card">
             <p className="bal-eyebrow">Net Asset Value</p>
             <p className="bal-amount">
@@ -617,16 +602,9 @@ export default function DashboardPage() {
               <button className="btn-dep">+ Deposit</button>
               <button className="btn-wd">Withdraw</button>
               <button className="btn-tx" onClick={() => setBalanceOpen(v => !v)}>
-                {balanceOpen ? '↑ hide' : '↓ transactions'}
+                {balanceOpen ? '↑ Hide' : '📋 History'}
               </button>
             </div>
-          </div>
-
-          <div className="risk-card">
-            <p className="risk-title">Risk Profile</p>
-            <Gauge value={0.4} />
-            <p className="risk-pct">0.4%</p>
-            <p className="risk-label">Conservative</p>
           </div>
         </div>
 
