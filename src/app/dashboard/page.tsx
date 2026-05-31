@@ -1,989 +1,783 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 
-type Transaction = {
-  id: string;
-  type: 'Deposit' | 'Withdrawal' | 'Trade';
-  asset: string;
-  amount: number;
-  status: 'COMPLETED' | 'PENDING' | 'FAILED';
-  createdAt: string;
-};
-
-type MarketAsset = {
-  symbol: string;
-  name: string;
-  price: number | null;
-  changePercent: number | null;
-};
-
-function fmt(n: number | null | undefined, decimals = 2) {
-  return (n ?? 0).toLocaleString('en-US', {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
+/* ─── tiny helpers ─── */
+function fmt(n, d = 2) {
+  return (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
-function Sparkline({ positive = true }: { positive?: boolean }) {
-  const pts = positive
-    ? '0,22 12,16 24,18 36,8 48,12 60,4 72,6 84,0'
-    : '0,0 12,6 24,4 36,14 48,10 60,18 72,16 84,22';
-  const color = positive ? '#2e7d4f' : '#b83232';
+/* ─── Gauge (Risk Profile) ─── */
+function Gauge({ value = 0.4 }) {
+  const r = 44, cx = 56, cy = 56;
+  const circ = Math.PI * r; // half-circle
+  const pct = Math.min(Math.max(value / 2, 0), 1); // 0–2% range → 0–1
+  const dash = pct * circ;
   return (
-    <svg width="84" height="22" viewBox="0 0 84 22" fill="none">
-      <polyline points={pts} fill="none"
-        stroke={color} strokeWidth="1.5"
-        strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="112" height="68" viewBox="0 0 112 68">
+      {/* track */}
+      <path d={`M12,56 A${r},${r} 0 0,1 100,56`} fill="none" stroke="#e2dbd1" strokeWidth="10" strokeLinecap="round" />
+      {/* fill */}
+      <path d={`M12,56 A${r},${r} 0 0,1 100,56`} fill="none" stroke="#1c1a17" strokeWidth="10"
+        strokeLinecap="round" strokeDasharray={`${dash} ${circ}`} />
+      {/* needle dot */}
+      <circle cx={cx} cy={cy - r} r="4" fill="#1c1a17" />
     </svg>
   );
 }
 
+/* ─── Sparkline ─── */
+function Sparkline({ positive = true, width = 80, height = 32 }) {
+  const pts = positive
+    ? '0,28 14,20 28,22 42,12 56,16 70,6 80,8'
+    : '0,6 14,12 28,10 42,20 56,16 70,24 80,28';
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} fill="none">
+      <polyline points={pts} stroke={positive ? '#2e7d4f' : '#b83232'}
+        strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+    </svg>
+  );
+}
+
+/* ─── Badge ─── */
+function Badge({ status }) {
+  const map = { COMPLETED: ['#e4f2ea', '#2e7d4f'], PENDING: ['#fdf3d0', '#8a6800'], FAILED: ['#faeaea', '#b83232'] };
+  const [bg, col] = map[status] ?? map.COMPLETED;
+  return (
+    <span style={{ background: bg, color: col, padding: '2px 8px', borderRadius: 20,
+      fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+      fontFamily: 'var(--mono)' }}>
+      {status}
+    </span>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════
+   MAIN DASHBOARD
+═══════════════════════════════════════════════════════ */
 export default function DashboardPage() {
-  const { data: session } = useSession();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [markets, setMarkets]           = useState<MarketAsset[]>([]);
-  const [loading, setLoading]           = useState(true);
-  const [balanceOpen, setBalanceOpen]   = useState(false);
-  const [time, setTime]                 = useState('');
+  const [time, setTime] = useState('');
+  const [balanceOpen, setBalanceOpen] = useState(false);
+  const [transactions] = useState([]);
+  const [loading] = useState(false);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    }, 1000);
-    setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    const tick = () => setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch('/api/market');
-        const data = await res.json();
-        if (Array.isArray(data)) setMarkets(data);
-      } catch {}
-    };
-    load();
-    const id = setInterval(load, 30000);
-    return () => clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await fetch('/api/user/dashboard');
-        if (res.ok) {
-          const data = await res.json();
-          setTransactions(data.transactions ?? []);
-        }
-      } catch {}
-      finally { setLoading(false); }
-    };
-    load();
-  }, []);
-
-  const balance       = 24_850.00;
+  const balance = 24_850;
   const changePercent = 3.42;
-  const changePos     = changePercent >= 0;
-  const profit        = 842.30;
-  const firstName     = session?.user?.name?.split(' ')[0] ?? 'Trader';
+  const profit = 842.30;
+  const firstName = 'James';
+  const userId = 'LAC8WC';
+
+  const markets = [
+    { symbol: 'BTC', name: 'Bitcoin',  price: 48123.50, change: 2.15,  vol: '1.2B', icon: '₿',  iconBg: '#f7931a', iconCol: '#fff' },
+    { symbol: 'ETH', name: 'Ethereum', price: 73600,    change: 2.15,  vol: '1.2B', icon: 'Ξ',  iconBg: '#627eea', iconCol: '#fff' },
+    { symbol: 'SOL', name: 'Solana',   price: 50.34,    change: 0.32,  vol: '1.7B', icon: '◎',  iconBg: '#9945ff', iconCol: '#fff' },
+    { symbol: 'BNB', name: 'BNB',      price: 1095,     change: -0.07, vol: '1.0B', icon: 'B',  iconBg: '#f0b90b', iconCol: '#fff' },
+  ];
+
+  const topMovers = [
+    { symbol: 'BTC', change: 2.15,  icon: '₿',  bg: '#f7931a' },
+    { symbol: 'ETH', change: 1.60,  icon: 'Ξ',  bg: '#627eea' },
+    { symbol: 'SOL', change: -2.50, icon: '◎',  bg: '#9945ff' },
+    { symbol: 'BNB', change: -1.32, icon: 'B',  bg: '#f0b90b' },
+  ];
+
+  const recentActivity = [
+    'Deposit of $500',
+    'Buy    Bitcoin',
+    'Buy    $2,500',
+    'Buy    Bitcoin',
+  ];
+
+  const activityLog = [
+    '● Deposit of $500',
+    '● Deposit of $500 for ETH',
+  ];
+
+  const notifications = [
+    '● Trade executed for ETH',
+    '● Buy ratoer ETH',
+  ];
 
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+
         :root {
-          --bg:        #f5f0eb;
-          --bg-1:      #ede8e1;
-          --bg-2:      #e2dbd1;
-          --bg-3:      #cec5b8;
+          --bg:        #f0ece6;
+          --bg-1:      #e8e3db;
+          --bg-2:      #ddd7cd;
+          --bg-3:      #cbc4b8;
           --white:     #ffffff;
+          --card:      #eeeae4;
           --ink:       #1c1a17;
           --ink-2:     #2e2b26;
           --ink-dim:   #6b6457;
           --ink-faint: #9e9485;
-          --charcoal:  #1c1a17;
           --orange:    #e85c0d;
-          --orange-2:  #f07030;
           --orange-l:  #fde8dc;
-          --orange-m:  #f5c4a8;
           --green:     #2e7d4f;
           --green-l:   #e4f2ea;
           --red:       #b83232;
           --red-l:     #faeaea;
           --gold-l:    #fdf3d0;
           --gold:      #8a6800;
-          --blue:      #1a3d8a;
-          --blue-l:    #e4eaf8;
-          --shadow-xs: 0 1px 3px rgba(28,26,23,0.07);
-          --shadow-sm: 0 2px 8px rgba(28,26,23,0.09), 0 1px 2px rgba(28,26,23,0.05);
-          --shadow-md: 0 4px 20px rgba(28,26,23,0.12), 0 2px 6px rgba(28,26,23,0.06);
-          --r:    10px;
-          --r-sm: 8px;
-          --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-          --display: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-          --mono: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+          --sans: 'DM Sans', system-ui, sans-serif;
+          --mono: 'DM Mono', 'SF Mono', monospace;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { background: var(--bg); font-family: var(--sans); }
+
+        .dash-wrap {
+          max-width: 480px;
+          margin: 0 auto;
+          background: var(--bg);
+          min-height: 100vh;
+          padding-bottom: 40px;
+        }
+
+        /* ── TOP NAV BAR ── */
+        .top-bar {
+          background: #1c1a17;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 18px;
+          position: sticky;
+          top: 0;
+          z-index: 100;
+        }
+
+        .top-bar-logo {
+          font-family: var(--sans);
+          font-size: 0.78rem;
+          font-weight: 600;
+          color: #f0ece6;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+        }
+
+        .top-bar-logo span { color: var(--orange); margin: 0 4px; }
+
+        .hamburger {
+          display: flex; flex-direction: column; gap: 4px; cursor: pointer;
+        }
+        .hamburger span {
+          display: block; width: 18px; height: 2px;
+          background: #f0ece6; border-radius: 1px;
         }
 
         /* ── HEADER ── */
         .d-header {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           justify-content: space-between;
-          padding: 0 0 20px;
+          padding: 18px 18px 12px;
         }
 
-        .d-header-left { display: flex; flex-direction: column; gap: 5px; }
-
         .d-greeting {
-          font-family: var(--sans);
-          font-size: 0.7rem;
-          font-weight: 400;
-          color: var(--ink-faint);
-          letter-spacing: 0.04em;
+          font-size: 0.82rem; font-weight: 400; color: var(--ink-dim);
+          margin-bottom: 2px;
         }
 
         .d-name {
-          font-family: var(--sans);
-          font-size: 1.1rem;
-          font-weight: 600;
-          color: var(--ink);
-          letter-spacing: -0.01em;
-          line-height: 1;
+          font-size: 1.7rem; font-weight: 700; color: var(--ink);
+          letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px;
         }
 
         .d-uid {
-          font-family: var(--mono);
-          font-size: 0.58rem;
-          letter-spacing: 0.14em;
-          color: var(--ink-faint);
-          margin-top: 2px;
+          font-family: var(--mono); font-size: 0.6rem;
+          letter-spacing: 0.1em; color: var(--ink-faint);
         }
 
-        .d-header-right {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
+        .d-header-right { display: flex; align-items: center; gap: 10px; }
 
         .d-live-chip {
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          background: var(--orange-l);
-          border: 1px solid var(--orange-m);
-          border-radius: 20px;
-          padding: 4px 10px;
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          font-weight: 500;
-          letter-spacing: 0.14em;
-          color: var(--orange);
+          display: flex; align-items: center; gap: 5px;
+          background: #fff;
+          border-radius: 20px; padding: 5px 12px;
+          font-family: var(--mono); font-size: 0.62rem; font-weight: 500;
+          color: var(--ink);
+          box-shadow: 0 1px 4px rgba(0,0,0,0.08);
         }
 
-        .d-live-dot {
-          width: 5px; height: 5px;
-          background: var(--orange);
-          border-radius: 50%;
-          animation: dpulse 2s ease-in-out infinite;
+        .live-dot {
+          width: 8px; height: 8px; background: #22c55e;
+          border-radius: 50%; animation: blink 2s ease-in-out infinite;
         }
-
-        @keyframes dpulse {
-          0%,100% { transform: scale(1); opacity: 1; }
-          50%      { transform: scale(1.5); opacity: 0.5; }
-        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
         .d-clock {
-          font-family: var(--mono);
-          font-size: 0.72rem;
-          color: var(--ink-dim);
-          letter-spacing: 0.06em;
+          font-family: var(--mono); font-size: 0.75rem;
+          color: var(--ink-dim); letter-spacing: 0.05em;
         }
 
-        /* ── BALANCE CARD ── */
-        .d-balance {
-          background: var(--white);
-          border-radius: var(--r);
-          overflow: hidden;
-          margin-bottom: 10px;
-          box-shadow: var(--shadow-sm);
-          border-top: 3px solid var(--orange);
-          position: relative;
+        /* ── BALANCE + RISK ROW ── */
+        .balance-risk-row {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 10px;
+          padding: 0 18px 10px;
+          align-items: stretch;
         }
 
-        .d-balance-body {
+        .balance-card {
+          background: var(--card);
+          border-radius: 16px;
           padding: 18px 18px 14px;
+          border: 1px solid var(--bg-2);
         }
 
-        .d-balance-eyebrow {
-          font-family: var(--sans);
-          font-size: 0.6rem;
-          font-weight: 400;
-          color: var(--ink-faint);
-          margin-bottom: 6px;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
+        .bal-eyebrow {
+          font-size: 0.6rem; font-weight: 600; color: var(--ink-faint);
+          letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;
         }
 
-        .d-balance-amount {
-          font-family: var(--sans);
-          font-size: 2rem;
-          font-weight: 700;
-          color: var(--ink);
-          letter-spacing: -0.02em;
-          line-height: 1;
-          margin-bottom: 8px;
+        .bal-amount {
+          font-size: 2.4rem; font-weight: 700; color: var(--ink);
+          letter-spacing: -0.03em; line-height: 1; margin-bottom: 6px;
         }
 
-        .d-balance-amount sup {
-          font-size: 1rem;
-          font-weight: 500;
-          color: var(--ink-dim);
-          vertical-align: super;
+        .bal-amount sup { font-size: 1.1rem; font-weight: 500; vertical-align: super; }
+        .bal-amount .cents { font-size: 1.2rem; font-weight: 500; color: var(--ink-dim); }
+
+        .bal-change {
+          font-size: 0.8rem; font-weight: 600; color: var(--green); margin-bottom: 2px;
         }
 
-        .d-balance-amount .cents {
-          font-size: 1.1rem;
-          color: var(--ink-dim);
-          font-weight: 500;
+        .bal-period {
+          font-size: 0.65rem; font-weight: 300; color: var(--ink-faint); margin-bottom: 12px;
         }
 
-        .d-balance-change {
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-          background: var(--green-l);
-          border: 1px solid rgba(46,125,79,0.2);
-          border-radius: 4px;
-          padding: 3px 8px;
-          font-family: var(--mono);
-          font-size: 0.65rem;
-          font-weight: 500;
-          color: var(--green);
-          margin-bottom: 16px;
+        .sparkline-row { margin-bottom: 14px; }
+
+        .bal-actions { display: flex; gap: 8px; }
+
+        .btn-dep {
+          background: var(--orange); color: #fff;
+          border: none; border-radius: 8px; padding: 8px 16px;
+          font-family: var(--sans); font-size: 0.72rem; font-weight: 600;
+          cursor: pointer; transition: opacity 0.15s;
+        }
+        .btn-dep:hover { opacity: 0.88; }
+
+        .btn-wd {
+          background: var(--bg-2); color: var(--ink-2);
+          border: none; border-radius: 8px; padding: 8px 16px;
+          font-family: var(--sans); font-size: 0.72rem; font-weight: 600;
+          cursor: pointer; transition: background 0.15s;
+        }
+        .btn-wd:hover { background: var(--bg-3); }
+
+        .btn-tx {
+          background: transparent; color: var(--ink-faint); border: none;
+          font-family: var(--sans); font-size: 0.65rem; cursor: pointer;
+          padding: 8px 4px; text-decoration: underline; text-underline-offset: 2px;
         }
 
-        .d-balance-change.neg {
-          background: var(--red-l);
-          border-color: rgba(184,50,50,0.2);
-          color: var(--red);
+        /* Risk card */
+        .risk-card {
+          background: var(--card);
+          border-radius: 16px;
+          border: 1px solid var(--bg-2);
+          padding: 14px 16px;
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          min-width: 120px;
+          text-align: center;
         }
 
-        .d-balance-change svg { width: 8px; height: 8px; }
+        .risk-title {
+          font-size: 0.62rem; font-weight: 500; color: var(--ink-dim);
+          margin-bottom: 6px; letter-spacing: 0.02em;
+        }
 
-        /* 3-stat row */
-        .d-balance-stats {
+        .risk-pct {
+          font-size: 1.4rem; font-weight: 700; color: var(--ink);
+          letter-spacing: -0.02em; margin-top: -4px;
+        }
+
+        .risk-label {
+          font-size: 0.6rem; font-weight: 400; color: var(--ink-faint); margin-top: 4px;
+        }
+
+        /* ── PL/POSITIONS/RISK BAR ── */
+        .stat-bar {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
           gap: 0;
-          border-top: 1px solid var(--bg-2);
+          margin: 0 18px 10px;
+          background: var(--card);
+          border-radius: 12px;
+          border: 1px solid var(--bg-2);
+          overflow: hidden;
         }
 
-        .d-bstat {
-          padding: 12px 16px;
+        .stat-cell {
+          padding: 12px 14px;
           border-right: 1px solid var(--bg-2);
-          transition: background 0.12s;
         }
-        .d-bstat:last-child { border-right: none; }
-        .d-bstat:hover { background: var(--bg-1); }
+        .stat-cell:last-child { border-right: none; }
 
-        .d-bstat-label {
-          font-family: var(--sans);
-          font-size: 0.58rem;
-          font-weight: 400;
-          color: var(--ink-faint);
-          margin-bottom: 4px;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
+        .stat-lbl {
+          font-size: 0.58rem; font-weight: 600; color: var(--ink-faint);
+          text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px;
         }
 
-        .d-bstat-val {
-          font-family: var(--sans);
-          font-size: 0.82rem;
-          font-weight: 600;
-          color: var(--ink);
-          line-height: 1;
+        .stat-val {
+          font-size: 0.95rem; font-weight: 700; color: var(--ink); line-height: 1;
+          margin-bottom: 2px;
+        }
+        .stat-val.pos { color: var(--green); }
+
+        .stat-sub {
+          font-size: 0.58rem; font-weight: 300; color: var(--ink-faint);
         }
 
-        .d-bstat-val.pos { color: var(--green); }
-        .d-bstat-val.neg { color: var(--red); }
-
-        .d-bstat-sub {
-          font-family: var(--sans);
-          font-size: 0.58rem;
-          color: var(--ink-faint);
-          margin-top: 2px;
-          font-weight: 300;
-        }
-
-        /* action buttons inside balance */
-        .d-balance-actions {
-          display: flex;
-          gap: 8px;
-          padding: 0 18px 16px;
-        }
-
-        .d-act-btn {
-          padding: 7px 14px;
-          border-radius: 6px;
-          font-family: var(--sans);
-          font-size: 0.7rem;
-          font-weight: 500;
-          cursor: pointer;
-          border: none;
-          text-decoration: none;
-          transition: all 0.12s;
-          display: inline-flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .d-act-btn.primary {
-          background: var(--orange);
-          color: #fff;
-        }
-        .d-act-btn.primary:hover { background: var(--orange-2); }
-
-        .d-act-btn.ghost {
-          background: var(--bg-1);
-          color: var(--ink-2);
-          border: 1px solid var(--bg-3);
-        }
-        .d-act-btn.ghost:hover { background: var(--bg-2); }
-
-        .d-act-btn.text {
-          background: transparent;
-          color: var(--ink-faint);
-          font-size: 0.65rem;
-          padding: 7px 8px;
-        }
-        .d-act-btn.text:hover { color: var(--ink-dim); }
-
-        /* expand drawer */
-        .d-expand {
-          overflow: hidden;
-          transition: max-height 0.35s ease;
-        }
-
-        .d-expand-inner {
-          padding: 14px 18px 16px;
-          border-top: 1px solid var(--bg-2);
-        }
-
-        .d-expand-title {
-          font-family: var(--sans);
-          font-size: 0.6rem;
-          font-weight: 500;
-          color: var(--ink-faint);
-          margin-bottom: 10px;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-        }
-
-        .d-mini-table { width: 100%; border-collapse: collapse; }
-
-        .d-mini-table th {
-          font-family: var(--sans);
-          font-size: 0.58rem;
-          font-weight: 500;
-          color: var(--ink-faint);
-          padding-bottom: 7px;
-          text-align: left;
-          padding-right: 16px;
-          border-bottom: 1px solid var(--bg-2);
-        }
-
-        .d-mini-table td {
-          font-family: var(--sans);
-          font-size: 0.68rem;
-          color: var(--ink-2);
-          padding: 7px 16px 7px 0;
-          border-bottom: 1px solid var(--bg-2);
-        }
-        .d-mini-table tr:last-child td { border-bottom: none; }
-
-        .d-mini-table td.dep { color: var(--green); font-weight: 500; }
-        .d-mini-table td.wth { color: var(--red);   font-weight: 500; }
-        .d-mini-table td.amt { color: var(--ink);   font-weight: 500; }
-
-        /* ── METRICS ROW ── */
-        .d-metrics {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 8px;
-          margin-bottom: 10px;
-        }
-
-        .d-metric {
-          background: var(--white);
-          border-radius: var(--r-sm);
-          padding: 16px;
-          box-shadow: var(--shadow-xs);
-          position: relative;
-          overflow: hidden;
-          transition: transform 0.15s, box-shadow 0.15s;
-        }
-        .d-metric:hover {
-          transform: translateY(-2px);
-          box-shadow: var(--shadow-sm);
-        }
-
-        .d-metric.accent-top::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 3px;
-          background: var(--orange);
-        }
-
-        .d-metric-label {
-          font-family: var(--sans);
-          font-size: 0.62rem;
-          font-weight: 400;
-          color: var(--ink-faint);
-          margin-bottom: 10px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          letter-spacing: 0.01em;
-        }
-
-        .d-metric-delta {
-          font-family: var(--mono);
-          font-size: 0.58rem;
-          font-weight: 500;
-        }
-        .d-metric-delta.pos { color: var(--green); }
-        .d-metric-delta.neg { color: var(--red); }
-
-        .d-metric-val {
-          font-family: var(--sans);
-          font-size: 1.05rem;
-          font-weight: 600;
-          color: var(--ink);
-          letter-spacing: -0.01em;
-          line-height: 1;
-          margin-bottom: 3px;
-        }
-
-        .d-metric-sub {
-          font-family: var(--sans);
-          font-size: 0.62rem;
-          font-weight: 300;
-          color: var(--ink-faint);
-        }
-
-        /* ── GRID ── */
-        .d-grid {
+        /* ── 4-METRIC GRID ── */
+        .metrics-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 8px;
-          margin-bottom: 10px;
+          padding: 0 18px 10px;
         }
 
-        /* ── PANEL SHARED ── */
-        .d-panel {
-          background: var(--white);
-          border-radius: var(--r-sm);
-          box-shadow: var(--shadow-xs);
-          overflow: hidden;
+        .metric-card {
+          background: var(--card);
+          border: 1px solid var(--bg-2);
+          border-radius: 12px;
+          padding: 14px;
         }
 
-        .d-panel-head {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 16px;
-          border-bottom: 1px solid var(--bg-2);
+        .mc-label {
+          font-size: 0.6rem; font-weight: 500; color: var(--ink-faint);
+          margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.06em;
         }
 
-        .d-panel-title {
-          font-family: var(--sans);
-          font-size: 0.7rem;
-          font-weight: 600;
-          color: var(--ink);
-          letter-spacing: 0.01em;
-          display: flex;
-          align-items: center;
+        .mc-val {
+          font-size: 1.2rem; font-weight: 700; color: var(--ink);
+          letter-spacing: -0.02em; line-height: 1; margin-bottom: 2px;
+        }
+
+        .mc-sub {
+          font-size: 0.6rem; font-weight: 300; color: var(--ink-faint);
+        }
+
+        .mc-change {
+          font-size: 0.65rem; font-weight: 600; color: var(--green); margin-bottom: 2px;
+        }
+
+        /* Top Movers card */
+        .movers-card {
+          background: var(--card);
+          border: 1px solid var(--bg-2);
+          border-radius: 12px;
+          padding: 14px;
+        }
+
+        .movers-item {
+          display: flex; align-items: center; justify-content: space-between;
+          margin-bottom: 8px;
+        }
+        .movers-item:last-child { margin-bottom: 0; }
+
+        .mover-sym {
+          display: flex; align-items: center; gap: 6px;
+          font-family: var(--mono); font-size: 0.7rem; font-weight: 500; color: var(--ink);
+        }
+
+        .mover-ico {
+          width: 18px; height: 18px; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 9px; font-weight: 700; color: #fff;
+          flex-shrink: 0;
+        }
+
+        .mover-chg {
+          font-family: var(--mono); font-size: 0.65rem; font-weight: 500;
+        }
+        .mover-chg.up { color: var(--green); }
+        .mover-chg.dn { color: var(--red); }
+
+        /* Recent Activity card */
+        .activity-card {
+          background: var(--card);
+          border: 1px solid var(--bg-2);
+          border-radius: 12px;
+          padding: 14px;
+        }
+
+        .activity-item {
+          font-size: 0.65rem; font-weight: 400; color: var(--ink-dim);
+          margin-bottom: 6px; line-height: 1.3;
+        }
+        .activity-item:last-child { margin-bottom: 0; }
+
+        /* Open / volatility / notif row */
+        .bottom-metrics {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr 1fr;
           gap: 8px;
+          padding: 0 18px 10px;
         }
 
-        .d-panel-title::before {
-          content: '';
-          display: inline-block;
-          width: 3px; height: 13px;
-          background: var(--orange);
-          border-radius: 2px;
+        .bm-card {
+          background: var(--card);
+          border: 1px solid var(--bg-2);
+          border-radius: 12px;
+          padding: 12px;
         }
 
-        .d-panel-link {
-          font-family: var(--mono);
-          font-size: 0.58rem;
-          letter-spacing: 0.1em;
-          color: var(--orange);
-          text-decoration: none;
-          text-transform: uppercase;
-        }
-        .d-panel-link:hover { opacity: 0.7; }
-
-        /* ── MARKET ROWS ── */
-        .d-mkt-row {
-          display: flex;
-          align-items: center;
-          padding: 11px 16px;
-          border-bottom: 1px solid var(--bg-2);
-          text-decoration: none;
-          transition: all 0.12s;
-          gap: 10px;
-          cursor: pointer;
-        }
-        .d-mkt-row:last-child { border-bottom: none; }
-        .d-mkt-row:hover { background: var(--bg-1); transform: translateX(2px); }
-
-        .d-mkt-icon {
-          width: 32px; height: 32px;
-          border-radius: 8px;
-          background: var(--bg-1);
-          display: flex; align-items: center; justify-content: center;
-          font-size: 13px;
-          flex-shrink: 0;
-          font-weight: 700;
+        .bm-lbl {
+          font-size: 0.58rem; font-weight: 600; color: var(--ink-faint);
+          text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px;
         }
 
-        .d-mkt-info { flex: 1; }
-
-        .d-mkt-sym {
-          font-family: var(--mono);
-          font-size: 0.72rem;
-          font-weight: 500;
-          color: var(--ink);
-          letter-spacing: 0.06em;
-          line-height: 1;
-          margin-bottom: 2px;
+        .bm-val {
+          font-size: 1rem; font-weight: 700; color: var(--ink);
+          letter-spacing: -0.02em; line-height: 1; margin-bottom: 2px;
         }
 
-        .d-mkt-name {
-          font-family: var(--sans);
-          font-size: 0.6rem;
-          font-weight: 300;
-          color: var(--ink-faint);
+        .bm-sub {
+          font-size: 0.58rem; font-weight: 300; color: var(--ink-faint);
+          line-height: 1.3;
         }
 
-        .d-mkt-right { text-align: right; }
+        .bm-dot { font-size: 0.6rem; color: var(--green); }
+        .bm-dot.red { color: var(--red); }
 
-        .d-mkt-price {
-          font-family: var(--mono);
-          font-size: 0.75rem;
-          font-weight: 500;
-          color: var(--ink);
-          font-feature-settings: 'tnum';
-          margin-bottom: 2px;
+        /* ── ASSET TABLE ── */
+        .asset-section { padding: 0 18px 20px; }
+
+        .section-head {
+          display: flex; align-items: center; justify-content: space-between;
+          margin-bottom: 8px;
         }
 
-        .d-mkt-chg {
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          font-weight: 500;
-        }
-        .d-mkt-chg.up { color: var(--green); }
-        .d-mkt-chg.dn { color: var(--red); }
-
-        /* ── QUICK ACTIONS ── */
-        .d-action-row {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 14px 16px;
-          text-decoration: none;
-          border-bottom: 1px solid var(--bg-2);
-          transition: all 0.12s;
-          position: relative;
-        }
-        .d-action-row:last-child { border-bottom: none; }
-        .d-action-row:hover { background: var(--bg-1); transform: translateX(2px); }
-
-        .d-action-row::after {
-          content: '→';
-          position: absolute;
-          right: 16px;
-          font-family: var(--sans);
-          font-size: 0.9rem;
-          color: var(--bg-3);
-          transition: all 0.15s;
-        }
-        .d-action-row:hover::after { color: var(--orange); transform: translateX(3px); }
-
-        .d-action-ico {
-          width: 34px; height: 34px;
-          border-radius: 8px;
-          background: var(--orange-l);
-          border: 1px solid var(--orange-m);
-          display: flex; align-items: center; justify-content: center;
-          color: var(--orange);
-          flex-shrink: 0;
-          transition: all 0.12s;
-        }
-        .d-action-row:hover .d-action-ico {
-          background: var(--orange);
-          border-color: var(--orange);
-          color: #fff;
+        .section-title {
+          font-size: 0.62rem; font-weight: 700; color: var(--ink-faint);
+          text-transform: uppercase; letter-spacing: 0.1em;
+          display: flex; align-items: center; gap: 6px;
         }
 
-        .d-action-lbl {
-          font-family: var(--sans);
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: var(--ink);
-          margin-bottom: 2px;
-        }
-
-        .d-action-desc {
-          font-family: var(--sans);
-          font-size: 0.6rem;
-          font-weight: 300;
-          color: var(--ink-faint);
-        }
-
-        /* ── TX TABLE ── */
-        .d-tx {
-          background: var(--white);
-          border-radius: var(--r-sm);
-          box-shadow: var(--shadow-xs);
+        .asset-table-wrap {
+          background: var(--card);
+          border: 1px solid var(--bg-2);
+          border-radius: 14px;
           overflow: hidden;
         }
 
-        .d-tx-table { width: 100%; border-collapse: collapse; }
-
-        .d-tx-table th {
-          font-family: var(--sans);
-          font-size: 0.62rem;
-          font-weight: 500;
-          color: var(--ink-faint);
-          padding: 10px 16px;
-          text-align: left;
+        .asset-thead {
+          display: grid;
+          grid-template-columns: 2fr 1fr 1.3fr 1fr 1fr 1.4fr;
+          padding: 10px 14px;
           border-bottom: 1px solid var(--bg-2);
           background: var(--bg-1);
-          letter-spacing: 0.01em;
         }
 
-        .d-tx-table td {
-          font-family: var(--sans);
-          font-size: 0.72rem;
-          color: var(--ink-2);
-          padding: 11px 16px;
+        .asset-th {
+          font-size: 0.55rem; font-weight: 700; color: var(--ink-faint);
+          text-transform: uppercase; letter-spacing: 0.08em;
+        }
+
+        .asset-row {
+          display: grid;
+          grid-template-columns: 2fr 1fr 1.3fr 1fr 1fr 1.4fr;
+          align-items: center;
+          padding: 13px 14px;
           border-bottom: 1px solid var(--bg-2);
-          font-weight: 400;
+          transition: background 0.12s;
         }
+        .asset-row:last-child { border-bottom: none; }
+        .asset-row:hover { background: var(--bg-1); }
 
-        .d-tx-table tr:last-child td { border-bottom: none; }
-        .d-tx-table tbody tr:hover td { background: var(--bg-1); }
+        .asset-name-cell { display: flex; align-items: center; gap: 8px; }
 
-        .d-tx-dep { color: var(--green) !important; font-weight: 500 !important; }
-        .d-tx-wth { color: var(--red)   !important; font-weight: 500 !important; }
-        .d-tx-amt {
-          font-family: var(--mono) !important;
-          color: var(--ink) !important;
-          font-weight: 500 !important;
-          font-size: 0.7rem !important;
-          font-feature-settings: 'tnum';
-        }
-        .d-tx-date {
-          font-family: var(--mono) !important;
-          font-size: 0.62rem !important;
-          color: var(--ink-faint) !important;
-        }
-
-        /* badge */
-        .d-badge {
-          font-family: var(--mono);
-          font-size: 0.5rem;
-          font-weight: 600;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          padding: 3px 8px;
-          border-radius: 20px;
-          display: inline-block;
-        }
-        .d-badge.ok  { background: var(--green-l); color: var(--green); }
-        .d-badge.pnd { background: var(--gold-l);  color: var(--gold);  }
-        .d-badge.err { background: var(--red-l);   color: var(--red);   }
-
-        /* loading / empty */
-        .d-loading {
+        .asset-ico {
+          width: 32px; height: 32px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center;
-          padding: 40px;
-        }
-        .d-spinner {
-          width: 18px; height: 18px;
-          border: 2px solid var(--bg-2);
-          border-top-color: var(--orange);
-          border-radius: 50%;
-          animation: dspin 0.7s linear infinite;
-        }
-        @keyframes dspin { to { transform: rotate(360deg); } }
-
-        .d-empty {
-          padding: 32px 16px; text-align: center;
-          font-family: var(--sans); font-size: 0.7rem;
-          font-weight: 300; color: var(--ink-faint);
+          font-size: 14px; font-weight: 800; color: #fff;
+          flex-shrink: 0;
         }
 
-        /* ── RESPONSIVE ── */
-        @media (max-width: 640px) {
-          .d-metrics { grid-template-columns: 1fr 1fr; }
-          .d-grid    { grid-template-columns: 1fr; }
-          .d-balance-amount { font-size: 2.2rem; }
+        .asset-sym {
+          font-family: var(--mono); font-size: 0.72rem; font-weight: 600;
+          color: var(--ink); line-height: 1; margin-bottom: 1px;
+        }
+
+        .asset-nm {
+          font-size: 0.58rem; font-weight: 300; color: var(--ink-faint);
+        }
+
+        .asset-ticker {
+          font-family: var(--mono); font-size: 0.62rem; font-weight: 500;
+          color: var(--ink-dim);
+        }
+
+        .asset-price {
+          font-family: var(--mono); font-size: 0.7rem; font-weight: 500;
+          color: var(--ink); font-feature-settings: 'tnum';
+        }
+
+        .asset-chg {
+          font-family: var(--mono); font-size: 0.65rem; font-weight: 600;
+        }
+        .asset-chg.up { color: var(--green); }
+        .asset-chg.dn { color: var(--red); }
+
+        .asset-vol {
+          font-family: var(--mono); font-size: 0.62rem; font-weight: 400; color: var(--ink-dim);
+        }
+
+        .trade-btns { display: flex; gap: 4px; }
+
+        .btn-buy {
+          background: #1c1a17; color: #fff; border: none;
+          border-radius: 6px; padding: 5px 10px;
+          font-family: var(--sans); font-size: 0.62rem; font-weight: 600;
+          cursor: pointer; transition: opacity 0.12s;
+        }
+        .btn-buy:hover { opacity: 0.78; }
+
+        .btn-sell {
+          background: transparent; color: var(--ink-2);
+          border: 1px solid var(--bg-3); border-radius: 6px; padding: 5px 10px;
+          font-family: var(--sans); font-size: 0.62rem; font-weight: 600;
+          cursor: pointer; transition: background 0.12s;
+        }
+        .btn-sell:hover { background: var(--bg-2); }
+
+        /* expand drawer */
+        .tx-drawer {
+          overflow: hidden;
+          transition: max-height 0.35s ease;
+        }
+        .tx-drawer-inner {
+          padding: 14px 18px 6px;
+          border-top: 1px solid var(--bg-2);
         }
       `}</style>
 
-      {/* ── HEADER ── */}
-      <div className="d-header">
-        <div className="d-header-left">
-          <span className="d-greeting">Welcome back</span>
-          <span className="d-name">{firstName}</span>
-          <span className="d-uid">
-            APEX·MKTS&nbsp;/&nbsp;{session?.user?.id?.slice(-6).toUpperCase() ?? 'XXXXXX'}
-          </span>
-        </div>
-        <div className="d-header-right">
-          <div className="d-live-chip">
-            <span className="d-live-dot" />
-            Live
-          </div>
-          <span className="d-clock">{time}</span>
-        </div>
-      </div>
+      <div className="dash-wrap">
 
-      {/* ── BALANCE CARD ── */}
-      <div className="d-balance" style={{ marginBottom: 10 }}>
-        <div className="d-balance-body">
-          <p className="d-balance-eyebrow">Net Asset Value — USD</p>
-          <p className="d-balance-amount">
-            <sup>$</sup>24,850<span className="cents">.00</span>
-          </p>
-          <div className={`d-balance-change${changePos ? '' : ' neg'}`}>
-            <svg viewBox="0 0 9 9" fill="none">
-              <path d={changePos ? 'M1.5 6.5L4.5 2.5L7.5 6.5' : 'M1.5 2.5L4.5 6.5L7.5 2.5'}
-                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            {changePos ? '+' : ''}{fmt(changePercent)}% this period
+        {/* ── TOP NAV ── */}
+        <div className="top-bar">
+          <div className="hamburger">
+            <span /><span /><span />
           </div>
+          <div className="top-bar-logo">APEX<span>•</span>MARKETS</div>
+          <div style={{ width: 24 }} />
         </div>
 
-        {/* action buttons */}
-        <div className="d-balance-actions">
-          <Link href="/dashboard/deposit"  className="d-act-btn primary">+ Deposit</Link>
-          <Link href="/dashboard/withdraw" className="d-act-btn ghost">Withdraw</Link>
-          <button
-            className="d-act-btn text"
-            onClick={() => setBalanceOpen(v => !v)}
-          >
-            {balanceOpen ? '↑ hide' : '↓ transactions'}
-          </button>
-        </div>
-
-        {/* 3-stat bar */}
-        <div className="d-balance-stats">
-          <div className="d-bstat">
-            <p className="d-bstat-label">P &amp; L</p>
-            <p className={`d-bstat-val ${changePos ? 'pos' : 'neg'}`}>
-              +${fmt(profit)}
-            </p>
-            <p className="d-bstat-sub">Realised</p>
+        {/* ── HEADER ── */}
+        <div className="d-header">
+          <div>
+            <p className="d-greeting">Welcome back,</p>
+            <p className="d-name">{firstName}</p>
+            <p className="d-uid">APEX·MKTS / {userId}</p>
           </div>
-          <div className="d-bstat">
-            <p className="d-bstat-label">Positions</p>
-            <p className="d-bstat-val">3 open</p>
-            <p className="d-bstat-sub">2 profit · 1 loss</p>
-          </div>
-          <div className="d-bstat">
-            <p className="d-bstat-label">Risk</p>
-            <p className="d-bstat-val">Conservative</p>
-            <p className="d-bstat-sub">Volatility 0.4%</p>
-          </div>
-        </div>
-
-        {/* expand */}
-        <div className="d-expand" style={{ maxHeight: balanceOpen ? 320 : 0 }}>
-          <div className="d-expand-inner">
-            <p className="d-expand-title">Recent Transactions</p>
-            {transactions.length === 0 ? (
-              <p style={{ fontFamily: 'var(--sans)', fontSize: '0.65rem',
-                fontWeight: 300, color: 'var(--ink-faint)' }}>
-                No transactions yet.
-              </p>
-            ) : (
-              <table className="d-mini-table">
-                <thead>
-                  <tr>{['Type','Asset','Amount','Status'].map(h => <th key={h}>{h}</th>)}</tr>
-                </thead>
-                <tbody>
-                  {transactions.slice(0, 5).map(tx => (
-                    <tr key={tx.id}>
-                      <td className={tx.type === 'Deposit' ? 'dep' : 'wth'}>{tx.type}</td>
-                      <td>{tx.asset || 'USD'}</td>
-                      <td className="amt">${fmt(tx.amount, 0)}</td>
-                      <td>
-                        <span className={`d-badge ${tx.status === 'COMPLETED' ? 'ok' : tx.status === 'PENDING' ? 'pnd' : 'err'}`}>
-                          {tx.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ── METRICS ── */}
-      <div className="d-metrics">
-        {[
-          { label: 'Realised P&L',    val: `$${fmt(profit)}`,   sub: 'Current period',    delta: `+${fmt(changePercent)}%`, pos: true,  accent: true },
-          { label: 'Portfolio Value', val: `$${fmt(balance)}`,  sub: 'Mark-to-market',    delta: null,                       pos: true,  accent: false },
-          { label: 'Open Positions',  val: '3',                  sub: '2 profit · 1 loss', delta: null,                       pos: true,  accent: false },
-          { label: 'Volatility',      val: '0.4%',               sub: 'Conservative',      delta: null,                       pos: true,  accent: false },
-        ].map(({ label, val, sub, delta, pos, accent }) => (
-          <div key={label} className={`d-metric ${accent ? 'accent-top' : ''}`}>
-            <div className="d-metric-label">
-              {label}
-              {delta && <span className={`d-metric-delta ${pos ? 'pos' : 'neg'}`}>{delta}</span>}
+          <div className="d-header-right">
+            <div className="d-live-chip">
+              <span className="live-dot" />
+              Live
             </div>
-            <p className="d-metric-val">{val}</p>
-            <p className="d-metric-sub">{sub}</p>
-            {accent && <div style={{ marginTop: 10 }}><Sparkline positive={pos} /></div>}
+            <span className="d-clock">{time}</span>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* ── GRID: MARKETS + ACTIONS ── */}
-      <div className="d-grid">
-
-        {/* Markets */}
-        <div className="d-panel">
-          <div className="d-panel-head">
-            <span className="d-panel-title">Live Markets</span>
-            <Link href="/dashboard/markets" className="d-panel-link">All →</Link>
+        {/* ── BALANCE + RISK ── */}
+        <div className="balance-risk-row">
+          <div className="balance-card">
+            <p className="bal-eyebrow">Net Asset Value</p>
+            <p className="bal-amount">
+              <sup>$</sup>{fmt(balance, 0)}<span className="cents">.00</span>
+            </p>
+            <p className="bal-change">+${fmt(profit)} (+{fmt(changePercent)}%)</p>
+            <p className="bal-period">Current period</p>
+            <div className="sparkline-row">
+              <Sparkline positive width={120} height={28} />
+            </div>
+            <div className="bal-actions">
+              <button className="btn-dep">+ Deposit</button>
+              <button className="btn-wd">Withdraw</button>
+              <button className="btn-tx" onClick={() => setBalanceOpen(v => !v)}>
+                {balanceOpen ? '↑ hide' : '↓ transactions'}
+              </button>
+            </div>
           </div>
-          {markets.length === 0
-            ? ['BTC','ETH','NVDA','TSLA'].map(sym => (
-                <div key={sym} className="d-mkt-row" style={{ cursor: 'default' }}>
-                  <div className="d-mkt-icon" style={{ opacity: 0.3 }}>·</div>
-                  <div className="d-mkt-info">
-                    <div className="d-mkt-sym">{sym}</div>
-                    <div className="d-mkt-name" style={{ color: 'var(--bg-3)' }}>Loading…</div>
-                  </div>
-                  <div className="d-mkt-right">
-                    <div className="d-mkt-price" style={{ color: 'var(--bg-3)' }}>——</div>
+
+          <div className="risk-card">
+            <p className="risk-title">Risk Profile</p>
+            <Gauge value={0.4} />
+            <p className="risk-pct">0.4%</p>
+            <p className="risk-label">Conservative</p>
+          </div>
+        </div>
+
+        {/* Tx drawer */}
+        <div className="tx-drawer" style={{ maxHeight: balanceOpen ? 260 : 0, margin: '0 18px' }}>
+          <div className="tx-drawer-inner">
+            <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', marginBottom: 8, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              Recent Transactions
+            </p>
+            {transactions.length === 0
+              ? <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No transactions yet.</p>
+              : transactions.slice(0, 5).map(tx => (
+                <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--bg-2)', fontSize: '0.68rem' }}>
+                  <span style={{ color: tx.type === 'Deposit' ? 'var(--green)' : 'var(--red)', fontWeight: 500 }}>{tx.type}</span>
+                  <span style={{ fontFamily: 'var(--mono)' }}>${fmt(tx.amount, 0)}</span>
+                </div>
+              ))}
+          </div>
+        </div>
+
+        {/* ── P&L / POSITIONS / RISK BAR ── */}
+        <div className="stat-bar">
+          <div className="stat-cell">
+            <p className="stat-lbl">P &amp; L</p>
+            <p className="stat-val pos">+${fmt(profit)}</p>
+            <p className="stat-sub">Realised</p>
+          </div>
+          <div className="stat-cell">
+            <p className="stat-lbl">Positions</p>
+            <p className="stat-val">3 open</p>
+            <p className="stat-sub">3 profit · 1 loss</p>
+          </div>
+          <div className="stat-cell">
+            <p className="stat-lbl">Risk</p>
+            <p className="stat-val">Conservative</p>
+            <p className="stat-sub">Volatility 0.4%</p>
+          </div>
+        </div>
+
+        {/* ── 4-METRIC GRID ── */}
+        <div className="metrics-grid">
+          {/* Realised P&L */}
+          <div className="metric-card">
+            <p className="mc-label">Realised P&L</p>
+            <p className="mc-val">${fmt(profit)}</p>
+            <p className="mc-change">+{fmt(changePercent)}%</p>
+            <p className="mc-sub">Current period</p>
+            <div style={{ marginTop: 8 }}><Sparkline positive width={80} height={24} /></div>
+          </div>
+
+          {/* Top Movers */}
+          <div className="movers-card">
+            <p className="mc-label">Top Movers</p>
+            {topMovers.map(m => (
+              <div key={m.symbol} className="movers-item">
+                <span className="mover-sym">
+                  <span className="mover-ico" style={{ background: m.bg }}>{m.icon}</span>
+                  {m.symbol}
+                </span>
+                <span className={`mover-chg ${m.change >= 0 ? 'up' : 'dn'}`}>
+                  {m.change >= 0 ? '+' : ''}{fmt(m.change)}%
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Portfolio Value */}
+          <div className="metric-card">
+            <p className="mc-label">Portfolio Value</p>
+            <p className="mc-val">${fmt(balance)}.00</p>
+            <p className="mc-sub">Mark-to-market</p>
+          </div>
+
+          {/* Recent Activity */}
+          <div className="activity-card">
+            <p className="mc-label">Recent Activity</p>
+            {recentActivity.map((a, i) => (
+              <p key={i} className="activity-item">{a}</p>
+            ))}
+          </div>
+        </div>
+
+        {/* ── BOTTOM METRICS ROW ── */}
+        <div className="bottom-metrics">
+          <div className="bm-card">
+            <p className="bm-lbl">Open Positions</p>
+            <p className="bm-val">3</p>
+            <p className="bm-sub">2 profit · 1 loss</p>
+          </div>
+
+          <div className="bm-card">
+            <p className="bm-lbl">Activity</p>
+            {activityLog.map((a, i) => (
+              <p key={i} className="bm-sub" style={{ marginBottom: 4 }}>
+                <span className="bm-dot">●</span> {a.slice(2)}
+              </p>
+            ))}
+          </div>
+
+          <div className="bm-card">
+            <p className="bm-lbl">Volatility</p>
+            <p className="bm-val">0.4%</p>
+            <p className="bm-sub">Conservative</p>
+          </div>
+
+          <div className="bm-card">
+            <p className="bm-lbl">Notifications</p>
+            {notifications.map((n, i) => (
+              <p key={i} className="bm-sub" style={{ marginBottom: 4 }}>
+                <span className="bm-dot red">●</span> {n.slice(2)}
+              </p>
+            ))}
+          </div>
+        </div>
+
+        {/* ── ASSET TABLE ── */}
+        <div className="asset-section">
+          <div className="section-head">
+            <span className="section-title">
+              <span style={{ display: 'inline-block', width: 3, height: 12, background: 'var(--orange)', borderRadius: 2 }} />
+              Markets
+            </span>
+          </div>
+
+          <div className="asset-table-wrap">
+            <div className="asset-thead">
+              <span className="asset-th">Asset</span>
+              <span className="asset-th">Ticker</span>
+              <span className="asset-th">Current Price</span>
+              <span className="asset-th">24H Change</span>
+              <span className="asset-th">Volume</span>
+              <span className="asset-th">Quick Trade</span>
+            </div>
+
+            {markets.map(a => (
+              <div key={a.symbol} className="asset-row">
+                <div className="asset-name-cell">
+                  <div className="asset-ico" style={{ background: a.iconBg }}>{a.icon}</div>
+                  <div>
+                    <div className="asset-sym">{a.symbol}</div>
+                    <div className="asset-nm">{a.name}</div>
                   </div>
                 </div>
-              ))
-            : markets.slice(0, 6).map(a => {
-                const price = a.price ?? 0;
-                const chg   = a.changePercent ?? 0;
-                const up    = chg >= 0;
-                const icons: Record<string, string> = {
-                  BTC: '₿', ETH: 'Ξ', SOL: '◎', BNB: 'B', NVDA: 'N', TSLA: 'T', AAPL: '',
-                };
-                return (
-                  <Link key={a.symbol} href={`/dashboard/trade?asset=${a.symbol}`} className="d-mkt-row">
-                    <div className="d-mkt-icon">{icons[a.symbol] ?? a.symbol[0]}</div>
-                    <div className="d-mkt-info">
-                      <div className="d-mkt-sym">{a.symbol}</div>
-                      <div className="d-mkt-name">{a.name}</div>
-                    </div>
-                    <div className="d-mkt-right">
-                      <div className="d-mkt-price">${fmt(price)}</div>
-                      <div className={`d-mkt-chg ${up ? 'up' : 'dn'}`}>
-                        {up ? '+' : ''}{fmt(chg)}%
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-        </div>
-
-        {/* Actions */}
-        <div className="d-panel">
-          <div className="d-panel-head">
-            <span className="d-panel-title">Quick Actions</span>
-          </div>
-          {[
-            {
-              href: '/dashboard/deposit',
-              label: 'Deposit Funds',
-              desc: 'Add funds to account',
-              icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 7l3 3 3-3M1 11h12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
-            },
-            {
-              href: '/dashboard/withdraw',
-              label: 'Withdraw',
-              desc: 'Transfer to bank',
-              icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 9V1M4 3l3-3 3 3M1 11h12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
-            },
-            {
-              href: '/dashboard/trade',
-              label: 'New Trade',
-              desc: '180+ instruments',
-              icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 10l3-4 3 2 4-6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="11" cy="4" r="1.5" stroke="currentColor" strokeWidth="1.2"/></svg>,
-            },
-            {
-              href: '/dashboard/markets',
-              label: 'Markets',
-              desc: 'Browse all assets',
-              icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/></svg>,
-            },
-          ].map(({ href, label, desc, icon }) => (
-            <Link key={href} href={href} className="d-action-row">
-              <div className="d-action-ico">{icon}</div>
-              <div>
-                <p className="d-action-lbl">{label}</p>
-                <p className="d-action-desc">{desc}</p>
+                <span className="asset-ticker">{a.symbol}</span>
+                <span className="asset-price">${fmt(a.price)}</span>
+                <span className={`asset-chg ${a.change >= 0 ? 'up' : 'dn'}`}>
+                  {a.change >= 0 ? '+' : ''}{fmt(a.change)}%
+                </span>
+                <span className="asset-vol">${a.vol}</span>
+                <div className="trade-btns">
+                  <button className="btn-buy">Buy</button>
+                  <button className="btn-sell">Sell</button>
+                </div>
               </div>
-            </Link>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* ── TX TABLE ── */}
-      <div className="d-tx">
-        <div className="d-panel-head">
-          <span className="d-panel-title">Execution History</span>
-        </div>
-        {loading ? (
-          <div className="d-loading"><div className="d-spinner" /></div>
-        ) : transactions.length === 0 ? (
-          <div className="d-empty">No transactions yet</div>
-        ) : (
-          <table className="d-tx-table">
-            <thead>
-              <tr>
-                <th>Type</th><th>Asset</th><th>Amount</th><th>Date</th><th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.slice(0, 8).map(tx => (
-                <tr key={tx.id}>
-                  <td className={tx.type === 'Deposit' ? 'd-tx-dep' : tx.type === 'Withdrawal' ? 'd-tx-wth' : ''}>
-                    {tx.type}
-                  </td>
-                  <td>{tx.asset || 'USD'}</td>
-                  <td className="d-tx-amt">${fmt(tx.amount, 0)}</td>
-                  <td className="d-tx-date">
-                    {new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </td>
-                  <td>
-                    <span className={`d-badge ${tx.status === 'COMPLETED' ? 'ok' : tx.status === 'PENDING' ? 'pnd' : 'err'}`}>
-                      {tx.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
       </div>
     </>
   );
