@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 /* ─── tiny helpers ─── */
-function fmt(n, d = 2) {
+function fmt(n: number | null | undefined, d = 2) { 
   return (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
