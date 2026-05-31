@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-
+type Transaction = {
+  id: string;
+  type: 'Deposit' | 'Withdrawal' | 'Trade';
+  asset: string;
+  amount: number;
+  status: 'COMPLETED' | 'PENDING' | 'FAILED';
+  createdAt: string;
+};
 /* ─── tiny helpers ─── */
 function fmt(n: number | null | undefined, d = 2) { 
   return (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
