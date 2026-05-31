@@ -31,11 +31,12 @@ function Sparkline({ positive = true }: { positive?: boolean }) {
   const pts = positive
     ? '0,22 12,16 24,18 36,8 48,12 60,4 72,6 84,0'
     : '0,0 12,6 24,4 36,14 48,10 60,18 72,16 84,22';
+  const color = positive ? '#2e7d4f' : '#b83232';
   return (
     <svg width="84" height="22" viewBox="0 0 84 22" fill="none">
       <polyline points={pts} fill="none"
-        stroke={positive ? '#16a34a' : '#c9170a'}
-        strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        stroke={color} strokeWidth="1.5"
+        strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -47,12 +48,10 @@ export default function DashboardPage() {
   const [loading, setLoading]           = useState(true);
   const [balanceOpen, setBalanceOpen]   = useState(false);
   const [time, setTime]                 = useState('');
-  const [tick, setTick]                 = useState(0);
 
   useEffect(() => {
     const id = setInterval(() => {
       setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      setTick((t) => t + 1);
     }, 1000);
     setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
     return () => clearInterval(id);
@@ -89,528 +88,775 @@ export default function DashboardPage() {
   const changePercent = 3.42;
   const changePos     = changePercent >= 0;
   const profit        = 842.30;
-  const firstName     = session?.user?.name?.split(' ')[0] ?? 'TRADER';
+  const firstName     = session?.user?.name?.split(' ')[0] ?? 'Trader';
 
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@300;400;500&display=swap');
+
         :root {
-          --cr:  #f5f0e8;
-          --crd: #ede7d9;
-          --crx: #e0d9cc;
-          --ink: #1a1512;
-          --inm: #3d352e;
-          --inl: #7a6e65;
-          --red: #c9170a;
-          --redd:#9e1108;
-          --mono:'DM Mono', 'Courier New', monospace;
-          --sans:'Manrope', system-ui, sans-serif;
+          --bg:        #f5f0eb;
+          --bg-1:      #ede8e1;
+          --bg-2:      #e2dbd1;
+          --bg-3:      #cec5b8;
+          --white:     #ffffff;
+          --ink:       #1c1a17;
+          --ink-2:     #2e2b26;
+          --ink-dim:   #6b6457;
+          --ink-faint: #9e9485;
+          --charcoal:  #1c1a17;
+          --orange:    #e85c0d;
+          --orange-2:  #f07030;
+          --orange-l:  #fde8dc;
+          --orange-m:  #f5c4a8;
+          --green:     #2e7d4f;
+          --green-l:   #e4f2ea;
+          --red:       #b83232;
+          --red-l:     #faeaea;
+          --gold-l:    #fdf3d0;
+          --gold:      #8a6800;
+          --blue:      #1a3d8a;
+          --blue-l:    #e4eaf8;
+          --shadow-xs: 0 1px 3px rgba(28,26,23,0.07);
+          --shadow-sm: 0 2px 8px rgba(28,26,23,0.09), 0 1px 2px rgba(28,26,23,0.05);
+          --shadow-md: 0 4px 20px rgba(28,26,23,0.12), 0 2px 6px rgba(28,26,23,0.06);
+          --r:    14px;
+          --r-sm: 10px;
+          --sans: 'DM Sans', system-ui, sans-serif;
+          --display: 'Syne', system-ui, sans-serif;
+          --mono: 'DM Mono', 'Courier New', monospace;
         }
 
-        /* ── HEADER ROW ── */
-        .t-header {
+        /* ── HEADER ── */
+        .d-header {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-bottom: 16px;
-          border-bottom: 1px solid var(--crx);
-          margin-bottom: 20px;
+          padding: 0 0 20px;
         }
-        .t-header-left { display: flex; flex-direction: column; gap: 4px; }
-        .t-uid {
+
+        .d-header-left { display: flex; flex-direction: column; gap: 5px; }
+
+        .d-greeting {
+          font-family: var(--sans);
+          font-size: 0.7rem;
+          font-weight: 400;
+          color: var(--ink-faint);
+          letter-spacing: 0.04em;
+        }
+
+        .d-name {
+          font-family: var(--display);
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--ink);
+          letter-spacing: -0.01em;
+          line-height: 1;
+        }
+
+        .d-uid {
           font-family: var(--mono);
           font-size: 0.58rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: var(--inl);
+          letter-spacing: 0.14em;
+          color: var(--ink-faint);
+          margin-top: 2px;
         }
-        .t-uid span { color: var(--red); }
-        .t-name {
-          font-family: var(--mono);
-          font-size: 1rem;
-          font-weight: 500;
-          color: var(--ink);
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-        }
-        .t-header-right {
+
+        .d-header-right {
           display: flex;
           align-items: center;
           gap: 10px;
         }
-        .t-clock {
-          font-family: var(--mono);
-          font-size: 0.7rem;
-          color: var(--inl);
-          letter-spacing: 0.08em;
-          min-width: 72px;
-          text-align: right;
-        }
-        .t-live-pill {
-          font-family: var(--mono);
-          font-size: 0.55rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: #16a34a;
-          background: rgba(22,163,74,0.08);
-          border: 1px solid rgba(22,163,74,0.2);
-          padding: 3px 8px;
+
+        .d-live-chip {
           display: flex;
           align-items: center;
           gap: 5px;
-        }
-        .t-live-dot {
-          width: 5px; height: 5px;
-          background: #16a34a;
-          border-radius: 50%;
-          animation: tpulse 2s ease infinite;
-        }
-        @keyframes tpulse {
-          0%,100% { opacity: 1; } 50% { opacity: 0.3; }
-        }
-
-        /* ── BALANCE PANEL ── */
-        .t-balance {
-          background: var(--ink);
-          padding: 0;
-          margin-bottom: 1px;
-          position: relative;
-          overflow: hidden;
-        }
-        .t-balance-top {
-          display: grid;
-          grid-template-columns: 1fr auto;
-          gap: 0;
-        }
-        .t-balance-main {
-          padding: 20px 24px;
-          border-right: 1px solid rgba(255,255,255,0.05);
-        }
-        .t-balance-side {
-          padding: 20px 20px;
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          min-width: 130px;
-        }
-        .t-row-label {
-          font-family: var(--mono);
-          font-size: 0.55rem;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: #444;
-          margin-bottom: 6px;
-        }
-        .t-balance-val {
-          font-family: var(--mono);
-          font-size: 1.9rem;
-          font-weight: 500;
-          color: #f0ebe3;
-          letter-spacing: -0.02em;
-          line-height: 1;
-        }
-        .t-balance-chg {
-          font-family: var(--mono);
-          font-size: 0.68rem;
-          margin-top: 6px;
-          letter-spacing: 0.04em;
-        }
-        .t-balance-chg.pos { color: #4ade80; }
-        .t-balance-chg.neg { color: #fb7185; }
-        .t-side-stat { margin-bottom: 12px; }
-        .t-side-val {
-          font-family: var(--mono);
-          font-size: 0.85rem;
-          font-weight: 500;
-          color: #c8bfb5;
-          letter-spacing: 0.02em;
-        }
-        .t-balance-actions {
-          display: flex;
-          gap: 1px;
-          border-top: 1px solid rgba(255,255,255,0.05);
-        }
-        .t-bal-btn {
-          flex: 1;
+          background: var(--orange-l);
+          border: 1px solid var(--orange-m);
+          border-radius: 20px;
+          padding: 4px 10px;
           font-family: var(--mono);
           font-size: 0.6rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          padding: 11px 0;
-          text-align: center;
-          text-decoration: none;
-          transition: background 0.15s;
-          cursor: pointer;
-          border: none;
-          background: transparent;
+          font-weight: 500;
+          letter-spacing: 0.14em;
+          color: var(--orange);
         }
-        .t-bal-btn.primary { color: #f0ebe3; background: rgba(201,23,10,0.2); }
-        .t-bal-btn.primary:hover { background: var(--red); }
-        .t-bal-btn.ghost { color: #666; }
-        .t-bal-btn.ghost:hover { color: #c8bfb5; background: rgba(255,255,255,0.04); }
-        .t-bal-btn.expand { color: #444; font-size: 0.55rem; }
-        .t-bal-btn.expand:hover { color: #888; background: rgba(255,255,255,0.03); }
 
-        /* expand */
-        .t-expand {
+        .d-live-dot {
+          width: 5px; height: 5px;
+          background: var(--orange);
+          border-radius: 50%;
+          animation: dpulse 2s ease-in-out infinite;
+        }
+
+        @keyframes dpulse {
+          0%,100% { transform: scale(1); opacity: 1; }
+          50%      { transform: scale(1.5); opacity: 0.5; }
+        }
+
+        .d-clock {
+          font-family: var(--mono);
+          font-size: 0.72rem;
+          color: var(--ink-dim);
+          letter-spacing: 0.06em;
+        }
+
+        /* ── BALANCE CARD ── */
+        .d-balance {
+          background: var(--charcoal);
+          border-radius: var(--r);
           overflow: hidden;
-          transition: max-height 0.3s ease;
-          border-top: 1px solid rgba(255,255,255,0.04);
-        }
-        .t-expand-inner { padding: 16px 24px 20px; }
-        .t-mini-table { width: 100%; border-collapse: collapse; }
-        .t-mini-table th {
-          font-family: var(--mono);
-          font-size: 0.52rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: #333;
-          padding-bottom: 8px;
-          text-align: left;
-          padding-right: 16px;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
-        }
-        .t-mini-table td {
-          font-family: var(--mono);
-          font-size: 0.68rem;
-          color: #888;
-          padding: 7px 16px 7px 0;
-          border-bottom: 1px solid rgba(255,255,255,0.02);
-        }
-        .t-mini-table td.dep  { color: #4ade80; }
-        .t-mini-table td.wth  { color: #fb7185; }
-        .t-mini-table td.amt  { color: #c8bfb5; }
-
-        /* ── METRICS ROW ── */
-        .t-metrics {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 1px;
-          background: var(--crx);
-          margin-bottom: 1px;
-        }
-        .t-metric {
-          background: var(--cr);
-          padding: 14px 16px;
+          margin-bottom: 10px;
+          box-shadow: var(--shadow-md);
           position: relative;
         }
-        .t-metric.red-top::before {
+
+        /* orange glow top-right */
+        .d-balance::before {
           content: '';
           position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 2px;
-          background: var(--red);
+          top: -40px; right: -40px;
+          width: 200px; height: 200px;
+          background: radial-gradient(circle, rgba(232,92,13,0.35) 0%, transparent 65%);
+          pointer-events: none;
         }
-        .t-metric-label {
+
+        /* faint bottom-left */
+        .d-balance::after {
+          content: '';
+          position: absolute;
+          bottom: -30px; left: -30px;
+          width: 150px; height: 150px;
+          background: radial-gradient(circle, rgba(232,92,13,0.1) 0%, transparent 65%);
+          pointer-events: none;
+        }
+
+        .d-balance-body {
+          padding: 24px 22px 20px;
+          position: relative; z-index: 1;
+        }
+
+        .d-balance-eyebrow {
+          font-family: var(--mono);
+          font-size: 0.58rem;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.3);
+          margin-bottom: 10px;
+        }
+
+        .d-balance-amount {
+          font-family: var(--display);
+          font-size: 2.8rem;
+          font-weight: 800;
+          color: #fff;
+          letter-spacing: -0.03em;
+          line-height: 1;
+          margin-bottom: 10px;
+        }
+
+        .d-balance-amount sup {
+          font-size: 1.2rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.45);
+          vertical-align: super;
+          font-family: var(--sans);
+        }
+
+        .d-balance-amount .cents {
+          font-size: 1.4rem;
+          color: rgba(255,255,255,0.35);
+          font-weight: 600;
+        }
+
+        .d-balance-change {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: rgba(232,92,13,0.22);
+          border: 1px solid rgba(232,92,13,0.4);
+          border-radius: 20px;
+          padding: 5px 12px;
+          font-family: var(--mono);
+          font-size: 0.72rem;
+          font-weight: 500;
+          color: #f8a070;
+          margin-bottom: 20px;
+        }
+
+        .d-balance-change svg { width: 9px; height: 9px; }
+
+        /* 3-stat row */
+        .d-balance-stats {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 1px;
+          background: rgba(255,255,255,0.06);
+          border-top: 1px solid rgba(255,255,255,0.06);
+          border-radius: 0 0 var(--r) var(--r);
+          overflow: hidden;
+        }
+
+        .d-bstat {
+          background: rgba(255,255,255,0.03);
+          padding: 14px 16px;
+          transition: background 0.15s;
+        }
+
+        .d-bstat:hover { background: rgba(255,255,255,0.06); }
+
+        .d-bstat-label {
           font-family: var(--mono);
           font-size: 0.52rem;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: var(--inl);
-          margin-bottom: 8px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+          color: rgba(255,255,255,0.25);
+          margin-bottom: 5px;
         }
-        .t-metric-delta {
-          font-family: var(--mono);
-          font-size: 0.55rem;
-          letter-spacing: 0.04em;
-        }
-        .t-metric-delta.pos { color: #16a34a; }
-        .t-metric-delta.neg { color: var(--red); }
-        .t-metric-val {
-          font-family: var(--mono);
-          font-size: 1.1rem;
-          font-weight: 500;
-          color: var(--ink);
+
+        .d-bstat-val {
+          font-family: var(--display);
+          font-size: 0.95rem;
+          font-weight: 600;
+          color: rgba(255,255,255,0.8);
           letter-spacing: -0.01em;
           line-height: 1;
-          margin-bottom: 4px;
-        }
-        .t-metric-sub {
-          font-family: var(--mono);
-          font-size: 0.55rem;
-          color: var(--inl);
-          letter-spacing: 0.04em;
         }
 
-        /* ── GRID LAYOUT ── */
-        .t-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1px;
-          background: var(--crx);
-          margin-bottom: 1px;
+        .d-bstat-val.pos { color: #6fcf97; }
+        .d-bstat-val.neg { color: #f87171; }
+
+        .d-bstat-sub {
+          font-family: var(--sans);
+          font-size: 0.62rem;
+          color: rgba(255,255,255,0.25);
+          margin-top: 2px;
+          font-weight: 300;
         }
 
-        /* ── MARKET PANEL ── */
-        .t-panel {
-          background: var(--cr);
-        }
-        .t-panel-head {
+        /* action buttons inside balance */
+        .d-balance-actions {
           display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 10px 16px;
-          border-bottom: 1px solid var(--crx);
+          gap: 8px;
+          padding: 16px 22px 0;
+          position: relative; z-index: 1;
         }
-        .t-panel-title {
+
+        .d-act-btn {
+          padding: 9px 18px;
+          border-radius: 22px;
+          font-family: var(--sans);
+          font-size: 0.72rem;
+          font-weight: 600;
+          letter-spacing: 0.02em;
+          cursor: pointer;
+          border: none;
+          text-decoration: none;
+          transition: all 0.15s;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+        }
+
+        .d-act-btn.primary {
+          background: var(--orange);
+          color: #fff;
+          box-shadow: 0 2px 10px rgba(232,92,13,0.4);
+        }
+        .d-act-btn.primary:hover {
+          background: var(--orange-2);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 16px rgba(232,92,13,0.5);
+        }
+
+        .d-act-btn.ghost {
+          background: rgba(255,255,255,0.08);
+          color: rgba(255,255,255,0.6);
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .d-act-btn.ghost:hover {
+          background: rgba(255,255,255,0.13);
+          color: rgba(255,255,255,0.85);
+        }
+
+        .d-act-btn.text {
+          background: transparent;
+          color: rgba(255,255,255,0.3);
+          font-size: 0.65rem;
+          padding: 9px 12px;
+        }
+        .d-act-btn.text:hover { color: rgba(255,255,255,0.55); }
+
+        /* expand drawer */
+        .d-expand {
+          overflow: hidden;
+          transition: max-height 0.35s ease;
+          position: relative; z-index: 1;
+        }
+
+        .d-expand-inner {
+          padding: 16px 22px 20px;
+          border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .d-expand-title {
           font-family: var(--mono);
           font-size: 0.55rem;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: var(--inl);
+          color: rgba(255,255,255,0.25);
+          margin-bottom: 12px;
+        }
+
+        .d-mini-table { width: 100%; border-collapse: collapse; }
+
+        .d-mini-table th {
+          font-family: var(--mono);
+          font-size: 0.5rem;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: rgba(255,255,255,0.2);
+          padding-bottom: 8px;
+          text-align: left;
+          padding-right: 16px;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          font-weight: 400;
+        }
+
+        .d-mini-table td {
+          font-family: var(--mono);
+          font-size: 0.65rem;
+          color: rgba(255,255,255,0.4);
+          padding: 7px 16px 7px 0;
+          border-bottom: 1px solid rgba(255,255,255,0.03);
+          letter-spacing: 0.02em;
+        }
+
+        .d-mini-table td.dep  { color: #6fcf97; }
+        .d-mini-table td.wth  { color: #f87171; }
+        .d-mini-table td.amt  { color: rgba(255,255,255,0.7); font-weight: 500; }
+
+        /* ── METRICS ROW ── */
+        .d-metrics {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+
+        .d-metric {
+          background: var(--white);
+          border-radius: var(--r-sm);
+          padding: 16px;
+          box-shadow: var(--shadow-xs);
+          position: relative;
+          overflow: hidden;
+          transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .d-metric:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-sm);
+        }
+
+        .d-metric.accent-top::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 3px;
+          background: var(--orange);
+        }
+
+        .d-metric-label {
+          font-family: var(--sans);
+          font-size: 0.62rem;
+          font-weight: 400;
+          color: var(--ink-faint);
+          margin-bottom: 10px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          letter-spacing: 0.01em;
+        }
+
+        .d-metric-delta {
+          font-family: var(--mono);
+          font-size: 0.58rem;
+          font-weight: 500;
+        }
+        .d-metric-delta.pos { color: var(--green); }
+        .d-metric-delta.neg { color: var(--red); }
+
+        .d-metric-val {
+          font-family: var(--display);
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: var(--ink);
+          letter-spacing: -0.02em;
+          line-height: 1;
+          margin-bottom: 4px;
+        }
+
+        .d-metric-sub {
+          font-family: var(--sans);
+          font-size: 0.62rem;
+          font-weight: 300;
+          color: var(--ink-faint);
+        }
+
+        /* ── GRID ── */
+        .d-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+          margin-bottom: 10px;
+        }
+
+        /* ── PANEL SHARED ── */
+        .d-panel {
+          background: var(--white);
+          border-radius: var(--r-sm);
+          box-shadow: var(--shadow-xs);
+          overflow: hidden;
+        }
+
+        .d-panel-head {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px 16px;
+          border-bottom: 1px solid var(--bg-2);
+        }
+
+        .d-panel-title {
+          font-family: var(--sans);
+          font-size: 0.7rem;
+          font-weight: 600;
+          color: var(--ink);
+          letter-spacing: 0.01em;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
         }
-        .t-panel-title::before {
+
+        .d-panel-title::before {
           content: '';
           display: inline-block;
-          width: 10px; height: 1px;
-          background: var(--red);
+          width: 3px; height: 13px;
+          background: var(--orange);
+          border-radius: 2px;
         }
-        .t-panel-link {
-          font-family: var(--mono);
-          font-size: 0.52rem;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--red);
-          text-decoration: none;
-        }
-        .t-panel-link:hover { opacity: 0.7; }
 
-        .t-mkt-row {
-          display: grid;
-          grid-template-columns: 1fr auto;
-          align-items: center;
-          padding: 10px 16px;
-          border-bottom: 1px solid var(--crx);
+        .d-panel-link {
+          font-family: var(--mono);
+          font-size: 0.58rem;
+          letter-spacing: 0.1em;
+          color: var(--orange);
           text-decoration: none;
-          transition: background 0.1s;
+          text-transform: uppercase;
+        }
+        .d-panel-link:hover { opacity: 0.7; }
+
+        /* ── MARKET ROWS ── */
+        .d-mkt-row {
+          display: flex;
+          align-items: center;
+          padding: 11px 16px;
+          border-bottom: 1px solid var(--bg-2);
+          text-decoration: none;
+          transition: all 0.12s;
+          gap: 10px;
           cursor: pointer;
         }
-        .t-mkt-row:last-child { border-bottom: none; }
-        .t-mkt-row:hover { background: var(--crd); }
-        .t-mkt-sym {
+        .d-mkt-row:last-child { border-bottom: none; }
+        .d-mkt-row:hover { background: var(--bg-1); transform: translateX(2px); }
+
+        .d-mkt-icon {
+          width: 32px; height: 32px;
+          border-radius: 8px;
+          background: var(--bg-1);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 13px;
+          flex-shrink: 0;
+          font-weight: 700;
+        }
+
+        .d-mkt-info { flex: 1; }
+
+        .d-mkt-sym {
           font-family: var(--mono);
-          font-size: 0.68rem;
+          font-size: 0.72rem;
           font-weight: 500;
           color: var(--ink);
           letter-spacing: 0.06em;
+          line-height: 1;
+          margin-bottom: 2px;
         }
-        .t-mkt-name {
-          font-family: var(--mono);
-          font-size: 0.55rem;
-          color: var(--inl);
-          margin-top: 1px;
-          letter-spacing: 0.04em;
+
+        .d-mkt-name {
+          font-family: var(--sans);
+          font-size: 0.6rem;
+          font-weight: 300;
+          color: var(--ink-faint);
         }
-        .t-mkt-right { text-align: right; }
-        .t-mkt-price {
+
+        .d-mkt-right { text-align: right; }
+
+        .d-mkt-price {
           font-family: var(--mono);
           font-size: 0.75rem;
           font-weight: 500;
           color: var(--ink);
-          letter-spacing: 0.02em;
+          font-feature-settings: 'tnum';
+          margin-bottom: 2px;
         }
-        .t-mkt-chg {
-          font-family: var(--mono);
-          font-size: 0.58rem;
-          margin-top: 1px;
-          letter-spacing: 0.04em;
-        }
-        .t-mkt-chg.up { color: #16a34a; }
-        .t-mkt-chg.dn { color: var(--red); }
 
-        /* ── ACTIONS PANEL ── */
-        .t-actions { display: flex; flex-direction: column; }
-        .t-action-row {
-          flex: 1;
+        .d-mkt-chg {
+          font-family: var(--mono);
+          font-size: 0.6rem;
+          font-weight: 500;
+        }
+        .d-mkt-chg.up { color: var(--green); }
+        .d-mkt-chg.dn { color: var(--red); }
+
+        /* ── QUICK ACTIONS ── */
+        .d-action-row {
           display: flex;
           align-items: center;
           gap: 12px;
-          padding: 16px;
+          padding: 14px 16px;
           text-decoration: none;
-          border-bottom: 1px solid var(--crx);
-          transition: background 0.1s;
+          border-bottom: 1px solid var(--bg-2);
+          transition: all 0.12s;
           position: relative;
         }
-        .t-action-row:last-child { border-bottom: none; }
-        .t-action-row:hover { background: var(--crd); }
-        .t-action-row::after {
+        .d-action-row:last-child { border-bottom: none; }
+        .d-action-row:hover { background: var(--bg-1); transform: translateX(2px); }
+
+        .d-action-row::after {
           content: '→';
           position: absolute;
           right: 16px;
-          font-family: var(--mono);
-          font-size: 0.8rem;
-          color: var(--crx);
-          transition: color 0.15s, transform 0.15s;
+          font-family: var(--sans);
+          font-size: 0.9rem;
+          color: var(--bg-3);
+          transition: all 0.15s;
         }
-        .t-action-row:hover::after { color: var(--red); transform: translateX(3px); }
-        .t-action-ico {
-          width: 32px; height: 32px;
-          border: 1px solid var(--crx);
+        .d-action-row:hover::after { color: var(--orange); transform: translateX(3px); }
+
+        .d-action-ico {
+          width: 34px; height: 34px;
+          border-radius: 8px;
+          background: var(--orange-l);
+          border: 1px solid var(--orange-m);
           display: flex; align-items: center; justify-content: center;
-          color: var(--red);
+          color: var(--orange);
           flex-shrink: 0;
-          transition: border-color 0.15s;
+          transition: all 0.12s;
         }
-        .t-action-row:hover .t-action-ico { border-color: var(--red); }
-        .t-action-lbl {
-          font-family: var(--mono);
-          font-size: 0.68rem;
-          font-weight: 500;
+        .d-action-row:hover .d-action-ico {
+          background: var(--orange);
+          border-color: var(--orange);
+          color: #fff;
+        }
+
+        .d-action-lbl {
+          font-family: var(--sans);
+          font-size: 0.75rem;
+          font-weight: 600;
           color: var(--ink);
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
           margin-bottom: 2px;
         }
-        .t-action-desc {
-          font-family: var(--mono);
-          font-size: 0.55rem;
-          color: var(--inl);
-          letter-spacing: 0.04em;
+
+        .d-action-desc {
+          font-family: var(--sans);
+          font-size: 0.6rem;
+          font-weight: 300;
+          color: var(--ink-faint);
         }
 
         /* ── TX TABLE ── */
-        .t-tx { background: var(--cr); }
-        .t-tx-table { width: 100%; border-collapse: collapse; }
-        .t-tx-table th {
-          font-family: var(--mono);
-          font-size: 0.52rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: var(--inl);
+        .d-tx {
+          background: var(--white);
+          border-radius: var(--r-sm);
+          box-shadow: var(--shadow-xs);
+          overflow: hidden;
+        }
+
+        .d-tx-table { width: 100%; border-collapse: collapse; }
+
+        .d-tx-table th {
+          font-family: var(--sans);
+          font-size: 0.62rem;
+          font-weight: 500;
+          color: var(--ink-faint);
           padding: 10px 16px;
           text-align: left;
-          border-bottom: 1px solid var(--crx);
+          border-bottom: 1px solid var(--bg-2);
+          background: var(--bg-1);
+          letter-spacing: 0.01em;
+        }
+
+        .d-tx-table td {
+          font-family: var(--sans);
+          font-size: 0.72rem;
+          color: var(--ink-2);
+          padding: 11px 16px;
+          border-bottom: 1px solid var(--bg-2);
           font-weight: 400;
         }
-        .t-tx-table td {
-          font-family: var(--mono);
-          font-size: 0.68rem;
-          color: var(--inm);
-          padding: 10px 16px;
-          border-bottom: 1px solid var(--crx);
-          letter-spacing: 0.02em;
-        }
-        .t-tx-table tr:last-child td { border-bottom: none; }
-        .t-tx-table tr:hover td { background: var(--crd); }
-        .t-tx-dep  { color: #16a34a !important; }
-        .t-tx-wth  { color: var(--red) !important; }
-        .t-tx-amt  { color: var(--ink) !important; font-weight: 500; }
 
-        .t-badge {
+        .d-tx-table tr:last-child td { border-bottom: none; }
+        .d-tx-table tbody tr:hover td { background: var(--bg-1); }
+
+        .d-tx-dep { color: var(--green) !important; font-weight: 500 !important; }
+        .d-tx-wth { color: var(--red)   !important; font-weight: 500 !important; }
+        .d-tx-amt {
+          font-family: var(--mono) !important;
+          color: var(--ink) !important;
+          font-weight: 500 !important;
+          font-size: 0.7rem !important;
+          font-feature-settings: 'tnum';
+        }
+        .d-tx-date {
+          font-family: var(--mono) !important;
+          font-size: 0.62rem !important;
+          color: var(--ink-faint) !important;
+        }
+
+        /* badge */
+        .d-badge {
           font-family: var(--mono);
           font-size: 0.5rem;
-          font-weight: 500;
+          font-weight: 600;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          padding: 2px 6px;
-          border: 1px solid;
+          padding: 3px 8px;
+          border-radius: 20px;
+          display: inline-block;
         }
-        .t-badge.ok  { color: #16a34a; border-color: rgba(22,163,74,0.3);  background: rgba(22,163,74,0.06);  }
-        .t-badge.pnd { color: #d97706; border-color: rgba(217,119,6,0.3);  background: rgba(217,119,6,0.06);  }
-        .t-badge.err { color: var(--red); border-color: rgba(201,23,10,0.3); background: rgba(201,23,10,0.06); }
+        .d-badge.ok  { background: var(--green-l); color: var(--green); }
+        .d-badge.pnd { background: var(--gold-l);  color: var(--gold);  }
+        .d-badge.err { background: var(--red-l);   color: var(--red);   }
 
-        .t-loading { display: flex; align-items: center; justify-content: center; padding: 40px; }
-        .t-spinner {
-          width: 16px; height: 16px;
-          border: 1.5px solid var(--crx);
-          border-top-color: var(--red);
+        /* loading / empty */
+        .d-loading {
+          display: flex; align-items: center; justify-content: center;
+          padding: 40px;
+        }
+        .d-spinner {
+          width: 18px; height: 18px;
+          border: 2px solid var(--bg-2);
+          border-top-color: var(--orange);
           border-radius: 50%;
-          animation: tspin 0.7s linear infinite;
+          animation: dspin 0.7s linear infinite;
         }
-        @keyframes tspin { to { transform: rotate(360deg); } }
-        .t-empty {
+        @keyframes dspin { to { transform: rotate(360deg); } }
+
+        .d-empty {
           padding: 32px 16px; text-align: center;
-          font-family: var(--mono); font-size: 0.6rem;
-          letter-spacing: 0.12em; color: var(--inl); text-transform: uppercase;
+          font-family: var(--sans); font-size: 0.7rem;
+          font-weight: 300; color: var(--ink-faint);
         }
 
+        /* ── RESPONSIVE ── */
         @media (max-width: 640px) {
-          .t-metrics { grid-template-columns: 1fr 1fr; }
-          .t-grid    { grid-template-columns: 1fr; }
-          .t-balance-top { grid-template-columns: 1fr; }
-          .t-balance-side { display: none; }
+          .d-metrics { grid-template-columns: 1fr 1fr; }
+          .d-grid    { grid-template-columns: 1fr; }
+          .d-balance-amount { font-size: 2.2rem; }
         }
       `}</style>
 
       {/* ── HEADER ── */}
-      <div className="t-header">
-        <div className="t-header-left">
-          <span className="t-uid">
-            APEX<span>•</span>MKTS / {session?.user?.id?.slice(-6).toUpperCase() ?? 'XXXXXX'}
+      <div className="d-header">
+        <div className="d-header-left">
+          <span className="d-greeting">Welcome back</span>
+          <span className="d-name">{firstName}</span>
+          <span className="d-uid">
+            APEX·MKTS&nbsp;/&nbsp;{session?.user?.id?.slice(-6).toUpperCase() ?? 'XXXXXX'}
           </span>
-          <span className="t-name">{firstName}</span>
         </div>
-        <div className="t-header-right">
-          <span className="t-live-pill"><span className="t-live-dot" />Live</span>
-          <span className="t-clock">{time}</span>
+        <div className="d-header-right">
+          <div className="d-live-chip">
+            <span className="d-live-dot" />
+            Live
+          </div>
+          <span className="d-clock">{time}</span>
         </div>
       </div>
 
-      {/* ── BALANCE ── */}
-      <div className="t-balance" style={{ marginBottom: 1 }}>
-        <div className="t-balance-top">
-          <div className="t-balance-main">
-            <p className="t-row-label">Net Asset Value — USD</p>
-            <p className="t-balance-val">${fmt(balance)}</p>
-            <p className={`t-balance-chg ${changePos ? 'pos' : 'neg'}`}>
-              {changePos ? '▲ +' : '▼ '}{fmt(changePercent)}% · this period
-            </p>
-          </div>
-          <div className="t-balance-side">
-            <div className="t-side-stat">
-              <p className="t-row-label">Profit / Loss</p>
-              <p className="t-side-val">${fmt(profit)}</p>
-            </div>
-            <div className="t-side-stat">
-              <p className="t-row-label">Positions</p>
-              <p className="t-side-val">3 open</p>
-            </div>
-            <div className="t-side-stat">
-              <p className="t-row-label">Risk</p>
-              <p className="t-side-val">Conservative</p>
-            </div>
+      {/* ── BALANCE CARD ── */}
+      <div className="d-balance" style={{ marginBottom: 10 }}>
+        <div className="d-balance-body">
+          <p className="d-balance-eyebrow">Net Asset Value — USD</p>
+          <p className="d-balance-amount">
+            <sup>$</sup>24,850<span className="cents">.00</span>
+          </p>
+          <div className={`d-balance-change`}>
+            <svg viewBox="0 0 9 9" fill="none">
+              <path d={changePos ? 'M1.5 6.5L4.5 2.5L7.5 6.5' : 'M1.5 2.5L4.5 6.5L7.5 2.5'}
+                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            {changePos ? '+' : ''}{fmt(changePercent)}% this period
           </div>
         </div>
 
-        <div className="t-balance-actions">
-          <Link href="/dashboard/deposit"  className="t-bal-btn primary">+ Deposit</Link>
-          <Link href="/dashboard/withdraw" className="t-bal-btn ghost">Withdraw</Link>
+        {/* action buttons */}
+        <div className="d-balance-actions">
+          <Link href="/dashboard/deposit"  className="d-act-btn primary">+ Deposit</Link>
+          <Link href="/dashboard/withdraw" className="d-act-btn ghost">Withdraw</Link>
           <button
-            className="t-bal-btn expand"
-            onClick={() => setBalanceOpen((v) => !v)}
+            className="d-act-btn text"
+            onClick={() => setBalanceOpen(v => !v)}
           >
             {balanceOpen ? '↑ hide' : '↓ transactions'}
           </button>
         </div>
 
-        <div className="t-expand" style={{ maxHeight: balanceOpen ? 320 : 0 }}>
-          <div className="t-expand-inner">
-            <p className="t-row-label" style={{ marginBottom: 10 }}>Recent Transactions</p>
+        {/* 3-stat bar */}
+        <div className="d-balance-stats" style={{ marginTop: 20 }}>
+          <div className="d-bstat">
+            <p className="d-bstat-label">P &amp; L</p>
+            <p className={`d-bstat-val ${changePos ? 'pos' : 'neg'}`}>
+              +${fmt(profit)}
+            </p>
+            <p className="d-bstat-sub">Realised</p>
+          </div>
+          <div className="d-bstat">
+            <p className="d-bstat-label">Positions</p>
+            <p className="d-bstat-val">3 open</p>
+            <p className="d-bstat-sub">2 profit · 1 loss</p>
+          </div>
+          <div className="d-bstat">
+            <p className="d-bstat-label">Risk</p>
+            <p className="d-bstat-val">Conservative</p>
+            <p className="d-bstat-sub">Volatility 0.4%</p>
+          </div>
+        </div>
+
+        {/* expand */}
+        <div className="d-expand" style={{ maxHeight: balanceOpen ? 320 : 0 }}>
+          <div className="d-expand-inner">
+            <p className="d-expand-title">Recent Transactions</p>
             {transactions.length === 0 ? (
-              <p style={{ fontFamily: 'var(--mono)', fontSize: '0.65rem', color: '#444' }}>No transactions yet.</p>
+              <p style={{ fontFamily: 'var(--sans)', fontSize: '0.65rem',
+                fontWeight: 300, color: 'rgba(255,255,255,0.3)' }}>
+                No transactions yet.
+              </p>
             ) : (
-              <table className="t-mini-table">
+              <table className="d-mini-table">
                 <thead>
-                  <tr>
-                    {['Type', 'Asset', 'Amount', 'Status'].map((h) => (
-                      <th key={h}>{h}</th>
-                    ))}
-                  </tr>
+                  <tr>{['Type','Asset','Amount','Status'].map(h => <th key={h}>{h}</th>)}</tr>
                 </thead>
                 <tbody>
-                  {transactions.slice(0, 5).map((tx) => (
+                  {transactions.slice(0, 5).map(tx => (
                     <tr key={tx.id}>
                       <td className={tx.type === 'Deposit' ? 'dep' : 'wth'}>{tx.type}</td>
                       <td>{tx.asset || 'USD'}</td>
                       <td className="amt">${fmt(tx.amount, 0)}</td>
                       <td>
-                        <span className={`t-badge ${tx.status === 'COMPLETED' ? 'ok' : tx.status === 'PENDING' ? 'pnd' : 'err'}`}>
+                        <span className={`d-badge ${tx.status === 'COMPLETED' ? 'ok' : tx.status === 'PENDING' ? 'pnd' : 'err'}`}>
                           {tx.status}
                         </span>
                       </td>
@@ -624,60 +870,65 @@ export default function DashboardPage() {
       </div>
 
       {/* ── METRICS ── */}
-      <div className="t-metrics" style={{ marginBottom: 1 }}>
+      <div className="d-metrics">
         {[
-          { label: 'Realised P&L', val: `$${fmt(profit)}`, sub: 'Current period', delta: `+${fmt(changePercent)}%`, pos: true, red: true },
-          { label: 'Portfolio Value', val: `$${fmt(balance)}`, sub: 'Mark-to-market', delta: null, pos: true, red: false },
-          { label: 'Open Positions', val: '3', sub: '2 profit · 1 loss', delta: null, pos: true, red: false },
-          { label: 'Volatility', val: '0.4%', sub: 'Conservative risk', delta: null, pos: true, red: false },
-        ].map(({ label, val, sub, delta, pos, red }) => (
-          <div key={label} className={`t-metric ${red ? 'red-top' : ''}`}>
-            <div className="t-metric-label">
+          { label: 'Realised P&L',    val: `$${fmt(profit)}`,   sub: 'Current period',    delta: `+${fmt(changePercent)}%`, pos: true,  accent: true },
+          { label: 'Portfolio Value', val: `$${fmt(balance)}`,  sub: 'Mark-to-market',    delta: null,                       pos: true,  accent: false },
+          { label: 'Open Positions',  val: '3',                  sub: '2 profit · 1 loss', delta: null,                       pos: true,  accent: false },
+          { label: 'Volatility',      val: '0.4%',               sub: 'Conservative',      delta: null,                       pos: true,  accent: false },
+        ].map(({ label, val, sub, delta, pos, accent }) => (
+          <div key={label} className={`d-metric ${accent ? 'accent-top' : ''}`}>
+            <div className="d-metric-label">
               {label}
-              {delta && <span className={`t-metric-delta ${pos ? 'pos' : 'neg'}`}>{delta}</span>}
+              {delta && <span className={`d-metric-delta ${pos ? 'pos' : 'neg'}`}>{delta}</span>}
             </div>
-            <p className="t-metric-val">{val}</p>
-            <p className="t-metric-sub">{sub}</p>
-            {red && <div style={{ marginTop: 8 }}><Sparkline positive={pos} /></div>}
+            <p className="d-metric-val">{val}</p>
+            <p className="d-metric-sub">{sub}</p>
+            {accent && <div style={{ marginTop: 10 }}><Sparkline positive={pos} /></div>}
           </div>
         ))}
       </div>
 
       {/* ── GRID: MARKETS + ACTIONS ── */}
-      <div className="t-grid" style={{ marginBottom: 1 }}>
+      <div className="d-grid">
 
         {/* Markets */}
-        <div className="t-panel">
-          <div className="t-panel-head">
-            <span className="t-panel-title">Live Markets</span>
-            <Link href="/dashboard/markets" className="t-panel-link">All markets →</Link>
+        <div className="d-panel">
+          <div className="d-panel-head">
+            <span className="d-panel-title">Live Markets</span>
+            <Link href="/dashboard/markets" className="d-panel-link">All →</Link>
           </div>
           {markets.length === 0
-            ? ['BTC', 'ETH', 'NVDA', 'TSLA'].map((sym) => (
-                <div key={sym} className="t-mkt-row" style={{ cursor: 'default' }}>
-                  <div>
-                    <div className="t-mkt-sym">{sym}</div>
-                    <div className="t-mkt-name" style={{ color: 'var(--crx)' }}>loading...</div>
+            ? ['BTC','ETH','NVDA','TSLA'].map(sym => (
+                <div key={sym} className="d-mkt-row" style={{ cursor: 'default' }}>
+                  <div className="d-mkt-icon" style={{ opacity: 0.3 }}>·</div>
+                  <div className="d-mkt-info">
+                    <div className="d-mkt-sym">{sym}</div>
+                    <div className="d-mkt-name" style={{ color: 'var(--bg-3)' }}>Loading…</div>
                   </div>
-                  <div className="t-mkt-right">
-                    <div className="t-mkt-price" style={{ color: 'var(--crx)' }}>——</div>
+                  <div className="d-mkt-right">
+                    <div className="d-mkt-price" style={{ color: 'var(--bg-3)' }}>——</div>
                   </div>
                 </div>
               ))
-            : markets.slice(0, 6).map((a) => {
+            : markets.slice(0, 6).map(a => {
                 const price = a.price ?? 0;
                 const chg   = a.changePercent ?? 0;
-                const pos   = chg >= 0;
+                const up    = chg >= 0;
+                const icons: Record<string, string> = {
+                  BTC: '₿', ETH: 'Ξ', SOL: '◎', BNB: 'B', NVDA: 'N', TSLA: 'T', AAPL: '',
+                };
                 return (
-                  <Link key={a.symbol} href={`/dashboard/trade?asset=${a.symbol}`} className="t-mkt-row">
-                    <div>
-                      <div className="t-mkt-sym">{a.symbol}</div>
-                      <div className="t-mkt-name">{a.name}</div>
+                  <Link key={a.symbol} href={`/dashboard/trade?asset=${a.symbol}`} className="d-mkt-row">
+                    <div className="d-mkt-icon">{icons[a.symbol] ?? a.symbol[0]}</div>
+                    <div className="d-mkt-info">
+                      <div className="d-mkt-sym">{a.symbol}</div>
+                      <div className="d-mkt-name">{a.name}</div>
                     </div>
-                    <div className="t-mkt-right">
-                      <div className="t-mkt-price">${fmt(price)}</div>
-                      <div className={`t-mkt-chg ${pos ? 'up' : 'dn'}`}>
-                        {pos ? '+' : ''}{fmt(chg)}%
+                    <div className="d-mkt-right">
+                      <div className="d-mkt-price">${fmt(price)}</div>
+                      <div className={`d-mkt-chg ${up ? 'up' : 'dn'}`}>
+                        {up ? '+' : ''}{fmt(chg)}%
                       </div>
                     </div>
                   </Link>
@@ -686,96 +937,78 @@ export default function DashboardPage() {
         </div>
 
         {/* Actions */}
-        <div className="t-panel">
-          <div className="t-panel-head">
-            <span className="t-panel-title">Quick Actions</span>
+        <div className="d-panel">
+          <div className="d-panel-head">
+            <span className="d-panel-title">Quick Actions</span>
           </div>
-          <div className="t-actions">
-            {[
-              {
-                href: '/dashboard/deposit',
-                label: 'Deposit Funds',
-                desc: 'Add funds to account',
-                icon: (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 1v8M4 7l3 3 3-3M1 11h12" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
-                  </svg>
-                ),
-              },
-              {
-                href: '/dashboard/withdraw',
-                label: 'Withdraw',
-                desc: 'Transfer to bank',
-                icon: (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M7 9V1M4 3l3-3 3 3M1 11h12" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
-                  </svg>
-                ),
-              },
-              {
-                href: '/dashboard/trade',
-                label: 'New Trade',
-                desc: '180+ instruments',
-                icon: (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M1 10l3-4 3 2 4-6" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" strokeLinejoin="miter" />
-                    <circle cx="11" cy="4" r="2" stroke="currentColor" strokeWidth="1.1" />
-                  </svg>
-                ),
-              },
-              {
-                href: '/dashboard/markets',
-                label: 'Markets',
-                desc: 'Browse all assets',
-                icon: (
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <rect x="1" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                    <rect x="8" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                    <rect x="1" y="8" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                    <rect x="8" y="8" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                  </svg>
-                ),
-              },
-            ].map(({ href, label, desc, icon }) => (
-              <Link key={href} href={href} className="t-action-row">
-                <div className="t-action-ico">{icon}</div>
-                <div>
-                  <p className="t-action-lbl">{label}</p>
-                  <p className="t-action-desc">{desc}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
+          {[
+            {
+              href: '/dashboard/deposit',
+              label: 'Deposit Funds',
+              desc: 'Add funds to account',
+              icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 7l3 3 3-3M1 11h12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
+            },
+            {
+              href: '/dashboard/withdraw',
+              label: 'Withdraw',
+              desc: 'Transfer to bank',
+              icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 9V1M4 3l3-3 3 3M1 11h12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
+            },
+            {
+              href: '/dashboard/trade',
+              label: 'New Trade',
+              desc: '180+ instruments',
+              icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 10l3-4 3 2 4-6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="11" cy="4" r="1.5" stroke="currentColor" strokeWidth="1.2"/></svg>,
+            },
+            {
+              href: '/dashboard/markets',
+              label: 'Markets',
+              desc: 'Browse all assets',
+              icon: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" strokeWidth="1.2"/></svg>,
+            },
+          ].map(({ href, label, desc, icon }) => (
+            <Link key={href} href={href} className="d-action-row">
+              <div className="d-action-ico">{icon}</div>
+              <div>
+                <p className="d-action-lbl">{label}</p>
+                <p className="d-action-desc">{desc}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       </div>
 
       {/* ── TX TABLE ── */}
-      <div className="t-tx">
-        <div className="t-panel-head">
-          <span className="t-panel-title">Execution History</span>
+      <div className="d-tx">
+        <div className="d-panel-head">
+          <span className="d-panel-title">Execution History</span>
         </div>
         {loading ? (
-          <div className="t-loading"><div className="t-spinner" /></div>
+          <div className="d-loading"><div className="d-spinner" /></div>
         ) : transactions.length === 0 ? (
-          <div className="t-empty">No transactions yet</div>
+          <div className="d-empty">No transactions yet</div>
         ) : (
-          <table className="t-tx-table">
+          <table className="d-tx-table">
             <thead>
               <tr>
                 <th>Type</th><th>Asset</th><th>Amount</th><th>Date</th><th>Status</th>
               </tr>
             </thead>
             <tbody>
-              {transactions.slice(0, 8).map((tx) => (
+              {transactions.slice(0, 8).map(tx => (
                 <tr key={tx.id}>
-                  <td className={tx.type === 'Deposit' ? 't-tx-dep' : tx.type === 'Withdrawal' ? 't-tx-wth' : ''}>{tx.type}</td>
+                  <td className={tx.type === 'Deposit' ? 'd-tx-dep' : tx.type === 'Withdrawal' ? 'd-tx-wth' : ''}>
+                    {tx.type}
+                  </td>
                   <td>{tx.asset || 'USD'}</td>
-                  <td className="t-tx-amt">${fmt(tx.amount, 0)}</td>
-                  <td>{new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                  <td className="d-tx-amt">${fmt(tx.amount, 0)}</td>
+                  <td className="d-tx-date">
+                    {new Date(tx.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </td>
                   <td>
-                    <span className={`t-badge ${tx.status === 'COMPLETED' ? 'ok' : tx.status === 'PENDING' ? 'pnd' : 'err'}`}>
-  {tx.status}
-</span>
+                    <span className={`d-badge ${tx.status === 'COMPLETED' ? 'ok' : tx.status === 'PENDING' ? 'pnd' : 'err'}`}>
+                      {tx.status}
+                    </span>
                   </td>
                 </tr>
               ))}
