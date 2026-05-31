@@ -40,7 +40,7 @@ function Sparkline({ positive = true, width = 80, height = 32 }) {
 }
 
 /* ─── Badge ─── */
-function Badge({ status }) {
+function Badge({ status }: { status: 'COMPLETED' | 'PENDING' | 'FAILED' }) {
   const map = { COMPLETED: ['#e4f2ea', '#2e7d4f'], PENDING: ['#fdf3d0', '#8a6800'], FAILED: ['#faeaea', '#b83232'] };
   const [bg, col] = map[status] ?? map.COMPLETED;
   return (
