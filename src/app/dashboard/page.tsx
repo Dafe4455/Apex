@@ -93,8 +93,6 @@ export default function DashboardPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@300;400;500&display=swap');
-
         :root {
           --bg:        #f5f0eb;
           --bg-1:      #ede8e1;
@@ -121,11 +119,11 @@ export default function DashboardPage() {
           --shadow-xs: 0 1px 3px rgba(28,26,23,0.07);
           --shadow-sm: 0 2px 8px rgba(28,26,23,0.09), 0 1px 2px rgba(28,26,23,0.05);
           --shadow-md: 0 4px 20px rgba(28,26,23,0.12), 0 2px 6px rgba(28,26,23,0.06);
-          --r:    14px;
-          --r-sm: 10px;
-          --sans: 'DM Sans', system-ui, sans-serif;
-          --display: 'Syne', system-ui, sans-serif;
-          --mono: 'DM Mono', 'Courier New', monospace;
+          --r:    10px;
+          --r-sm: 8px;
+          --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+          --display: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+          --mono: 'SF Mono', 'Fira Code', 'Courier New', monospace;
         }
 
         /* ── HEADER ── */
@@ -147,9 +145,9 @@ export default function DashboardPage() {
         }
 
         .d-name {
-          font-family: var(--display);
-          font-size: 1.5rem;
-          font-weight: 700;
+          font-family: var(--sans);
+          font-size: 1.1rem;
+          font-weight: 600;
           color: var(--ink);
           letter-spacing: -0.01em;
           line-height: 1;
@@ -205,133 +203,116 @@ export default function DashboardPage() {
 
         /* ── BALANCE CARD ── */
         .d-balance {
-          background: var(--charcoal);
+          background: var(--white);
           border-radius: var(--r);
           overflow: hidden;
           margin-bottom: 10px;
-          box-shadow: var(--shadow-md);
+          box-shadow: var(--shadow-sm);
+          border-top: 3px solid var(--orange);
           position: relative;
         }
 
-        /* orange glow top-right */
-        .d-balance::before {
-          content: '';
-          position: absolute;
-          top: -40px; right: -40px;
-          width: 200px; height: 200px;
-          background: radial-gradient(circle, rgba(232,92,13,0.35) 0%, transparent 65%);
-          pointer-events: none;
-        }
-
-        /* faint bottom-left */
-        .d-balance::after {
-          content: '';
-          position: absolute;
-          bottom: -30px; left: -30px;
-          width: 150px; height: 150px;
-          background: radial-gradient(circle, rgba(232,92,13,0.1) 0%, transparent 65%);
-          pointer-events: none;
-        }
-
         .d-balance-body {
-          padding: 24px 22px 20px;
-          position: relative; z-index: 1;
+          padding: 18px 18px 14px;
         }
 
         .d-balance-eyebrow {
-          font-family: var(--mono);
-          font-size: 0.58rem;
-          letter-spacing: 0.2em;
+          font-family: var(--sans);
+          font-size: 0.6rem;
+          font-weight: 400;
+          color: var(--ink-faint);
+          margin-bottom: 6px;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.3);
-          margin-bottom: 10px;
+          letter-spacing: 0.08em;
         }
 
         .d-balance-amount {
-          font-family: var(--display);
-          font-size: 2.8rem;
-          font-weight: 800;
-          color: #fff;
-          letter-spacing: -0.03em;
+          font-family: var(--sans);
+          font-size: 2rem;
+          font-weight: 700;
+          color: var(--ink);
+          letter-spacing: -0.02em;
           line-height: 1;
-          margin-bottom: 10px;
+          margin-bottom: 8px;
         }
 
         .d-balance-amount sup {
-          font-size: 1.2rem;
-          font-weight: 600;
-          color: rgba(255,255,255,0.45);
+          font-size: 1rem;
+          font-weight: 500;
+          color: var(--ink-dim);
           vertical-align: super;
-          font-family: var(--sans);
         }
 
         .d-balance-amount .cents {
-          font-size: 1.4rem;
-          color: rgba(255,255,255,0.35);
-          font-weight: 600;
+          font-size: 1.1rem;
+          color: var(--ink-dim);
+          font-weight: 500;
         }
 
         .d-balance-change {
           display: inline-flex;
           align-items: center;
-          gap: 5px;
-          background: rgba(232,92,13,0.22);
-          border: 1px solid rgba(232,92,13,0.4);
-          border-radius: 20px;
-          padding: 5px 12px;
+          gap: 4px;
+          background: var(--green-l);
+          border: 1px solid rgba(46,125,79,0.2);
+          border-radius: 4px;
+          padding: 3px 8px;
           font-family: var(--mono);
-          font-size: 0.72rem;
+          font-size: 0.65rem;
           font-weight: 500;
-          color: #f8a070;
-          margin-bottom: 20px;
+          color: var(--green);
+          margin-bottom: 16px;
         }
 
-        .d-balance-change svg { width: 9px; height: 9px; }
+        .d-balance-change.neg {
+          background: var(--red-l);
+          border-color: rgba(184,50,50,0.2);
+          color: var(--red);
+        }
+
+        .d-balance-change svg { width: 8px; height: 8px; }
 
         /* 3-stat row */
         .d-balance-stats {
           display: grid;
           grid-template-columns: 1fr 1fr 1fr;
-          gap: 1px;
-          background: rgba(255,255,255,0.06);
-          border-top: 1px solid rgba(255,255,255,0.06);
-          border-radius: 0 0 var(--r) var(--r);
-          overflow: hidden;
+          gap: 0;
+          border-top: 1px solid var(--bg-2);
         }
 
         .d-bstat {
-          background: rgba(255,255,255,0.03);
-          padding: 14px 16px;
-          transition: background 0.15s;
+          padding: 12px 16px;
+          border-right: 1px solid var(--bg-2);
+          transition: background 0.12s;
         }
-
-        .d-bstat:hover { background: rgba(255,255,255,0.06); }
+        .d-bstat:last-child { border-right: none; }
+        .d-bstat:hover { background: var(--bg-1); }
 
         .d-bstat-label {
-          font-family: var(--mono);
-          font-size: 0.52rem;
-          letter-spacing: 0.18em;
+          font-family: var(--sans);
+          font-size: 0.58rem;
+          font-weight: 400;
+          color: var(--ink-faint);
+          margin-bottom: 4px;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.25);
-          margin-bottom: 5px;
+          letter-spacing: 0.06em;
         }
 
         .d-bstat-val {
-          font-family: var(--display);
-          font-size: 0.95rem;
+          font-family: var(--sans);
+          font-size: 0.82rem;
           font-weight: 600;
-          color: rgba(255,255,255,0.8);
-          letter-spacing: -0.01em;
+          color: var(--ink);
           line-height: 1;
         }
 
-        .d-bstat-val.pos { color: #6fcf97; }
-        .d-bstat-val.neg { color: #f87171; }
+        .d-bstat-val.pos { color: var(--green); }
+        .d-bstat-val.neg { color: var(--red); }
 
         .d-bstat-sub {
           font-family: var(--sans);
-          font-size: 0.62rem;
-          color: rgba(255,255,255,0.25);
+          font-size: 0.58rem;
+          color: var(--ink-faint);
           margin-top: 2px;
           font-weight: 300;
         }
@@ -340,103 +321,91 @@ export default function DashboardPage() {
         .d-balance-actions {
           display: flex;
           gap: 8px;
-          padding: 16px 22px 0;
-          position: relative; z-index: 1;
+          padding: 0 18px 16px;
         }
 
         .d-act-btn {
-          padding: 9px 18px;
-          border-radius: 22px;
+          padding: 7px 14px;
+          border-radius: 6px;
           font-family: var(--sans);
-          font-size: 0.72rem;
-          font-weight: 600;
-          letter-spacing: 0.02em;
+          font-size: 0.7rem;
+          font-weight: 500;
           cursor: pointer;
           border: none;
           text-decoration: none;
-          transition: all 0.15s;
+          transition: all 0.12s;
           display: inline-flex;
           align-items: center;
-          gap: 5px;
+          gap: 4px;
         }
 
         .d-act-btn.primary {
           background: var(--orange);
           color: #fff;
-          box-shadow: 0 2px 10px rgba(232,92,13,0.4);
         }
-        .d-act-btn.primary:hover {
-          background: var(--orange-2);
-          transform: translateY(-1px);
-          box-shadow: 0 4px 16px rgba(232,92,13,0.5);
-        }
+        .d-act-btn.primary:hover { background: var(--orange-2); }
 
         .d-act-btn.ghost {
-          background: rgba(255,255,255,0.08);
-          color: rgba(255,255,255,0.6);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: var(--bg-1);
+          color: var(--ink-2);
+          border: 1px solid var(--bg-3);
         }
-        .d-act-btn.ghost:hover {
-          background: rgba(255,255,255,0.13);
-          color: rgba(255,255,255,0.85);
-        }
+        .d-act-btn.ghost:hover { background: var(--bg-2); }
 
         .d-act-btn.text {
           background: transparent;
-          color: rgba(255,255,255,0.3);
+          color: var(--ink-faint);
           font-size: 0.65rem;
-          padding: 9px 12px;
+          padding: 7px 8px;
         }
-        .d-act-btn.text:hover { color: rgba(255,255,255,0.55); }
+        .d-act-btn.text:hover { color: var(--ink-dim); }
 
         /* expand drawer */
         .d-expand {
           overflow: hidden;
           transition: max-height 0.35s ease;
-          position: relative; z-index: 1;
         }
 
         .d-expand-inner {
-          padding: 16px 22px 20px;
-          border-top: 1px solid rgba(255,255,255,0.06);
+          padding: 14px 18px 16px;
+          border-top: 1px solid var(--bg-2);
         }
 
         .d-expand-title {
-          font-family: var(--mono);
-          font-size: 0.55rem;
-          letter-spacing: 0.18em;
+          font-family: var(--sans);
+          font-size: 0.6rem;
+          font-weight: 500;
+          color: var(--ink-faint);
+          margin-bottom: 10px;
           text-transform: uppercase;
-          color: rgba(255,255,255,0.25);
-          margin-bottom: 12px;
+          letter-spacing: 0.08em;
         }
 
         .d-mini-table { width: 100%; border-collapse: collapse; }
 
         .d-mini-table th {
-          font-family: var(--mono);
-          font-size: 0.5rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: rgba(255,255,255,0.2);
-          padding-bottom: 8px;
+          font-family: var(--sans);
+          font-size: 0.58rem;
+          font-weight: 500;
+          color: var(--ink-faint);
+          padding-bottom: 7px;
           text-align: left;
           padding-right: 16px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-          font-weight: 400;
+          border-bottom: 1px solid var(--bg-2);
         }
 
         .d-mini-table td {
-          font-family: var(--mono);
-          font-size: 0.65rem;
-          color: rgba(255,255,255,0.4);
+          font-family: var(--sans);
+          font-size: 0.68rem;
+          color: var(--ink-2);
           padding: 7px 16px 7px 0;
-          border-bottom: 1px solid rgba(255,255,255,0.03);
-          letter-spacing: 0.02em;
+          border-bottom: 1px solid var(--bg-2);
         }
+        .d-mini-table tr:last-child td { border-bottom: none; }
 
-        .d-mini-table td.dep  { color: #6fcf97; }
-        .d-mini-table td.wth  { color: #f87171; }
-        .d-mini-table td.amt  { color: rgba(255,255,255,0.7); font-weight: 500; }
+        .d-mini-table td.dep { color: var(--green); font-weight: 500; }
+        .d-mini-table td.wth { color: var(--red);   font-weight: 500; }
+        .d-mini-table td.amt { color: var(--ink);   font-weight: 500; }
 
         /* ── METRICS ROW ── */
         .d-metrics {
@@ -489,13 +458,13 @@ export default function DashboardPage() {
         .d-metric-delta.neg { color: var(--red); }
 
         .d-metric-val {
-          font-family: var(--display);
-          font-size: 1.25rem;
-          font-weight: 700;
+          font-family: var(--sans);
+          font-size: 1.05rem;
+          font-weight: 600;
           color: var(--ink);
-          letter-spacing: -0.02em;
+          letter-spacing: -0.01em;
           line-height: 1;
-          margin-bottom: 4px;
+          margin-bottom: 3px;
         }
 
         .d-metric-sub {
@@ -793,7 +762,7 @@ export default function DashboardPage() {
           <p className="d-balance-amount">
             <sup>$</sup>24,850<span className="cents">.00</span>
           </p>
-          <div className={`d-balance-change`}>
+          <div className={`d-balance-change${changePos ? '' : ' neg'}`}>
             <svg viewBox="0 0 9 9" fill="none">
               <path d={changePos ? 'M1.5 6.5L4.5 2.5L7.5 6.5' : 'M1.5 2.5L4.5 6.5L7.5 2.5'}
                 stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -815,7 +784,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 3-stat bar */}
-        <div className="d-balance-stats" style={{ marginTop: 20 }}>
+        <div className="d-balance-stats">
           <div className="d-bstat">
             <p className="d-bstat-label">P &amp; L</p>
             <p className={`d-bstat-val ${changePos ? 'pos' : 'neg'}`}>
@@ -841,7 +810,7 @@ export default function DashboardPage() {
             <p className="d-expand-title">Recent Transactions</p>
             {transactions.length === 0 ? (
               <p style={{ fontFamily: 'var(--sans)', fontSize: '0.65rem',
-                fontWeight: 300, color: 'rgba(255,255,255,0.3)' }}>
+                fontWeight: 300, color: 'var(--ink-faint)' }}>
                 No transactions yet.
               </p>
             ) : (
