@@ -243,3 +243,15 @@ model SupportMessage {
 
   ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
+model MarketPrice {
+  id        String   @id @default(cuid())
+  symbol    String   @unique
+  geckoId   String   @unique
+  name      String
+  icon      String   @default("?")
+  iconBg    String   @default("#cccccc")
+  iconCol   String   @default("#ffffff")
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
