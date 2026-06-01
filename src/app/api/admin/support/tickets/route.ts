@@ -1,20 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@root/auth';
 import { prisma } from '@/lib/prisma';
+import { TicketStatus } from '@prisma/client';
 
 function isAdmin(s: any) { return s?.user?.role === 'ADMIN'; }
 
-// GET /api/admin/support/tickets?status=OPEN|CLOSED
 export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session || !isAdmin(session))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const status = req.nextUrl.searchParams.get('status');
-  const where = status === 'OPEN' || status === 'CLOSED' ? { status } : {};
+  const statusParam = req.nextUrl.searchParams.get('status');
+  const validStatuses: TicketStatus[] = ['OPEN', 'CLOSED'];
+  const status = validStatuses.includes(statusParam as TicketStatus)
+    ? (statusParam as TicketStatus)
+    : undefined;
 
   const tickets = await prisma.supportTicket.findMany({
-    where,
+    where: status ? { status } : undefined,
     orderBy: { updatedAt: 'desc' },
     include: {
       user: { select: { id: true, name: true, email: true } },
