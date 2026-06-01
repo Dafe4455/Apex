@@ -48,23 +48,32 @@ enum MessageSender {
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 model User {
-  id                String    @id @default(cuid())
-  name              String?
-  email             String    @unique
-  emailVerified     DateTime?
-  password          String?
-  image             String?
-  role              Role      @default(USER)
-  portfolioBalance  Float     @default(0)
-  kycStatus         KycStatus @default(NONE)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  firstName             String?
+  name                  String?
+  email                 String    @unique
+  emailVerified         DateTime?
+  password              String?
+  image                 String?
+  role                  Role      @default(USER)
+  portfolioBalance      Float     @default(0)
+  portfolioChangePercent Float    @default(0)
+  realisedPnl           Float     @default(0)
+  volatility            Float     @default(0)
+  riskLabel             String    @default("Conservative")
+  kycStatus             KycStatus @default(NONE)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   accounts       Account[]
   sessions       Session[]
   deposits       Deposit[]
   withdrawals    Withdrawal[]
   supportTickets SupportTicket[]
+  positions      Position[]
+  notifications  Notification[]
+  activityLogs   ActivityLog[]
+  kycSubmission  KYCSubmission?
 }
 
 model Account {
@@ -143,6 +152,70 @@ model Withdrawal {
   adminNote String?
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Position {
+  id         String   @id @default(cuid())
+  userId     String
+  asset      String
+  symbol     String
+  quantity   Float    @default(0)
+  entryPrice Float    @default(0)
+  currentPnl Float    @default(0)
+  side       String   @default("LONG")
+  status     String   @default("OPEN")
+  openedAt   DateTime @default(now())
+  closedAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MarketPrice {
+  id        String   @id @default(cuid())
+  symbol    String   @unique
+  name      String
+  price     Float    @default(0)
+  change24h Float    @default(0)
+  volume24h String   @default("0")
+  icon      String   @default("?")
+  iconBg    String   @default("#cccccc")
+  iconCol   String   @default("#ffffff")
+  isActive  Boolean  @default(true)
+  updatedAt DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  description String
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model KYCSubmission {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  status       String    @default("PENDING")
+  documentType String    @default("PASSPORT")
+  frontUrl     String?
+  backUrl      String?
+  selfieUrl    String?
+  notes        String?
+  submittedAt  DateTime  @default(now())
+  reviewedAt   DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
