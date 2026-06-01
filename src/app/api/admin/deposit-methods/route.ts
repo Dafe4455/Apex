@@ -1,7 +1,7 @@
 // src/app/api/admin/deposit-methods/route.ts
 
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { auth } from '@root/auth';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/admin/deposit-methods
