@@ -43,17 +43,18 @@ export async function PUT(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const { id } = await params;
-  const { name, email, kycStatus } = await req.json();
+  const { name, email, kycStatus, portfolioBalance } = await req.json();
 
   const validKyc: KycStatus[] = ['NONE', 'PENDING', 'APPROVED', 'REJECTED'];
 
   const user = await prisma.user.update({
     where: { id },
     data: {
-      ...(name !== undefined && { name }),
-      ...(email !== undefined && { email }),
-      ...(kycStatus && validKyc.includes(kycStatus) && { kycStatus }),
-    },
+  ...(name !== undefined && { name }),
+  ...(email !== undefined && { email }),
+  ...(kycStatus && validKyc.includes(kycStatus) && { kycStatus }),
+  ...(portfolioBalance !== undefined && { portfolioBalance: Number(portfolioBalance) }),
+},
     select: {
       id: true,
       name: true,
