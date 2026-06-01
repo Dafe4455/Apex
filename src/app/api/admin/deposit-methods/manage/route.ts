@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions } from '@root/auth';
 import { prisma } from '@/lib/prisma';
 
 function isAdmin(session: any) {
@@ -12,8 +12,8 @@ function isAdmin(session: any) {
 
 // GET /api/admin/deposit-methods/manage — all methods (including inactive)
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session || !isAdmin(session)) {
+  const session = await auth();
+if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
