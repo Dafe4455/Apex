@@ -4,17 +4,18 @@ import { prisma } from '@/lib/prisma';
 
 function isAdmin(s: any) { return s?.user?.role === 'ADMIN'; }
 
-// GET /api/admin/support/tickets/[id] — single ticket with full messages
 export async function GET(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   if (!session || !isAdmin(session))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+  const { id } = await params;
+
   const ticket = await prisma.supportTicket.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       user: { select: { id: true, name: true, email: true } },
       messages: {
@@ -30,22 +31,22 @@ export async function GET(
   return NextResponse.json({ ticket });
 }
 
-// PATCH /api/admin/support/tickets/[id] — open or close a ticket
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   if (!session || !isAdmin(session))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+  const { id } = await params;
   const { status } = await req.json();
 
   if (!['OPEN', 'CLOSED'].includes(status))
     return NextResponse.json({ error: 'status must be OPEN or CLOSED' }, { status: 400 });
 
   const ticket = await prisma.supportTicket.update({
-    where: { id: params.id },
+    where: { id },
     data: { status },
     include: {
       user: { select: { id: true, name: true, email: true } },
