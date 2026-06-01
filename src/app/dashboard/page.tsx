@@ -23,6 +23,15 @@ type Market = {
   volume24h: number;
 };
 
+type DepositMethod = {
+  id: string;
+  label: string;
+  icon: string;
+  address: string;
+  network?: string;
+  note?: string;
+};
+
 type DashboardData = {
   user: {
     id: string;
@@ -43,7 +52,7 @@ type DashboardData = {
     loss: number;
   };
   notifications: { id: string; message: string; read: boolean }[];
-  activityLogs:  { id: string; description: string }[];
+  activityLogs: { id: string; description: string }[];
 };
 
 /* ─── tiny helpers ─── */
@@ -54,17 +63,14 @@ function fmt(n: number | null | undefined, d = 2) {
 /* ─── Gauge (Risk Profile) ─── */
 function Gauge({ value = 0.4 }) {
   const r = 44, cx = 56, cy = 56;
-  const circ = Math.PI * r; // half-circle
-  const pct = Math.min(Math.max(value / 2, 0), 1); // 0–2% range → 0–1
+  const circ = Math.PI * r;
+  const pct = Math.min(Math.max(value / 2, 0), 1);
   const dash = pct * circ;
   return (
     <svg width="112" height="68" viewBox="0 0 112 68">
-      {/* track */}
       <path d={`M12,56 A${r},${r} 0 0,1 100,56`} fill="none" stroke="#e2dbd1" strokeWidth="10" strokeLinecap="round" />
-      {/* fill */}
       <path d={`M12,56 A${r},${r} 0 0,1 100,56`} fill="none" stroke="#1c1a17" strokeWidth="10"
         strokeLinecap="round" strokeDasharray={`${dash} ${circ}`} />
-      {/* needle dot */}
       <circle cx={cx} cy={cy - r} r="4" fill="#1c1a17" />
     </svg>
   );
@@ -100,19 +106,19 @@ function Badge({ status }: { status: 'COMPLETED' | 'PENDING' | 'FAILED' }) {
    MAIN DASHBOARD
 ═══════════════════════════════════════════════════════ */
 export default function DashboardPage() {
-  const [time, setTime]               = useState('');
+  const [time, setTime] = useState('');
   const [balanceOpen, setBalanceOpen] = useState(false);
-  const [sheet, setSheet]             = useState<'deposit' | 'withdraw' | null>(null);
-  const [amount, setAmount]           = useState('');
-  const [method, setMethod]           = useState('');
-  const [submitted, setSubmitted]     = useState(false);
-  const [copied, setCopied]           = useState(false);
+  const [sheet, setSheet] = useState<'deposit' | 'withdraw' | null>(null);
+  const [amount, setAmount] = useState('');
+  const [method, setMethod] = useState('');
+  const [submitted, setSubmitted] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   // ── Real data state ──
-  const [data, setData]               = useState<DashboardData | null>(null);
-  const [markets, setMarkets]         = useState<Market[]>([]);
-  const [loading, setLoading]         = useState(true);
-  const [depositMethods, setDepositMethods] = useState<any[]>([]);
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [depositMethods, setDepositMethods] = useState<DepositMethod[]>([]);
   const [methodsLoading, setMethodsLoading] = useState(false);
 
   // ── Fetch dashboard data ──
@@ -136,7 +142,6 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchDashboard();
     fetchMarkets();
-    // Refresh markets every 60s
     const id = setInterval(fetchMarkets, 60_000);
     return () => clearInterval(id);
   }, [fetchDashboard, fetchMarkets]);
@@ -189,9 +194,18 @@ export default function DashboardPage() {
     .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
     .slice(0, 4);
 
+  // ── Loading screen ──
   if (loading) {
     return (
-    
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f0ece6' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #ddd7cd', borderTopColor: '#e85c0d', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
+
+  return (
+    <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
@@ -651,6 +665,7 @@ export default function DashboardPage() {
           padding: 14px 18px 6px;
           border-top: 1px solid var(--bg-2);
         }
+
         /* ── BOTTOM SHEET ── */
         .sheet-overlay {
           position: fixed; inset: 0; background: rgba(28,26,23,0.5);
@@ -804,10 +819,12 @@ export default function DashboardPage() {
             <p className="bal-amount">
               <sup>$</sup>{fmt(balance, 0)}<span className="cents">.00</span>
             </p>
-            <p className="bal-change">+${fmt(profit)} (+{fmt(changePercent)}%)</p>
+            <p className="bal-change">
+              {profit >= 0 ? '+' : ''}${fmt(profit)} ({changePercent >= 0 ? '+' : ''}{fmt(changePercent)}%)
+            </p>
             <p className="bal-period">Current period</p>
             <div className="sparkline-row">
-              <Sparkline positive width={120} height={28} />
+              <Sparkline positive={profit >= 0} width={120} height={28} />
             </div>
             <div className="bal-actions">
               <button className="btn-dep" onClick={openDeposit}>+ Deposit</button>
@@ -828,9 +845,10 @@ export default function DashboardPage() {
             {transactions.length === 0
               ? <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No transactions yet.</p>
               : transactions.slice(0, 5).map(tx => (
-                <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--bg-2)', fontSize: '0.68rem' }}>
+                <div key={tx.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--bg-2)', fontSize: '0.68rem' }}>
                   <span style={{ color: tx.type === 'Deposit' ? 'var(--green)' : 'var(--red)', fontWeight: 500 }}>{tx.type}</span>
                   <span style={{ fontFamily: 'var(--mono)' }}>${fmt(tx.amount, 0)}</span>
+                  <Badge status={tx.status} />
                 </div>
               ))}
           </div>
@@ -840,18 +858,18 @@ export default function DashboardPage() {
         <div className="stat-bar">
           <div className="stat-cell">
             <p className="stat-lbl">P &amp; L</p>
-            <p className="stat-val pos">+${fmt(profit)}</p>
+            <p className="stat-val pos">{profit >= 0 ? '+' : ''}${fmt(profit)}</p>
             <p className="stat-sub">Realised</p>
           </div>
           <div className="stat-cell">
             <p className="stat-lbl">Positions</p>
-            <p className="stat-val">3 open</p>
-            <p className="stat-sub">3 profit · 1 loss</p>
+            <p className="stat-val">{openPositions} open</p>
+            <p className="stat-sub">{profitPos} profit · {lossPos} loss</p>
           </div>
           <div className="stat-cell">
             <p className="stat-lbl">Risk</p>
-            <p className="stat-val">Conservative</p>
-            <p className="stat-sub">Volatility 0.4%</p>
+            <p className="stat-val">{riskLabel}</p>
+            <p className="stat-sub">Volatility {fmt(volatility, 1)}%</p>
           </div>
         </div>
 
@@ -861,40 +879,44 @@ export default function DashboardPage() {
           <div className="metric-card">
             <p className="mc-label">Realised P&L</p>
             <p className="mc-val">${fmt(profit)}</p>
-            <p className="mc-change">+{fmt(changePercent)}%</p>
+            <p className="mc-change">{changePercent >= 0 ? '+' : ''}{fmt(changePercent)}%</p>
             <p className="mc-sub">Current period</p>
-            <div style={{ marginTop: 8 }}><Sparkline positive width={80} height={24} /></div>
+            <div style={{ marginTop: 8 }}><Sparkline positive={profit >= 0} width={80} height={24} /></div>
           </div>
 
           {/* Top Movers */}
           <div className="movers-card">
             <p className="mc-label">Top Movers</p>
-            {topMovers.map(m => (
-              <div key={m.symbol} className="movers-item">
-                <span className="mover-sym">
-                  <span className="mover-ico" style={{ background: m.bg }}>{m.icon}</span>
-                  {m.symbol}
-                </span>
-                <span className={`mover-chg ${m.change >= 0 ? 'up' : 'dn'}`}>
-                  {m.change >= 0 ? '+' : ''}{fmt(m.change)}%
-                </span>
-              </div>
-            ))}
+            {topMovers.length === 0
+              ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No data</p>
+              : topMovers.map(m => (
+                <div key={m.symbol} className="movers-item">
+                  <span className="mover-sym">
+                    <span className="mover-ico" style={{ background: m.iconBg }}>{m.icon}</span>
+                    {m.symbol}
+                  </span>
+                  <span className={`mover-chg ${m.change24h >= 0 ? 'up' : 'dn'}`}>
+                    {m.change24h >= 0 ? '+' : ''}{fmt(m.change24h)}%
+                  </span>
+                </div>
+              ))}
           </div>
 
           {/* Portfolio Value */}
           <div className="metric-card">
             <p className="mc-label">Portfolio Value</p>
-            <p className="mc-val">${fmt(balance)}.00</p>
+            <p className="mc-val">${fmt(balance, 2)}</p>
             <p className="mc-sub">Mark-to-market</p>
           </div>
 
           {/* Recent Activity */}
           <div className="activity-card">
             <p className="mc-label">Recent Activity</p>
-            {recentActivity.map((a, i) => (
-              <p key={i} className="activity-item">{a}</p>
-            ))}
+            {activityLogs.length === 0
+              ? <p className="activity-item" style={{ color: 'var(--ink-faint)' }}>No recent activity</p>
+              : activityLogs.slice(0, 4).map(a => (
+                <p key={a.id} className="activity-item">{a.description}</p>
+              ))}
           </div>
         </div>
 
@@ -902,32 +924,36 @@ export default function DashboardPage() {
         <div className="bottom-metrics">
           <div className="bm-card">
             <p className="bm-lbl">Open Positions</p>
-            <p className="bm-val">3</p>
-            <p className="bm-sub">2 profit · 1 loss</p>
+            <p className="bm-val">{openPositions}</p>
+            <p className="bm-sub">{profitPos} profit · {lossPos} loss</p>
           </div>
 
           <div className="bm-card">
             <p className="bm-lbl">Activity</p>
-            {activityLog.map((a, i) => (
-              <p key={i} className="bm-sub" style={{ marginBottom: 4 }}>
-                <span className="bm-dot">●</span> {a.slice(2)}
-              </p>
-            ))}
+            {activityLogs.length === 0
+              ? <p className="bm-sub">No activity</p>
+              : activityLogs.slice(0, 2).map(a => (
+                <p key={a.id} className="bm-sub" style={{ marginBottom: 4 }}>
+                  <span className="bm-dot">●</span> {a.description}
+                </p>
+              ))}
           </div>
 
           <div className="bm-card">
             <p className="bm-lbl">Volatility</p>
-            <p className="bm-val">0.4%</p>
-            <p className="bm-sub">Conservative</p>
+            <p className="bm-val">{fmt(volatility, 1)}%</p>
+            <p className="bm-sub">{riskLabel}</p>
           </div>
 
           <div className="bm-card">
             <p className="bm-lbl">Notifications</p>
-            {notifications.map((n, i) => (
-              <p key={i} className="bm-sub" style={{ marginBottom: 4 }}>
-                <span className="bm-dot red">●</span> {n.slice(2)}
-              </p>
-            ))}
+            {notifications.length === 0
+              ? <p className="bm-sub">None</p>
+              : notifications.slice(0, 2).map(n => (
+                <p key={n.id} className="bm-sub" style={{ marginBottom: 4 }}>
+                  <span className="bm-dot red">●</span> {n.message}
+                </p>
+              ))}
           </div>
         </div>
 
@@ -950,27 +976,33 @@ export default function DashboardPage() {
               <span className="asset-th">Quick Trade</span>
             </div>
 
-            {markets.map(a => (
-              <div key={a.symbol} className="asset-row">
-                <div className="asset-name-cell">
-                  <div className="asset-ico" style={{ background: a.iconBg }}>{a.icon}</div>
-                  <div>
-                    <div className="asset-sym">{a.symbol}</div>
-                    <div className="asset-nm">{a.name}</div>
+            {markets.length === 0
+              ? (
+                <div style={{ padding: '24px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.68rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No market data available.</p>
+                </div>
+              )
+              : markets.map(a => (
+                <div key={a.id} className="asset-row">
+                  <div className="asset-name-cell">
+                    <div className="asset-ico" style={{ background: a.iconBg }}>{a.icon}</div>
+                    <div>
+                      <div className="asset-sym">{a.symbol}</div>
+                      <div className="asset-nm">{a.name}</div>
+                    </div>
+                  </div>
+                  <span className="asset-ticker">{a.symbol}</span>
+                  <span className="asset-price">${fmt(a.price)}</span>
+                  <span className={`asset-chg ${a.change24h >= 0 ? 'up' : 'dn'}`}>
+                    {a.change24h >= 0 ? '+' : ''}{fmt(a.change24h)}%
+                  </span>
+                  <span className="asset-vol">${fmt(a.volume24h / 1_000_000_000, 1)}B</span>
+                  <div className="trade-btns">
+                    <button className="btn-buy">Buy</button>
+                    <button className="btn-sell">Sell</button>
                   </div>
                 </div>
-                <span className="asset-ticker">{a.symbol}</span>
-                <span className="asset-price">${fmt(a.price)}</span>
-                <span className={`asset-chg ${a.change >= 0 ? 'up' : 'dn'}`}>
-                  {a.change >= 0 ? '+' : ''}{fmt(a.change)}%
-                </span>
-                <span className="asset-vol">${a.vol}</span>
-                <div className="trade-btns">
-                  <button className="btn-buy">Buy</button>
-                  <button className="btn-sell">Sell</button>
-                </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
 
