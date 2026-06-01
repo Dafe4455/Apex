@@ -722,7 +722,7 @@ export default function AdminDashboard() {
                               )}
                               <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAdm ? 'flex-end' : 'flex-start' }}>
                                 <div className={`adm-bubble ${isAdm ? 'admin' : 'user'}`}>
-                                  <p style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-words' }}>{msg.body}</p>
+                                  <p style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.body}</p>
                                 </div>
                                 <span className="adm-msg-time">{isAdm ? 'You · ' : ''}{fmtTime(msg.createdAt)}</span>
                               </div>
