@@ -1,6 +1,6 @@
-'use client';
+use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 type Transaction = {
   id: string;
@@ -11,13 +11,39 @@ type Transaction = {
   createdAt: string;
 };
 
-type DepositMethod = {
+type Market = {
   id: string;
-  label: string;
+  symbol: string;
+  name: string;
   icon: string;
-  address: string;
-  network?: string;
-  note?: string;
+  iconBg: string;
+  iconCol: string;
+  price: number;
+  change24h: number;
+  volume24h: number;
+};
+
+type DashboardData = {
+  user: {
+    id: string;
+    name: string;
+    firstName: string;
+    email: string;
+    portfolioBalance: number;
+    portfolioChangePercent: number;
+    realisedPnl: number;
+    volatility: number;
+    riskLabel: string;
+    kycStatus: string;
+  };
+  transactions: Transaction[];
+  positions: {
+    open: number;
+    profit: number;
+    loss: number;
+  };
+  notifications: { id: string; message: string; read: boolean }[];
+  activityLogs:  { id: string; description: string }[];
 };
 
 /* ─── tiny helpers ─── */
@@ -74,16 +100,53 @@ function Badge({ status }: { status: 'COMPLETED' | 'PENDING' | 'FAILED' }) {
    MAIN DASHBOARD
 ═══════════════════════════════════════════════════════ */
 export default function DashboardPage() {
-  const [time, setTime] = useState('');
+  const [time, setTime]               = useState('');
   const [balanceOpen, setBalanceOpen] = useState(false);
-  const [transactions] = useState<Transaction[]>([]);
-  const [sheet, setSheet] = useState<'deposit' | 'withdraw' | null>(null);
-  const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState('');
-  const [submitted, setSubmitted] = useState(false);
-  const [depositMethods, setDepositMethods] = useState<DepositMethod[]>([]);
+  const [sheet, setSheet]             = useState<'deposit' | 'withdraw' | null>(null);
+  const [amount, setAmount]           = useState('');
+  const [method, setMethod]           = useState('');
+  const [submitted, setSubmitted]     = useState(false);
+  const [copied, setCopied]           = useState(false);
+
+  // ── Real data state ──
+  const [data, setData]               = useState<DashboardData | null>(null);
+  const [markets, setMarkets]         = useState<Market[]>([]);
+  const [loading, setLoading]         = useState(true);
+  const [depositMethods, setDepositMethods] = useState<any[]>([]);
   const [methodsLoading, setMethodsLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+
+  // ── Fetch dashboard data ──
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const res = await fetch('/api/user/dashboard');
+      if (res.ok) setData(await res.json());
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ── Fetch markets ──
+  const fetchMarkets = useCallback(async () => {
+    try {
+      const res = await fetch('/api/markets');
+      if (res.ok) setMarkets(await res.json());
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchDashboard();
+    fetchMarkets();
+    // Refresh markets every 60s
+    const id = setInterval(fetchMarkets, 60_000);
+    return () => clearInterval(id);
+  }, [fetchDashboard, fetchMarkets]);
+
+  useEffect(() => {
+    const tick = () => setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const closeSheet = () => { setSheet(null); setAmount(''); setSubmitted(false); setCopied(false); };
 
@@ -93,12 +156,11 @@ export default function DashboardPage() {
     try {
       const res = await fetch('/api/admin/deposit-methods');
       if (res.ok) {
-        const data = await res.json();
-        setDepositMethods(data);
-        if (data.length > 0) setMethod(data[0].id);
+        const d = await res.json();
+        setDepositMethods(d);
+        if (d.length > 0) setMethod(d[0].id);
       }
-    } catch {}
-    finally { setMethodsLoading(false); }
+    } finally { setMethodsLoading(false); }
   };
 
   const copyAddress = (address: string) => {
@@ -107,54 +169,29 @@ export default function DashboardPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const [loading] = useState(false);
+  // ── Derived values from real data ──
+  const balance       = data?.user.portfolioBalance       ?? 0;
+  const changePercent = data?.user.portfolioChangePercent ?? 0;
+  const profit        = data?.user.realisedPnl            ?? 0;
+  const firstName     = data?.user.firstName              ?? '';
+  const userId        = data?.user.id?.slice(-6).toUpperCase() ?? '------';
+  const transactions  = data?.transactions                ?? [];
+  const openPositions = data?.positions.open              ?? 0;
+  const profitPos     = data?.positions.profit            ?? 0;
+  const lossPos       = data?.positions.loss              ?? 0;
+  const notifications = data?.notifications               ?? [];
+  const activityLogs  = data?.activityLogs                ?? [];
+  const riskLabel     = data?.user.riskLabel              ?? 'Conservative';
+  const volatility    = data?.user.volatility             ?? 0;
 
-  useEffect(() => {
-    const tick = () => setTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, []);
+  // Top movers from live market data
+  const topMovers = [...markets]
+    .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
+    .slice(0, 4);
 
-  const balance = 24_850;
-  const changePercent = 3.42;
-  const profit = 842.30;
-  const firstName = 'James';
-  const userId = 'LAC8WC';
-
-  const markets = [
-    { symbol: 'BTC', name: 'Bitcoin',  price: 48123.50, change: 2.15,  vol: '1.2B', icon: '₿',  iconBg: '#f7931a', iconCol: '#fff' },
-    { symbol: 'ETH', name: 'Ethereum', price: 73600,    change: 2.15,  vol: '1.2B', icon: 'Ξ',  iconBg: '#627eea', iconCol: '#fff' },
-    { symbol: 'SOL', name: 'Solana',   price: 50.34,    change: 0.32,  vol: '1.7B', icon: '◎',  iconBg: '#9945ff', iconCol: '#fff' },
-    { symbol: 'BNB', name: 'BNB',      price: 1095,     change: -0.07, vol: '1.0B', icon: 'B',  iconBg: '#f0b90b', iconCol: '#fff' },
-  ];
-
-  const topMovers = [
-    { symbol: 'BTC', change: 2.15,  icon: '₿',  bg: '#f7931a' },
-    { symbol: 'ETH', change: 1.60,  icon: 'Ξ',  bg: '#627eea' },
-    { symbol: 'SOL', change: -2.50, icon: '◎',  bg: '#9945ff' },
-    { symbol: 'BNB', change: -1.32, icon: 'B',  bg: '#f0b90b' },
-  ];
-
-  const recentActivity = [
-    'Deposit of $500',
-    'Buy    Bitcoin',
-    'Buy    $2,500',
-    'Buy    Bitcoin',
-  ];
-
-  const activityLog = [
-    '● Deposit of $500',
-    '● Deposit of $500 for ETH',
-  ];
-
-  const notifications = [
-    '● Trade executed for ETH',
-    '● Buy ratoer ETH',
-  ];
-
-  return (
-    <>
+  if (loading) {
+    return (
+    
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
