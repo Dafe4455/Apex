@@ -8,23 +8,63 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ── Enums ─────────────────────────────────────────────────────────────────────
+
 enum Role {
   USER
   ADMIN
 }
 
+enum KycStatus {
+  NONE
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TransactionStatus {
+  PENDING
+  CONFIRMED
+  REJECTED
+}
+
+enum WithdrawalStatus {
+  PENDING_VERIFICATION
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum TicketStatus {
+  OPEN
+  CLOSED
+}
+
+enum MessageSender {
+  USER
+  ADMIN
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
+
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  password      String?
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  role  Role  @default(USER)
-  accounts Account[]
-  sessions Session[]
+  id                String    @id @default(cuid())
+  name              String?
+  email             String    @unique
+  emailVerified     DateTime?
+  password          String?
+  image             String?
+  role              Role      @default(USER)
+  portfolioBalance  Float     @default(0)
+  kycStatus         KycStatus @default(NONE)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  deposits       Deposit[]
+  withdrawals    Withdrawal[]
+  supportTickets SupportTicket[]
 }
 
 model Account {
@@ -62,15 +102,71 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+// ── Finance ───────────────────────────────────────────────────────────────────
+
 model DepositMethod {
   id        String   @id @default(cuid())
-  label     String   // e.g. "Bitcoin (BTC)"
-  icon      String   // e.g. "₿"
-  address   String   // wallet address or bank details
-  network   String?  // e.g. "ERC-20", "TRC-20"
-  note      String?  // warning shown to user e.g. "Min deposit $50"
+  label     String
+  icon      String
+  address   String
+  network   String?
+  note      String?
   isActive  Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Deposit {
+  id          String            @id @default(cuid())
+  userId      String
+  amount      Float
+  currency    String            @default("USD")
+  status      TransactionStatus @default(PENDING)
+  methodLabel String?
+  note        String?
+  adminNote   String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Withdrawal {
+  id        String           @id @default(cuid())
+  userId    String
+  amount    Float
+  currency  String           @default("USD")
+  status    WithdrawalStatus @default(PENDING)
+  note      String?
+  adminNote String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ── Support ───────────────────────────────────────────────────────────────────
+
+model SupportTicket {
+  id        String       @id @default(cuid())
+  userId    String
+  subject   String
+  status    TicketStatus @default(OPEN)
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages SupportMessage[]
+}
+
+model SupportMessage {
+  id        String        @id @default(cuid())
+  ticketId  String
+  sender    MessageSender
+  body      String
+  createdAt DateTime      @default(now())
+
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
