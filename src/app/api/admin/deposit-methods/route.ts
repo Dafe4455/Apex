@@ -8,8 +8,9 @@ import { prisma } from '@/lib/prisma';
 // GET /api/admin/deposit-methods
 // Public to authenticated users — returns active deposit methods
 export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session) {
+  const session = await auth();
+if (!session) {
+  
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
