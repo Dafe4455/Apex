@@ -170,20 +170,7 @@ model Position {
   closedAt   DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
 
-model MarketPrice {
-  id        String   @id @default(cuid())
-  symbol    String   @unique
-  name      String
-  price     Float    @default(0)
-  change24h Float    @default(0)
-  volume24h String   @default("0")
-  icon      String   @default("?")
-  iconBg    String   @default("#cccccc")
-  iconCol   String   @default("#ffffff")
-  isActive  Boolean  @default(true)
-  updatedAt DateTime @updatedAt
 }
 
 model Notification {
