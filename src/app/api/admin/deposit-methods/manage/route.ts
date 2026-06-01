@@ -2,7 +2,7 @@
 // Admin-only CRUD — protect with role check
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/auth';
+import { auth } from '@root/auth';
 import { prisma } from '@/lib/prisma';
 
 function isAdmin(session: any) {
