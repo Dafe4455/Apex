@@ -4,21 +4,21 @@ import { prisma } from '@/lib/prisma';
 
 function isAdmin(s: any) { return s?.user?.role === 'ADMIN'; }
 
-// PATCH /api/admin/deposits/[id] — confirm or reject a deposit
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await auth();
   if (!session || !isAdmin(session))
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
+  const { id } = await params;
   const { action, adminNote } = await req.json();
 
   if (!['CONFIRMED', 'REJECTED'].includes(action))
     return NextResponse.json({ error: 'action must be CONFIRMED or REJECTED' }, { status: 400 });
 
-  const deposit = await prisma.deposit.findUnique({ where: { id: params.id } });
+  const deposit = await prisma.deposit.findUnique({ where: { id } });
   if (!deposit)
     return NextResponse.json({ error: 'Deposit not found' }, { status: 404 });
 
@@ -27,11 +27,10 @@ export async function PATCH(
 
   const updated = await prisma.$transaction(async (tx) => {
     const dep = await tx.deposit.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: action, adminNote: adminNote ?? null },
     });
 
-    // Credit the user's balance on confirmation
     if (action === 'CONFIRMED') {
       await tx.user.update({
         where: { id: deposit.userId },
