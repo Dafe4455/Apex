@@ -2,8 +2,7 @@
 // Admin-only CRUD — protect with role check
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@root/auth';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 function isAdmin(session: any) {
@@ -13,7 +12,7 @@ function isAdmin(session: any) {
 // GET /api/admin/deposit-methods/manage — all methods (including inactive)
 export async function GET() {
   const session = await auth();
-if (!session || !isAdmin(session)) {
+  if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -26,7 +25,7 @@ if (!session || !isAdmin(session)) {
 
 // POST /api/admin/deposit-methods/manage — create new method
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
@@ -55,7 +54,7 @@ export async function POST(req: NextRequest) {
 
 // PATCH /api/admin/deposit-methods/manage — update a method
 export async function PATCH(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
@@ -77,7 +76,7 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE /api/admin/deposit-methods/manage — delete a method
 export async function DELETE(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session || !isAdmin(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
