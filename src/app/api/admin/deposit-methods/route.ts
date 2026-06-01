@@ -1,16 +1,14 @@
 // src/app/api/admin/deposit-methods/route.ts
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@root/auth';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 
 // GET /api/admin/deposit-methods
 // Public to authenticated users — returns active deposit methods
 export async function GET() {
   const session = await auth();
-if (!session) {
-  
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
