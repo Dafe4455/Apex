@@ -44,6 +44,18 @@ enum MessageSender {
   USER
   ADMIN
 }
+enum WithdrawalStatus {
+  PENDING
+  PENDING_VERIFICATION
+  APPROVED
+  REJECTED
+}
+
+enum TransactionType {
+  Deposit
+  Withdrawal
+  Trade
+}
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
@@ -241,4 +253,15 @@ model MarketPrice {
   isActive  Boolean  @default(true)
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+}
+model Transaction {
+  id        String            @id @default(cuid())
+  type      TransactionType
+  asset     String?
+  amount    Float
+  status    TransactionStatus @default(PENDING)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id])
+  createdAt DateTime          @default(now())
+  updatedAt DateTime          @updatedAt
 }
