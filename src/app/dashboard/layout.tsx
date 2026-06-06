@@ -91,7 +91,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           --sans: 'Manrope', system-ui, sans-serif;
         }
 
-        body { background: var(--cr); }
+        html, body { background: #0a1a26 !important; }
 
         .db-shell {
           min-height: 100vh;
@@ -251,7 +251,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           top: 0; left: 0; right: 0;
           z-index: 60;
-          background: var(--ink);
+          background: #0a1a26 !important;
           padding: 12px 18px;
           align-items: center;
           justify-content: space-between;
@@ -278,6 +278,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .db-topbar { display: none; }
           .db-mobile-bar { display: flex; }
           .db-content { padding: 68px 16px 32px; }
+          .db-shell { background: var(--ink); }
         }
       `}</style>
 
