@@ -44,12 +44,7 @@ enum MessageSender {
   USER
   ADMIN
 }
-enum WithdrawalStatus {
-  PENDING
-  PENDING_VERIFICATION
-  APPROVED
-  REJECTED
-}
+
 
 enum TransactionType {
   Deposit
