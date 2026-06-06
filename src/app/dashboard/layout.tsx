@@ -280,11 +280,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .db-content { padding: 68px 16px 32px; }
           .db-shell { background: #0a1a26 !important; }
         }
-      \`}</style>
+      `}</style>
 
       <div className="db-shell">
         {/* SIDEBAR */}
-        <aside className={\`db-sidebar \${mobileOpen ? 'open' : ''}\`}>
+        <aside className={`db-sidebar ${mobileOpen ? 'open' : ''}`}>
           <div className="db-sidebar-logo">
             <Link href="/" className="db-logo-text">
               APEX<span>•</span>MARKETS
@@ -297,7 +297,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link
                 key={item.href}
                 href={item.href}
-                className={\`db-nav-item \${pathname === item.href ? 'active' : ''}\`}
+                className={`db-nav-item ${pathname === item.href ? 'active' : ''}`}
                 onClick={() => setMobileOpen(false)}
               >
                 {item.icon}
