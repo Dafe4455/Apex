@@ -80,18 +80,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --cr:  #112838;
-          --crd: #0e2132;
-          --crx: #1a3a50;
-          --ink: #0a1a26;
-          --inm: #c8dfed;
-          --inl: #4d7a96;
-          --accent: #38bdf8;
+          --cr:  #1f0a0a;
+          --crd: #180808;
+          --crx: #3a1010;
+          --ink: #120505;
+          --inm: #edcaca;
+          --inl: #96504d;
+          --accent: #e63030;
           --mono: 'DM Mono', 'Courier New', monospace;
           --sans: 'Manrope', system-ui, sans-serif;
         }
 
-        html, body { background: #0a1a26 !important; }
+        html, body { background: #120505 !important; }
 
         .db-shell {
           min-height: 100vh;
@@ -123,7 +123,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-weight: 500;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #c8dfed;
+          color: #edcaca;
           text-decoration: none;
           display: block;
         }
@@ -133,7 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.52rem;
           letter-spacing: 0.15em;
           text-transform: uppercase;
-          color: #1e3d52;
+          color: #3d1e1e;
           margin-top: 4px;
         }
 
@@ -148,14 +148,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.65rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #2d5a78;
+          color: #5a2d2d;
           text-decoration: none;
           transition: color 0.1s, background 0.1s;
           position: relative;
           margin: 1px 0;
         }
-        .db-nav-item:hover { color: #7aaec8; background: rgba(56,189,248,0.04); }
-        .db-nav-item.active { color: #c8dfed; }
+        .db-nav-item:hover { color: #c87a7a; background: rgba(230,48,48,0.06); }
+        .db-nav-item.active { color: #edcaca; }
         .db-nav-item.active::before {
           content: '';
           position: absolute;
@@ -178,7 +178,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.65rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #2d5a78;
+          color: #5a2d2d;
           background: none;
           border: none;
           cursor: pointer;
@@ -251,7 +251,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           top: 0; left: 0; right: 0;
           z-index: 60;
-          background: #0a1a26 !important;
+          background: #120505 !important;
           padding: 12px 18px;
           align-items: center;
           justify-content: space-between;
@@ -259,7 +259,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         .db-hamburger {
           background: none; border: none;
-          color: #4d7a96; cursor: pointer; padding: 4px;
+          color: #96504d; cursor: pointer; padding: 4px;
         }
         .db-mobile-logo {
           font-family: var(--mono);
@@ -267,7 +267,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-weight: 500;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #c8dfed;
+          color: #edcaca;
         }
         .db-mobile-logo span { color: var(--accent); }
 
