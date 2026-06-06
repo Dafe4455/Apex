@@ -81,6 +81,7 @@ model User {
   notifications  Notification[]
   activityLogs   ActivityLog[]
   kycSubmission  KYCSubmission?
+transaction  Transaction[] 
 }
 
 model Account {
