@@ -163,8 +163,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e3f56' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #2a5470', borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a1628' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #112040', borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -175,17 +175,17 @@ export default function DashboardPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
         :root {
-          --bg:#1e3f56;
-          --bg-1:#18374c;
-          --bg-2:#2a5470;
-          --bg-3:#346080;
-          --card:#244d66;
+          --bg:#0a1628;
+          --bg-1:#071020;
+          --bg-2:#112040;
+          --bg-3:#1a3058;
+          --card:#0f1e38;
           --ink:#f0f8ff;
-          --ink-2:#d6ecf8;
-          --ink-dim:#8dbdd8;
-          --ink-faint:#6a9ab8;
+          --ink-2:#ccdff5;
+          --ink-dim:#7a9ec0;
+          --ink-faint:#4e6e90;
           --accent:#38bdf8;
-          --accent-l:#0e3448;
+          --accent-l:#071828;
           --green:#4ade80;
           --green-l:#0d3320;
           --red:#f87171;
@@ -213,7 +213,7 @@ export default function DashboardPage() {
 
         /* ── HERO CARD ── */
         .hero-card{margin:0 16px 6px;background:var(--card);border-radius:20px;padding:22px 20px 18px;border:1px solid var(--bg-3);position:relative;overflow:hidden;}
-        .hero-card::before{content:'';position:absolute;top:-60px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(56,189,248,0.08) 0%,transparent 70%);pointer-events:none;}
+        .hero-card::before{content:'';position:absolute;top:-60px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(56,189,248,0.07) 0%,transparent 70%);pointer-events:none;}
         .bal-eyebrow{font-size:0.58rem;font-weight:600;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;}
         .bal-amount{font-size:2.6rem;font-weight:700;color:var(--ink);letter-spacing:-0.03em;line-height:1;margin-bottom:8px;}
         .bal-amount sup{font-size:1rem;font-weight:500;vertical-align:super;margin-right:1px;}
@@ -223,7 +223,7 @@ export default function DashboardPage() {
         .bal-period{font-size:0.62rem;font-weight:300;color:var(--ink-faint);}
         .bal-sparkline{margin-bottom:18px;}
         .bal-actions{display:flex;gap:8px;}
-        .btn-dep{background:var(--accent);color:#0a1f2e;border:none;border-radius:10px;padding:10px 18px;font-family:var(--sans);font-size:0.72rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;flex-shrink:0;}
+        .btn-dep{background:var(--accent);color:#071020;border:none;border-radius:10px;padding:10px 18px;font-family:var(--sans);font-size:0.72rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;flex-shrink:0;}
         .btn-dep:hover{opacity:0.88;}
         .btn-ghost{background:var(--bg-2);color:var(--ink-2);border:none;border-radius:10px;padding:10px 14px;font-family:var(--sans);font-size:0.72rem;font-weight:600;cursor:pointer;transition:background 0.15s;text-decoration:none;display:inline-flex;align-items:center;flex-shrink:0;}
         .btn-ghost:hover{background:var(--bg-3);}
@@ -270,7 +270,7 @@ export default function DashboardPage() {
         .asset-th{font-size:0.54rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;}
         .asset-row{display:grid;grid-template-columns:2fr 1.2fr 1fr 1.4fr;align-items:center;padding:12px 14px;border-bottom:1px solid var(--bg-2);transition:background 0.12s;}
         .asset-row:last-child{border-bottom:none;}
-        .asset-row:hover{background:rgba(255,255,255,0.03);}
+        .asset-row:hover{background:rgba(255,255,255,0.02);}
         .asset-name-cell{display:flex;align-items:center;gap:8px;}
         .asset-ico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
         .asset-sym{font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--ink);line-height:1;margin-bottom:1px;}
@@ -280,21 +280,21 @@ export default function DashboardPage() {
         .asset-chg.up{color:var(--green);}
         .asset-chg.dn{color:var(--red);}
         .trade-btns{display:flex;gap:4px;}
-        .btn-buy{background:var(--accent);color:#0a1f2e;border:none;border-radius:6px;padding:5px 10px;font-family:var(--sans);font-size:0.6rem;font-weight:700;cursor:pointer;transition:opacity 0.12s;}
+        .btn-buy{background:var(--accent);color:#071020;border:none;border-radius:6px;padding:5px 10px;font-family:var(--sans);font-size:0.6rem;font-weight:700;cursor:pointer;transition:opacity 0.12s;}
         .btn-buy:hover{opacity:0.78;}
         .btn-sell{background:transparent;color:var(--ink-2);border:1px solid var(--bg-3);border-radius:6px;padding:5px 10px;font-family:var(--sans);font-size:0.6rem;font-weight:600;cursor:pointer;transition:background 0.12s;}
         .btn-sell:hover{background:var(--bg-2);}
 
         /* ── SHEET ── */
-        .sheet-overlay{position:fixed;inset:0;background:rgba(10,24,36,0.7);z-index:200;backdrop-filter:blur(3px);animation:fadeIn 0.2s ease;}
+        .sheet-overlay{position:fixed;inset:0;background:rgba(4,10,20,0.75);z-index:200;backdrop-filter:blur(3px);animation:fadeIn 0.2s ease;}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .sheet{position:fixed;bottom:0;left:0;right:0;background:#1a3a50;border-radius:24px 24px 0 0;border-top:1px solid var(--bg-3);padding:0 20px 40px;z-index:201;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-width:480px;margin:0 auto;}
+        .sheet{position:fixed;bottom:0;left:0;right:0;background:#0c1a30;border-radius:24px 24px 0 0;border-top:1px solid var(--bg-3);padding:0 20px 40px;z-index:201;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-width:480px;margin:0 auto;}
         @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
         @keyframes dspin{to{transform:rotate(360deg)}}
         .sheet-handle{width:36px;height:4px;background:var(--bg-3);border-radius:2px;margin:12px auto 20px;}
         .sheet-title{font-size:1.1rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:4px;}
         .sheet-sub{font-size:0.67rem;font-weight:300;color:var(--ink-faint);margin-bottom:20px;}
-        .sheet-full-link{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;background:var(--accent);color:#0a1f2e;border-radius:12px;font-family:var(--sans);font-size:0.8rem;font-weight:700;text-decoration:none;transition:opacity 0.15s;margin-top:12px;}
+        .sheet-full-link{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;background:var(--accent);color:#071020;border-radius:12px;font-family:var(--sans);font-size:0.8rem;font-weight:700;text-decoration:none;transition:opacity 0.15s;margin-top:12px;}
         .sheet-full-link:hover{opacity:0.85;}
       `}</style>
 
@@ -465,7 +465,7 @@ export default function DashboardPage() {
                       flexShrink: 0, padding: '6px 14px', borderRadius: 20,
                       border: method === m.id ? 'none' : '1px solid var(--bg-3)',
                       background: method === m.id ? 'var(--accent)' : 'var(--card)',
-                      color: method === m.id ? '#0a1f2e' : 'var(--ink-dim)',
+                      color: method === m.id ? '#071020' : 'var(--ink-dim)',
                       fontFamily: 'var(--sans)', fontSize: '0.7rem', fontWeight: 600,
                       cursor: 'pointer', transition: 'all 0.15s',
                     }}>
