@@ -17,9 +17,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Apex Markets" />
 <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        <script src="//cdn.jsdelivr.net/npm/eruda" />
-        <script dangerouslySetInnerHTML={{ __html: 'eruda.init()' }} />
-      </head>
+        <script dangerouslySetInnerHTML={{ __html: `
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js');
+    });
+  }
+`}} />
       <body style={{ margin: 0, padding: 0, background: '#f5f0e8' }}>
         <Providers>{children}</Providers>
       </body>
