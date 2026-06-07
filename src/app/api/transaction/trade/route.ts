@@ -76,8 +76,9 @@ export async function POST(req: NextRequest) {
       newBalance: result.newBalance,
     });
 
-  } catch (err: any) {
-    console.error('[trade] error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+ } catch (err: any) {
+  console.error('[trade] error:', err?.message);
+  console.error('[trade] stack:', err?.stack);
+  return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 });
   }
 }
