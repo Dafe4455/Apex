@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
           type:   'Trade',
           asset:  `${action}:${asset}`,
           amount: numAmount,
-          status: 'CONFIRMED',
+          status: 'COMPLETED',
         },
       });
 
