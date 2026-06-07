@@ -84,21 +84,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --cr:  #1e3f56;
-          --crd: #18374c;
-          --crx: #2a5470;
-          --inm: #d6ecf8;
-          --inl: #6a9ab8;
+          --cr:  #0a1628;
+          --crd: #071020;
+          --crx: #112040;
+          --inm: #ccdff5;
+          --inl: #4e6e90;
           --accent: #38bdf8;
           --mono: 'DM Mono', 'Courier New', monospace;
           --sans: 'Manrope', system-ui, sans-serif;
         }
 
-        html, body { background: #18374c !important; }
+        html, body { background: #071020 !important; }
 
         .db-shell {
           min-height: 100vh;
-          background: #1e3f56 !important;
+          background: #0a1628 !important;
           font-family: var(--sans);
           display: flex;
         }
@@ -107,17 +107,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .db-sidebar {
           width: 200px;
           flex-shrink: 0;
-          background: #13304a !important;
+          background: #07111f !important;
           display: flex;
           flex-direction: column;
           position: fixed;
           top: 0; left: 0; bottom: 0;
           z-index: 50;
-          border-right: 1px solid rgba(255,255,255,0.06);
+          border-right: 1px solid rgba(255,255,255,0.05);
         }
         .db-sidebar-logo {
           padding: 22px 18px 18px;
-          border-bottom: 1px solid rgba(255,255,255,0.07);
+          border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .db-logo-text {
           font-family: var(--mono);
@@ -125,7 +125,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-weight: 500;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #d6ecf8;
+          color: #ccdff5;
           text-decoration: none;
           display: block;
         }
@@ -135,7 +135,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.52rem;
           letter-spacing: 0.15em;
           text-transform: uppercase;
-          color: #2a5470;
+          color: #112040;
           margin-top: 4px;
         }
         .db-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
@@ -148,14 +148,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.65rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #3d6e8a;
+          color: #2a4a6a;
           text-decoration: none;
           transition: color 0.1s, background 0.1s;
           position: relative;
           margin: 1px 0;
         }
-        .db-nav-item:hover { color: #8dbdd8; background: rgba(56,189,248,0.05); }
-        .db-nav-item.active { color: #d6ecf8; }
+        .db-nav-item:hover { color: #7a9ec0; background: rgba(56,189,248,0.04); }
+        .db-nav-item.active { color: #ccdff5; }
         .db-nav-item.active::before {
           content: '';
           position: absolute;
@@ -166,7 +166,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         .db-sidebar-footer {
           padding: 12px 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
+          border-top: 1px solid rgba(255,255,255,0.04);
         }
         .db-signout {
           display: flex;
@@ -177,7 +177,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.65rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #3d6e8a;
+          color: #2a4a6a;
           background: none;
           border: none;
           cursor: pointer;
@@ -201,8 +201,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: sticky;
           top: 0;
           z-index: 40;
-          background: #1e3f56 !important;
-          border-bottom: 1px solid #2a5470;
+          background: #0a1628 !important;
+          border-bottom: 1px solid #112040;
           padding: 0 32px;
           height: 44px;
           display: flex;
@@ -234,7 +234,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           letter-spacing: 0.1em;
           color: var(--inl);
         }
-        .db-topbar-sep { color: #2a5470; }
+        .db-topbar-sep { color: #112040; }
 
         /* ── CONTENT ── */
         .db-content {
@@ -250,11 +250,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           top: 0; left: 0; right: 0;
           z-index: 60;
-          background: #13304a !important;
+          background: #07111f !important;
           padding: 14px 20px;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid rgba(255,255,255,0.07);
+          border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         .db-mobile-logo {
           font-family: var(--mono);
@@ -262,7 +262,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-weight: 500;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: #d6ecf8;
+          color: #ccdff5;
         }
         .db-mobile-logo span { color: var(--accent); }
 
@@ -272,10 +272,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           bottom: 0; left: 0; right: 0;
           z-index: 60;
-          background: rgba(19, 48, 74, 0.97);
+          background: rgba(7, 17, 31, 0.97);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
-          border-top: 1px solid rgba(255,255,255,0.07);
+          border-top: 1px solid rgba(255,255,255,0.06);
           padding: 0 0 env(safe-area-inset-bottom);
         }
         .db-bottom-nav-inner {
@@ -311,7 +311,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           border-radius: 0 0 2px 2px;
         }
         .db-bn-item svg {
-          color: #3d6e8a;
+          color: #2a4a6a;
           transition: color 0.15s;
         }
         .db-bn-item.active svg { color: #f0f8ff; }
@@ -320,16 +320,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.48rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #3d6e8a;
+          color: #2a4a6a;
           transition: color 0.15s;
           line-height: 1;
         }
-        .db-bn-item.active .db-bn-label { color: #8dbdd8; }
+        .db-bn-item.active .db-bn-label { color: #7a9ec0; }
 
         /* ── BOTTOM SHEET ── */
         .db-sheet-overlay {
           position: fixed; inset: 0;
-          background: rgba(10, 24, 38, 0.65);
+          background: rgba(2, 6, 14, 0.75);
           z-index: 70;
           animation: fadeIn 0.2s ease;
           backdrop-filter: blur(3px);
@@ -340,9 +340,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           bottom: 0; left: 0; right: 0;
           z-index: 71;
-          background: #18374c;
+          background: #0c1a2e;
           border-radius: 20px 20px 0 0;
-          border-top: 1px solid rgba(255,255,255,0.08);
+          border-top: 1px solid rgba(255,255,255,0.06);
           padding: 0 0 calc(24px + env(safe-area-inset-bottom));
           animation: slideUp 0.28s cubic-bezier(0.32,0.72,0,1);
         }
@@ -350,7 +350,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         .db-sheet-handle {
           width: 32px; height: 3px;
-          background: rgba(255,255,255,0.15);
+          background: rgba(255,255,255,0.1);
           border-radius: 2px;
           margin: 14px auto 6px;
         }
@@ -359,35 +359,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.56rem;
           letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: #4d7a96;
+          color: #3a5a7a;
           text-align: center;
           padding: 6px 0 18px;
         }
+
+        /* ── WALLET SHEET GRID ── */
         .db-sheet-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 10px;
+          gap: 8px;
           padding: 0 16px 8px;
         }
         .db-sheet-item {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
           text-decoration: none;
-          padding: 18px 8px 14px;
-          border-radius: 14px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.07);
-          transition: background 0.15s, border-color 0.15s;
+          padding: 20px 8px 16px;
+          border-radius: 16px;
+          background: #0f1e38;
+          border: none;
+          transition: background 0.15s;
         }
-        .db-sheet-item:active {
-          background: rgba(56,189,248,0.08);
-          border-color: rgba(56,189,248,0.2);
-        }
+        .db-sheet-item:active { background: #132840; }
         .db-sheet-item-icon {
-          width: 40px; height: 40px;
-          border-radius: 12px;
+          width: 44px; height: 44px;
+          border-radius: 14px;
           display: flex; align-items: center; justify-content: center;
         }
         .db-sheet-item-label {
@@ -395,7 +394,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.56rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #8dbdd8;
+          color: #7a9ec0;
         }
         .db-sheet-signout {
           margin: 6px 16px 0;
@@ -406,7 +405,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           padding: 13px;
           border-radius: 12px;
           background: rgba(248,113,113,0.05);
-          border: 1px solid rgba(248,113,113,0.1);
+          border: none;
           font-family: var(--mono);
           font-size: 0.58rem;
           letter-spacing: 0.12em;
@@ -425,7 +424,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .db-mobile-bar { display: flex; }
           .db-bottom-nav { display: block; }
           .db-content { padding: 64px 16px 80px; }
-          .db-shell { background: #1e3f56 !important; }
+          .db-shell { background: #0a1628 !important; }
         }
       `}</style>
 
@@ -464,7 +463,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* MOBILE TOPBAR */}
         <div className="db-mobile-bar">
           <span className="db-mobile-logo">APEX<span>•</span>MARKETS</span>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: '#3d6e8a' }}>
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: '#2a4a6a' }}>
             <circle cx="8" cy="4" r="1.2" fill="currentColor" />
             <circle cx="8" cy="8" r="1.2" fill="currentColor" />
             <circle cx="8" cy="12" r="1.2" fill="currentColor" />
@@ -552,7 +551,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="db-sheet-title">Wallet</div>
               <div className="db-sheet-grid">
                 <Link href="/dashboard/deposit" className="db-sheet-item" onClick={() => setWalletOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(74,222,128,0.08)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(74,222,128,0.1)' }}>
                     <svg width="22" height="22" viewBox="0 0 13 13" fill="none">
                       <path d="M6.5 1v8M4 7l2.5 2.5L9 7M1 11h11" stroke="#4ade80" strokeWidth="1.1" strokeLinecap="square" />
                     </svg>
@@ -560,7 +559,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="db-sheet-item-label">Deposit</span>
                 </Link>
                 <Link href="/dashboard/withdraw" className="db-sheet-item" onClick={() => setWalletOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(248,113,113,0.08)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(248,113,113,0.1)' }}>
                     <svg width="22" height="22" viewBox="0 0 13 13" fill="none">
                       <path d="M6.5 9V1M4 3l2.5-2.5L9 3M1 11h11" stroke="#f87171" strokeWidth="1.1" strokeLinecap="square" />
                     </svg>
@@ -568,7 +567,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="db-sheet-item-label">Withdraw</span>
                 </Link>
                 <Link href="/dashboard/history" className="db-sheet-item" onClick={() => setWalletOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(56,189,248,0.08)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(56,189,248,0.1)' }}>
                     <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
                       <circle cx="10" cy="10" r="7" stroke="#38bdf8" strokeWidth="1.3" />
                       <path d="M10 6v4l3 2" stroke="#38bdf8" strokeWidth="1.3" strokeLinecap="round" />
@@ -590,7 +589,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="db-sheet-title">More</div>
               <div className="db-sheet-grid">
                 <Link href="/dashboard/support" className="db-sheet-item" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(56,189,248,0.08)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(56,189,248,0.1)' }}>
                     <svg width="22" height="22" viewBox="0 0 13 13" fill="none">
                       <circle cx="6.5" cy="6.5" r="5" stroke="#38bdf8" strokeWidth="1.1" />
                       <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="#38bdf8" strokeWidth="1.1" strokeLinecap="square" />
@@ -644,4 +643,4 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
     </>
   );
-        }
+}
