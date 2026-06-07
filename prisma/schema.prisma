@@ -24,7 +24,7 @@ enum KycStatus {
 
 enum TransactionStatus {
   PENDING
-  CONFIRMED
+  COMPLETED
   REJECTED
 }
 
