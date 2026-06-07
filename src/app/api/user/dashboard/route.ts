@@ -90,7 +90,7 @@ export async function GET() {
       type:      'Deposit' as const,
       asset:     d.methodLabel ?? 'USD',
       amount:    d.amount,
-      status:    d.status === 'CONFIRMED' ? 'COMPLETED'
+      status:    d.status === 'COMPLETED' ? 'COMPLETED'
                : d.status === 'REJECTED'  ? 'FAILED'
                : 'PENDING',
       createdAt: d.createdAt.toISOString(),
