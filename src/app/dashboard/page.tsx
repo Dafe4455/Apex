@@ -72,9 +72,11 @@ function Badge({ status }: { status: 'COMPLETED' | 'PENDING' | 'FAILED' }) {
   const map = { COMPLETED: ['#0d3320', '#4ade80'], PENDING: ['#2a2200', '#fbbf24'], FAILED: ['#2a0d0d', '#f87171'] };
   const [bg, col] = map[status] ?? map.COMPLETED;
   return (
-    <span style={{ background: bg, color: col, padding: '2px 8px', borderRadius: 20,
+    <span style={{
+      background: bg, color: col, padding: '2px 8px', borderRadius: 20,
       fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
-      fontFamily: 'var(--mono)' }}>
+      fontFamily: 'var(--mono)'
+    }}>
       {status}
     </span>
   );
@@ -88,7 +90,6 @@ export default function DashboardPage() {
   const [method, setMethod] = useState('');
   const [depositMethods, setDepositMethods] = useState<DepositMethod[]>([]);
   const [methodsLoading, setMethodsLoading] = useState(false);
-
   const [data, setData] = useState<DashboardData | null>(null);
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,102 +185,110 @@ export default function DashboardPage() {
         }
         *{box-sizing:border-box;margin:0;padding:0;}
         body{background:var(--bg);font-family:var(--sans);}
+
         .dash-wrap{max-width:480px;margin:0 auto;background:var(--bg);min-height:100vh;padding-bottom:40px;}
-        .d-header{display:flex;align-items:flex-start;justify-content:space-between;padding:18px 18px 12px;}
-        .d-greeting{font-size:0.82rem;font-weight:400;color:var(--ink-dim);margin-bottom:2px;}
-        .d-name{font-size:1.7rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1;margin-bottom:4px;}
-        .d-uid{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.1em;color:var(--ink-faint);}
-        .d-header-right{display:flex;align-items:center;gap:10px;}
-        .d-live-chip{display:flex;align-items:center;gap:5px;background:var(--card);border:1px solid var(--bg-2);border-radius:20px;padding:5px 12px;font-family:var(--mono);font-size:0.62rem;font-weight:500;color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,0.3);}
-        .live-dot{width:8px;height:8px;background:#22c55e;border-radius:50%;animation:blink 2s ease-in-out infinite;}
+
+        /* ── HEADER: flat, no card ── */
+        .d-header{padding:20px 20px 16px;display:flex;align-items:flex-start;justify-content:space-between;}
+        .d-greeting{font-size:0.75rem;font-weight:400;color:var(--ink-faint);margin-bottom:2px;}
+        .d-name{font-size:1.65rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1;margin-bottom:4px;}
+        .d-uid{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;color:var(--ink-faint);}
+        .d-header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+        .d-live-chip{display:flex;align-items:center;gap:5px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:4px 10px;font-family:var(--mono);font-size:0.6rem;font-weight:500;color:#22c55e;}
+        .live-dot{width:6px;height:6px;background:#22c55e;border-radius:50%;animation:blink 2s ease-in-out infinite;flex-shrink:0;}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
-        .d-clock{font-family:var(--mono);font-size:0.75rem;color:var(--ink-dim);letter-spacing:0.05em;}
-        .balance-card{background:var(--card);border-radius:16px;padding:18px 18px 14px;border:1px solid var(--bg-2);}
-        .bal-eyebrow{font-size:0.6rem;font-weight:600;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
-        .bal-amount{font-size:2.4rem;font-weight:700;color:var(--ink);letter-spacing:-0.03em;line-height:1;margin-bottom:6px;}
-        .bal-amount sup{font-size:1.1rem;font-weight:500;vertical-align:super;}
-        .bal-amount .cents{font-size:1.2rem;font-weight:500;color:var(--ink-dim);}
-        .bal-change{font-size:0.8rem;font-weight:600;color:var(--green);margin-bottom:2px;}
-        .bal-period{font-size:0.65rem;font-weight:300;color:var(--ink-faint);margin-bottom:12px;}
-        .sparkline-row{margin-bottom:14px;}
+        .d-clock{font-family:var(--mono);font-size:0.7rem;color:var(--ink-faint);letter-spacing:0.04em;}
+
+        /* ── HERO BALANCE: the ONE big card ── */
+        .hero-card{margin:0 16px 6px;background:var(--card);border-radius:20px;padding:22px 20px 18px;border:1px solid var(--bg-2);position:relative;overflow:hidden;}
+        .hero-card::before{content:'';position:absolute;top:-60px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(56,189,248,0.06) 0%,transparent 70%);pointer-events:none;}
+        .bal-eyebrow{font-size:0.58rem;font-weight:600;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;}
+        .bal-amount{font-size:2.6rem;font-weight:700;color:var(--ink);letter-spacing:-0.03em;line-height:1;margin-bottom:8px;}
+        .bal-amount sup{font-size:1rem;font-weight:500;vertical-align:super;margin-right:1px;}
+        .bal-amount .cents{font-size:1.1rem;font-weight:400;color:var(--ink-dim);}
+        .bal-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+        .bal-change{font-size:0.78rem;font-weight:600;color:var(--green);}
+        .bal-period{font-size:0.62rem;font-weight:300;color:var(--ink-faint);}
+        .bal-sparkline{margin-bottom:18px;}
         .bal-actions{display:flex;gap:8px;}
-        .btn-dep{background:var(--accent);color:#0a1f2e;border:none;border-radius:8px;padding:8px 16px;font-family:var(--sans);font-size:0.72rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;}
+        .btn-dep{background:var(--accent);color:#0a1f2e;border:none;border-radius:10px;padding:10px 18px;font-family:var(--sans);font-size:0.72rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;flex-shrink:0;}
         .btn-dep:hover{opacity:0.88;}
-        .btn-wd{background:var(--bg-2);color:var(--ink-2);border:none;border-radius:8px;padding:8px 16px;font-family:var(--sans);font-size:0.72rem;font-weight:600;cursor:pointer;transition:background 0.15s;text-decoration:none;display:inline-flex;align-items:center;}
-        .btn-wd:hover{background:var(--bg-3);}
-        .btn-tx{background:var(--bg-2);color:var(--ink-dim);border:1px solid var(--bg-3);font-family:var(--sans);font-size:0.72rem;font-weight:600;cursor:pointer;padding:8px 14px;border-radius:8px;transition:background 0.15s;}
-        .btn-tx:hover{background:var(--bg-3);}
-        .tx-drawer{overflow:hidden;transition:max-height 0.35s ease;}
-        .tx-drawer-inner{padding:14px 18px 6px;border-top:1px solid var(--bg-2);}
-        .stat-bar{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin:0 18px 10px;background:var(--card);border-radius:12px;border:1px solid var(--bg-2);overflow:hidden;}
-        .stat-cell{padding:12px 14px;border-right:1px solid var(--bg-2);}
-        .stat-cell:last-child{border-right:none;}
-        .stat-lbl{font-size:0.58rem;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
-        .stat-val{font-size:0.95rem;font-weight:700;color:var(--ink);line-height:1;margin-bottom:2px;}
+        .btn-ghost{background:var(--bg-2);color:var(--ink-2);border:none;border-radius:10px;padding:10px 14px;font-family:var(--sans);font-size:0.72rem;font-weight:600;cursor:pointer;transition:background 0.15s;text-decoration:none;display:inline-flex;align-items:center;flex-shrink:0;}
+        .btn-ghost:hover{background:var(--bg-3);}
+
+        /* ── TX DRAWER: tucked inside hero card flow ── */
+        .tx-drawer{overflow:hidden;transition:max-height 0.35s ease;margin:0 16px;}
+        .tx-drawer-inner{background:var(--card);border:1px solid var(--bg-2);border-top:none;border-radius:0 0 16px 16px;padding:14px 16px 10px;}
+        .tx-drawer-label{font-size:0.58rem;color:var(--ink-faint);margin-bottom:8px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;}
+
+        /* ── STAT ROW: borderless, just numbers on background ── */
+        .stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;padding:20px 20px 4px;}
+        .stat-cell{padding:0;}
+        .stat-cell+.stat-cell{padding-left:16px;border-left:1px solid var(--bg-2);}
+        .stat-lbl{font-size:0.56rem;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.09em;margin-bottom:5px;}
+        .stat-val{font-size:1.05rem;font-weight:700;color:var(--ink);line-height:1;margin-bottom:3px;}
         .stat-val.pos{color:var(--green);}
         .stat-sub{font-size:0.58rem;font-weight:300;color:var(--ink-faint);}
-        .metrics-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 18px 10px;}
-        .metric-card,.movers-card,.activity-card{background:var(--card);border:1px solid var(--bg-2);border-radius:12px;padding:14px;}
-        .mc-label{font-size:0.6rem;font-weight:500;color:var(--ink-faint);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.06em;}
-        .mc-val{font-size:1.2rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1;margin-bottom:2px;}
-        .mc-sub{font-size:0.6rem;font-weight:300;color:var(--ink-faint);}
-        .mc-change{font-size:0.65rem;font-weight:600;color:var(--green);margin-bottom:2px;}
-        .movers-item{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+
+        /* ── DIVIDER ── */
+        .section-divider{height:1px;background:var(--bg-2);margin:18px 16px 16px;opacity:0.6;}
+
+        /* ── SECTION LABEL ── */
+        .section-label{font-size:0.58rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.12em;padding:0 20px 10px;display:flex;align-items:center;gap:7px;}
+        .section-label-pip{display:inline-block;width:3px;height:10px;background:var(--accent);border-radius:2px;flex-shrink:0;}
+
+        /* ── 2-COL CARDS: movers + activity ── */
+        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 8px;}
+        .info-card{background:var(--card);border:1px solid var(--bg-2);border-radius:14px;padding:14px;}
+        .ic-label{font-size:0.58rem;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
+        .movers-item{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
         .movers-item:last-child{margin-bottom:0;}
-        .mover-sym{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:0.7rem;font-weight:500;color:var(--ink);}
+        .mover-sym{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:0.68rem;font-weight:500;color:var(--ink);}
         .mover-ico{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;}
-        .mover-chg{font-family:var(--mono);font-size:0.65rem;font-weight:500;}
+        .mover-chg{font-family:var(--mono);font-size:0.63rem;font-weight:500;}
         .mover-chg.up{color:var(--green);}
         .mover-chg.dn{color:var(--red);}
-        .activity-item{font-size:0.65rem;font-weight:400;color:var(--ink-dim);margin-bottom:6px;line-height:1.3;}
+        .activity-item{font-size:0.63rem;font-weight:400;color:var(--ink-dim);margin-bottom:7px;line-height:1.4;padding-left:10px;border-left:2px solid var(--bg-2);}
         .activity-item:last-child{margin-bottom:0;}
-        .bottom-metrics{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:0 18px 10px;}
-        .bm-card{background:var(--card);border:1px solid var(--bg-2);border-radius:12px;padding:12px;}
-        .bm-lbl{font-size:0.58rem;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;}
-        .bm-val{font-size:1rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1;margin-bottom:2px;}
-        .bm-sub{font-size:0.58rem;font-weight:300;color:var(--ink-faint);line-height:1.3;}
-        .bm-dot{font-size:0.6rem;color:var(--green);}
-        .bm-dot.red{color:var(--red);}
-        .asset-section{padding:0 18px 20px;}
-        .section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
-        .section-title{font-size:0.62rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.1em;display:flex;align-items:center;gap:6px;}
+
+        /* ── MARKETS TABLE ── */
+        .asset-section{padding:0 16px 24px;}
         .asset-table-wrap{background:var(--card);border:1px solid var(--bg-2);border-radius:14px;overflow:hidden;}
-        .asset-thead{display:grid;grid-template-columns:2fr 1fr 1.3fr 1fr 1fr 1.4fr;padding:10px 14px;border-bottom:1px solid var(--bg-2);background:var(--bg-1);}
-        .asset-th{font-size:0.55rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;}
-        .asset-row{display:grid;grid-template-columns:2fr 1fr 1.3fr 1fr 1fr 1.4fr;align-items:center;padding:13px 14px;border-bottom:1px solid var(--bg-2);transition:background 0.12s;}
+        .asset-thead{display:grid;grid-template-columns:2fr 1.2fr 1fr 1.4fr;padding:10px 14px;border-bottom:1px solid var(--bg-2);background:var(--bg-1);}
+        .asset-th{font-size:0.54rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;}
+        .asset-row{display:grid;grid-template-columns:2fr 1.2fr 1fr 1.4fr;align-items:center;padding:12px 14px;border-bottom:1px solid var(--bg-2);transition:background 0.12s;}
         .asset-row:last-child{border-bottom:none;}
-        .asset-row:hover{background:var(--bg-1);}
+        .asset-row:hover{background:rgba(255,255,255,0.02);}
         .asset-name-cell{display:flex;align-items:center;gap:8px;}
-        .asset-ico{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;}
-        .asset-sym{font-family:var(--mono);font-size:0.72rem;font-weight:600;color:var(--ink);line-height:1;margin-bottom:1px;}
-        .asset-nm{font-size:0.58rem;font-weight:300;color:var(--ink-faint);}
-        .asset-ticker{font-family:var(--mono);font-size:0.62rem;font-weight:500;color:var(--ink-dim);}
-        .asset-price{font-family:var(--mono);font-size:0.7rem;font-weight:500;color:var(--ink);font-feature-settings:'tnum';}
-        .asset-chg{font-family:var(--mono);font-size:0.65rem;font-weight:600;}
+        .asset-ico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
+        .asset-sym{font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--ink);line-height:1;margin-bottom:1px;}
+        .asset-nm{font-size:0.56rem;font-weight:300;color:var(--ink-faint);}
+        .asset-price{font-family:var(--mono);font-size:0.68rem;font-weight:500;color:var(--ink);}
+        .asset-chg{font-family:var(--mono);font-size:0.63rem;font-weight:600;}
         .asset-chg.up{color:var(--green);}
         .asset-chg.dn{color:var(--red);}
-        .asset-vol{font-family:var(--mono);font-size:0.62rem;font-weight:400;color:var(--ink-dim);}
         .trade-btns{display:flex;gap:4px;}
-        .btn-buy{background:var(--accent);color:#0a1f2e;border:none;border-radius:6px;padding:5px 10px;font-family:var(--sans);font-size:0.62rem;font-weight:700;cursor:pointer;transition:opacity 0.12s;}
+        .btn-buy{background:var(--accent);color:#0a1f2e;border:none;border-radius:6px;padding:5px 10px;font-family:var(--sans);font-size:0.6rem;font-weight:700;cursor:pointer;transition:opacity 0.12s;}
         .btn-buy:hover{opacity:0.78;}
-        .btn-sell{background:transparent;color:var(--ink-2);border:1px solid var(--bg-3);border-radius:6px;padding:5px 10px;font-family:var(--sans);font-size:0.62rem;font-weight:600;cursor:pointer;transition:background 0.12s;}
+        .btn-sell{background:transparent;color:var(--ink-2);border:1px solid var(--bg-3);border-radius:6px;padding:5px 10px;font-family:var(--sans);font-size:0.6rem;font-weight:600;cursor:pointer;transition:background 0.12s;}
         .btn-sell:hover{background:var(--bg-2);}
-        .sheet-overlay{position:fixed;inset:0;background:rgba(8,18,26,0.7);z-index:200;backdrop-filter:blur(2px);animation:fadeIn 0.2s ease;}
+
+        /* ── SHEET ── */
+        .sheet-overlay{position:fixed;inset:0;background:rgba(8,18,26,0.75);z-index:200;backdrop-filter:blur(2px);animation:fadeIn 0.2s ease;}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .sheet{position:fixed;bottom:0;left:0;right:0;background:#112838;border-radius:24px 24px 0 0;padding:0 20px 40px;z-index:201;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-width:480px;margin:0 auto;}
+        .sheet{position:fixed;bottom:0;left:0;right:0;background:#112838;border-radius:24px 24px 0 0;border-top:1px solid var(--bg-2);padding:0 20px 40px;z-index:201;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-width:480px;margin:0 auto;}
         @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
         @keyframes dspin{to{transform:rotate(360deg)}}
         .sheet-handle{width:36px;height:4px;background:var(--bg-3);border-radius:2px;margin:12px auto 20px;}
         .sheet-title{font-size:1.1rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:4px;}
-        .sheet-sub{font-size:0.68rem;font-weight:300;color:var(--ink-faint);margin-bottom:20px;}
+        .sheet-sub{font-size:0.67rem;font-weight:300;color:var(--ink-faint);margin-bottom:20px;}
         .sheet-full-link{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;background:var(--accent);color:#0a1f2e;border-radius:12px;font-family:var(--sans);font-size:0.8rem;font-weight:700;text-decoration:none;transition:opacity 0.15s;margin-top:12px;}
         .sheet-full-link:hover{opacity:0.85;}
-        .sheet-full-link.dark{background:var(--bg-2);}
       `}</style>
 
       <div className="dash-wrap">
 
-        {/* HEADER */}
+        {/* HEADER — flat, no card */}
         <div className="d-header">
           <div>
             <p className="d-greeting">Welcome back,</p>
@@ -292,28 +301,28 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* BALANCE */}
-        <div style={{ padding: '0 18px 10px' }}>
-          <div className="balance-card">
-            <p className="bal-eyebrow">Net Asset Value</p>
-            <p className="bal-amount"><sup>$</sup>{fmt(balance, 0)}<span className="cents">.00</span></p>
-            <p className="bal-change">{profit >= 0 ? '+' : ''}${fmt(profit)} ({changePercent >= 0 ? '+' : ''}{fmt(changePercent)}%)</p>
-            <p className="bal-period">Current period</p>
-            <div className="sparkline-row"><Sparkline positive={profit >= 0} width={120} height={28} /></div>
-            <div className="bal-actions">
-              <button className="btn-dep" onClick={openDeposit}>+ Deposit</button>
-              <Link href="/dashboard/withdraw" className="btn-wd">Withdraw</Link>
-              <button className="btn-tx" onClick={() => setBalanceOpen(v => !v)}>
-                {balanceOpen ? '↑ Hide' : '📋 History'}
-              </button>
-            </div>
+        {/* HERO BALANCE — the only big card */}
+        <div className="hero-card">
+          <p className="bal-eyebrow">Net Asset Value</p>
+          <p className="bal-amount"><sup>$</sup>{fmt(balance, 0)}<span className="cents">.00</span></p>
+          <div className="bal-row">
+            <span className="bal-change">{profit >= 0 ? '+' : ''}${fmt(profit)} ({changePercent >= 0 ? '+' : ''}{fmt(changePercent)}%)</span>
+            <span className="bal-period">Current period</span>
+          </div>
+          <div className="bal-sparkline"><Sparkline positive={profit >= 0} width={140} height={30} /></div>
+          <div className="bal-actions">
+            <button className="btn-dep" onClick={openDeposit}>+ Deposit</button>
+            <Link href="/dashboard/withdraw" className="btn-ghost">Withdraw</Link>
+            <button className="btn-ghost" onClick={() => setBalanceOpen(v => !v)}>
+              {balanceOpen ? '↑ Hide' : '📋 History'}
+            </button>
           </div>
         </div>
 
-        {/* TX DRAWER */}
-        <div className="tx-drawer" style={{ maxHeight: balanceOpen ? 260 : 0, margin: '0 18px' }}>
+        {/* TX DRAWER — attached beneath hero card */}
+        <div className="tx-drawer" style={{ maxHeight: balanceOpen ? 260 : 0 }}>
           <div className="tx-drawer-inner">
-            <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', marginBottom: 8, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Recent Transactions</p>
+            <p className="tx-drawer-label">Recent Transactions</p>
             {transactions.length === 0
               ? <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No transactions yet.</p>
               : transactions.slice(0, 5).map(tx => (
@@ -326,8 +335,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* STAT BAR */}
-        <div className="stat-bar">
+        {/* STAT ROW — flat, no card border */}
+        <div className="stat-row">
           <div className="stat-cell">
             <p className="stat-lbl">P &amp; L</p>
             <p className="stat-val pos">{profit >= 0 ? '+' : ''}${fmt(profit)}</p>
@@ -341,23 +350,19 @@ export default function DashboardPage() {
           <div className="stat-cell">
             <p className="stat-lbl">Risk</p>
             <p className="stat-val">{riskLabel}</p>
-            <p className="stat-sub">Volatility {fmt(volatility, 1)}%</p>
+            <p className="stat-sub">Vol. {fmt(volatility, 1)}%</p>
           </div>
         </div>
 
-        {/* 4-METRIC GRID */}
-        <div className="metrics-grid">
-          <div className="metric-card">
-            <p className="mc-label">Realised P&L</p>
-            <p className="mc-val">${fmt(profit)}</p>
-            <p className="mc-change">{changePercent >= 0 ? '+' : ''}{fmt(changePercent)}%</p>
-            <p className="mc-sub">Current period</p>
-            <div style={{ marginTop: 8 }}><Sparkline positive={profit >= 0} width={80} height={24} /></div>
-          </div>
-          <div className="movers-card">
-            <p className="mc-label">Top Movers</p>
+        <div className="section-divider" />
+
+        {/* TOP MOVERS + ACTIVITY */}
+        <p className="section-label"><span className="section-label-pip" />Market Overview</p>
+        <div className="two-col">
+          <div className="info-card">
+            <p className="ic-label">Top Movers</p>
             {topMovers.length === 0
-              ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No data</p>
+              ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)' }}>No data</p>
               : topMovers.map(m => (
                 <div key={m.symbol} className="movers-item">
                   <span className="mover-sym">
@@ -370,74 +375,32 @@ export default function DashboardPage() {
                 </div>
               ))}
           </div>
-          <div className="metric-card">
-            <p className="mc-label">Portfolio Value</p>
-            <p className="mc-val">${fmt(balance, 2)}</p>
-            <p className="mc-sub">Mark-to-market</p>
-          </div>
-          <div className="activity-card">
-            <p className="mc-label">Recent Activity</p>
+          <div className="info-card">
+            <p className="ic-label">Recent Activity</p>
             {activityLogs.length === 0
-              ? <p className="activity-item" style={{ color: 'var(--ink-faint)' }}>No recent activity</p>
+              ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)' }}>No recent activity</p>
               : activityLogs.slice(0, 4).map(a => (
                 <p key={a.id} className="activity-item">{a.description}</p>
               ))}
           </div>
         </div>
 
-        {/* BOTTOM METRICS */}
-        <div className="bottom-metrics">
-          <div className="bm-card">
-            <p className="bm-lbl">Open Positions</p>
-            <p className="bm-val">{openPositions}</p>
-            <p className="bm-sub">{profitPos} profit · {lossPos} loss</p>
-          </div>
-          <div className="bm-card">
-            <p className="bm-lbl">Activity</p>
-            {activityLogs.length === 0
-              ? <p className="bm-sub">No activity</p>
-              : activityLogs.slice(0, 2).map(a => (
-                <p key={a.id} className="bm-sub" style={{ marginBottom: 4 }}>
-                  <span className="bm-dot">●</span> {a.description}
-                </p>
-              ))}
-          </div>
-          <div className="bm-card">
-            <p className="bm-lbl">Volatility</p>
-            <p className="bm-val">{fmt(volatility, 1)}%</p>
-            <p className="bm-sub">{riskLabel}</p>
-          </div>
-          <div className="bm-card">
-            <p className="bm-lbl">Notifications</p>
-            {notifications.length === 0
-              ? <p className="bm-sub">None</p>
-              : notifications.slice(0, 2).map(n => (
-                <p key={n.id} className="bm-sub" style={{ marginBottom: 4 }}>
-                  <span className="bm-dot red">●</span> {n.message}
-                </p>
-              ))}
-          </div>
-        </div>
+        <div className="section-divider" />
 
         {/* MARKETS */}
+        <p className="section-label"><span className="section-label-pip" />Markets</p>
         <div className="asset-section">
-          <div className="section-head">
-            <span className="section-title">
-              <span style={{ display: 'inline-block', width: 3, height: 12, background: 'var(--accent)', borderRadius: 2 }} />
-              Markets
-            </span>
-          </div>
           <div className="asset-table-wrap">
             <div className="asset-thead">
               <span className="asset-th">Asset</span>
-              <span className="asset-th">Ticker</span>
-              <span className="asset-th">Current Price</span>
-              <span className="asset-th">24H Change</span>
-              <span className="asset-th">Volume</span>
-              <span className="asset-th">Quick Trade</span>
+              <span className="asset-th">Price</span>
+              <span className="asset-th">24H</span>
+              <span className="asset-th">Trade</span>
             </div>
             {markets.length === 0
-              ? <div style={{ padding: '24px', textAlign: 'center' }}><p style={{ fontSize: '0.68rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No market data available.</p></div>
+              ? <div style={{ padding: '24px', textAlign: 'center' }}>
+                  <p style={{ fontSize: '0.68rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No market data available.</p>
+                </div>
               : markets.map(a => (
                 <div key={a.id} className="asset-row">
                   <div className="asset-name-cell">
@@ -447,12 +410,10 @@ export default function DashboardPage() {
                       <div className="asset-nm">{a.name}</div>
                     </div>
                   </div>
-                  <span className="asset-ticker">{a.symbol}</span>
                   <span className="asset-price">${fmt(a.price)}</span>
                   <span className={`asset-chg ${a.change24h >= 0 ? 'up' : 'dn'}`}>
                     {a.change24h >= 0 ? '+' : ''}{fmt(a.change24h)}%
                   </span>
-                  <span className="asset-vol">${fmt(a.volume24h / 1_000_000_000, 1)}B</span>
                   <div className="trade-btns">
                     <button className="btn-buy">Buy</button>
                     <button className="btn-sell">Sell</button>
@@ -461,6 +422,7 @@ export default function DashboardPage() {
               ))}
           </div>
         </div>
+
       </div>
 
       {/* QUICK DEPOSIT SHEET */}
@@ -499,7 +461,6 @@ export default function DashboardPage() {
                     </button>
                   ))}
                 </div>
-
                 {activeMethod && (
                   <div style={{ background: 'var(--card)', border: '1.5px solid var(--bg-2)', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}>
                     {activeMethod.network && (
@@ -521,7 +482,6 @@ export default function DashboardPage() {
                     </button>
                   </div>
                 )}
-
                 {activeMethod?.note && (
                   <div style={{ display: 'flex', gap: 8, background: 'var(--gold-l)', border: '1px solid #3a2e00', borderRadius: 10, padding: '10px 14px', marginBottom: 4 }}>
                     <span style={{ fontSize: '0.85rem' }}>⚠️</span>
@@ -530,7 +490,6 @@ export default function DashboardPage() {
                 )}
               </>
             )}
-
             <Link href="/dashboard/deposit" className="sheet-full-link" onClick={closeSheet}>
               Full Deposit Page →
             </Link>
