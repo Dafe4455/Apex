@@ -152,7 +152,6 @@ export default function DashboardPage() {
   const openPositions = data?.positions.open              ?? 0;
   const profitPos     = data?.positions.profit            ?? 0;
   const lossPos       = data?.positions.loss              ?? 0;
-  const notifications = data?.notifications               ?? [];
   const activityLogs  = data?.activityLogs                ?? [];
   const riskLabel     = data?.user.riskLabel              ?? 'Conservative';
   const volatility    = data?.user.volatility             ?? 0;
@@ -164,8 +163,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#112838' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #1e3d52', borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e3f56' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #2a5470', borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -176,32 +175,45 @@ export default function DashboardPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
         :root {
-          --bg:#112838;--bg-1:#0e2132;--bg-2:#1a3a50;--bg-3:#245068;
-          --card:#172f42;--ink:#e8f4fd;--ink-2:#c8dfed;--ink-dim:#7aaec8;
-          --ink-faint:#4d7a96;--accent:#38bdf8;--accent-l:#0c2d3f;
-          --green:#4ade80;--green-l:#0d3320;--red:#f87171;--red-l:#2a0d0d;
-          --gold-l:#2a2200;--gold:#fbbf24;
-          --sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono','SF Mono',monospace;
+          --bg:#1e3f56;
+          --bg-1:#18374c;
+          --bg-2:#2a5470;
+          --bg-3:#346080;
+          --card:#244d66;
+          --ink:#f0f8ff;
+          --ink-2:#d6ecf8;
+          --ink-dim:#8dbdd8;
+          --ink-faint:#6a9ab8;
+          --accent:#38bdf8;
+          --accent-l:#0e3448;
+          --green:#4ade80;
+          --green-l:#0d3320;
+          --red:#f87171;
+          --red-l:#2a0d0d;
+          --gold-l:#2a2200;
+          --gold:#fbbf24;
+          --sans:'DM Sans',system-ui,sans-serif;
+          --mono:'DM Mono','SF Mono',monospace;
         }
         *{box-sizing:border-box;margin:0;padding:0;}
         body{background:var(--bg);font-family:var(--sans);}
 
         .dash-wrap{max-width:480px;margin:0 auto;background:var(--bg);min-height:100vh;padding-bottom:40px;}
 
-        /* ── HEADER: flat, no card ── */
+        /* ── HEADER ── */
         .d-header{padding:20px 20px 16px;display:flex;align-items:flex-start;justify-content:space-between;}
         .d-greeting{font-size:0.75rem;font-weight:400;color:var(--ink-faint);margin-bottom:2px;}
         .d-name{font-size:1.65rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1;margin-bottom:4px;}
         .d-uid{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;color:var(--ink-faint);}
         .d-header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
-        .d-live-chip{display:flex;align-items:center;gap:5px;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);border-radius:20px;padding:4px 10px;font-family:var(--mono);font-size:0.6rem;font-weight:500;color:#22c55e;}
+        .d-live-chip{display:flex;align-items:center;gap:5px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.25);border-radius:20px;padding:4px 10px;font-family:var(--mono);font-size:0.6rem;font-weight:500;color:#22c55e;}
         .live-dot{width:6px;height:6px;background:#22c55e;border-radius:50%;animation:blink 2s ease-in-out infinite;flex-shrink:0;}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
-        .d-clock{font-family:var(--mono);font-size:0.7rem;color:var(--ink-faint);letter-spacing:0.04em;}
+        .d-clock{font-family:var(--mono);font-size:0.7rem;color:var(--ink-dim);letter-spacing:0.04em;}
 
-        /* ── HERO BALANCE: the ONE big card ── */
-        .hero-card{margin:0 16px 6px;background:var(--card);border-radius:20px;padding:22px 20px 18px;border:1px solid var(--bg-2);position:relative;overflow:hidden;}
-        .hero-card::before{content:'';position:absolute;top:-60px;right:-40px;width:160px;height:160px;background:radial-gradient(circle,rgba(56,189,248,0.06) 0%,transparent 70%);pointer-events:none;}
+        /* ── HERO CARD ── */
+        .hero-card{margin:0 16px 6px;background:var(--card);border-radius:20px;padding:22px 20px 18px;border:1px solid var(--bg-3);position:relative;overflow:hidden;}
+        .hero-card::before{content:'';position:absolute;top:-60px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(56,189,248,0.08) 0%,transparent 70%);pointer-events:none;}
         .bal-eyebrow{font-size:0.58rem;font-weight:600;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;}
         .bal-amount{font-size:2.6rem;font-weight:700;color:var(--ink);letter-spacing:-0.03em;line-height:1;margin-bottom:8px;}
         .bal-amount sup{font-size:1rem;font-weight:500;vertical-align:super;margin-right:1px;}
@@ -216,12 +228,12 @@ export default function DashboardPage() {
         .btn-ghost{background:var(--bg-2);color:var(--ink-2);border:none;border-radius:10px;padding:10px 14px;font-family:var(--sans);font-size:0.72rem;font-weight:600;cursor:pointer;transition:background 0.15s;text-decoration:none;display:inline-flex;align-items:center;flex-shrink:0;}
         .btn-ghost:hover{background:var(--bg-3);}
 
-        /* ── TX DRAWER: tucked inside hero card flow ── */
+        /* ── TX DRAWER ── */
         .tx-drawer{overflow:hidden;transition:max-height 0.35s ease;margin:0 16px;}
-        .tx-drawer-inner{background:var(--card);border:1px solid var(--bg-2);border-top:none;border-radius:0 0 16px 16px;padding:14px 16px 10px;}
+        .tx-drawer-inner{background:var(--card);border:1px solid var(--bg-3);border-top:none;border-radius:0 0 16px 16px;padding:14px 16px 10px;}
         .tx-drawer-label{font-size:0.58rem;color:var(--ink-faint);margin-bottom:8px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;}
 
-        /* ── STAT ROW: borderless, just numbers on background ── */
+        /* ── STAT ROW ── */
         .stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;padding:20px 20px 4px;}
         .stat-cell{padding:0;}
         .stat-cell+.stat-cell{padding-left:16px;border-left:1px solid var(--bg-2);}
@@ -231,15 +243,15 @@ export default function DashboardPage() {
         .stat-sub{font-size:0.58rem;font-weight:300;color:var(--ink-faint);}
 
         /* ── DIVIDER ── */
-        .section-divider{height:1px;background:var(--bg-2);margin:18px 16px 16px;opacity:0.6;}
+        .section-divider{height:1px;background:var(--bg-2);margin:18px 16px 16px;opacity:0.5;}
 
         /* ── SECTION LABEL ── */
         .section-label{font-size:0.58rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.12em;padding:0 20px 10px;display:flex;align-items:center;gap:7px;}
         .section-label-pip{display:inline-block;width:3px;height:10px;background:var(--accent);border-radius:2px;flex-shrink:0;}
 
-        /* ── 2-COL CARDS: movers + activity ── */
+        /* ── 2-COL CARDS ── */
         .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 8px;}
-        .info-card{background:var(--card);border:1px solid var(--bg-2);border-radius:14px;padding:14px;}
+        .info-card{background:var(--card);border:1px solid var(--bg-3);border-radius:14px;padding:14px;}
         .ic-label{font-size:0.58rem;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
         .movers-item{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
         .movers-item:last-child{margin-bottom:0;}
@@ -253,12 +265,12 @@ export default function DashboardPage() {
 
         /* ── MARKETS TABLE ── */
         .asset-section{padding:0 16px 24px;}
-        .asset-table-wrap{background:var(--card);border:1px solid var(--bg-2);border-radius:14px;overflow:hidden;}
+        .asset-table-wrap{background:var(--card);border:1px solid var(--bg-3);border-radius:14px;overflow:hidden;}
         .asset-thead{display:grid;grid-template-columns:2fr 1.2fr 1fr 1.4fr;padding:10px 14px;border-bottom:1px solid var(--bg-2);background:var(--bg-1);}
         .asset-th{font-size:0.54rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;}
         .asset-row{display:grid;grid-template-columns:2fr 1.2fr 1fr 1.4fr;align-items:center;padding:12px 14px;border-bottom:1px solid var(--bg-2);transition:background 0.12s;}
         .asset-row:last-child{border-bottom:none;}
-        .asset-row:hover{background:rgba(255,255,255,0.02);}
+        .asset-row:hover{background:rgba(255,255,255,0.03);}
         .asset-name-cell{display:flex;align-items:center;gap:8px;}
         .asset-ico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
         .asset-sym{font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--ink);line-height:1;margin-bottom:1px;}
@@ -274,9 +286,9 @@ export default function DashboardPage() {
         .btn-sell:hover{background:var(--bg-2);}
 
         /* ── SHEET ── */
-        .sheet-overlay{position:fixed;inset:0;background:rgba(8,18,26,0.75);z-index:200;backdrop-filter:blur(2px);animation:fadeIn 0.2s ease;}
+        .sheet-overlay{position:fixed;inset:0;background:rgba(10,24,36,0.7);z-index:200;backdrop-filter:blur(3px);animation:fadeIn 0.2s ease;}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .sheet{position:fixed;bottom:0;left:0;right:0;background:#112838;border-radius:24px 24px 0 0;border-top:1px solid var(--bg-2);padding:0 20px 40px;z-index:201;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-width:480px;margin:0 auto;}
+        .sheet{position:fixed;bottom:0;left:0;right:0;background:#1a3a50;border-radius:24px 24px 0 0;border-top:1px solid var(--bg-3);padding:0 20px 40px;z-index:201;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-width:480px;margin:0 auto;}
         @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
         @keyframes dspin{to{transform:rotate(360deg)}}
         .sheet-handle{width:36px;height:4px;background:var(--bg-3);border-radius:2px;margin:12px auto 20px;}
@@ -288,7 +300,7 @@ export default function DashboardPage() {
 
       <div className="dash-wrap">
 
-        {/* HEADER — flat, no card */}
+        {/* HEADER */}
         <div className="d-header">
           <div>
             <p className="d-greeting">Welcome back,</p>
@@ -301,7 +313,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* HERO BALANCE — the only big card */}
+        {/* HERO BALANCE */}
         <div className="hero-card">
           <p className="bal-eyebrow">Net Asset Value</p>
           <p className="bal-amount"><sup>$</sup>{fmt(balance, 0)}<span className="cents">.00</span></p>
@@ -319,7 +331,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* TX DRAWER — attached beneath hero card */}
+        {/* TX DRAWER */}
         <div className="tx-drawer" style={{ maxHeight: balanceOpen ? 260 : 0 }}>
           <div className="tx-drawer-inner">
             <p className="tx-drawer-label">Recent Transactions</p>
@@ -335,7 +347,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* STAT ROW — flat, no card border */}
+        {/* STAT ROW */}
         <div className="stat-row">
           <div className="stat-cell">
             <p className="stat-lbl">P &amp; L</p>
@@ -356,7 +368,7 @@ export default function DashboardPage() {
 
         <div className="section-divider" />
 
-        {/* TOP MOVERS + ACTIVITY */}
+        {/* MARKET OVERVIEW */}
         <p className="section-label"><span className="section-label-pip" />Market Overview</p>
         <div className="two-col">
           <div className="info-card">
@@ -451,7 +463,7 @@ export default function DashboardPage() {
                   {depositMethods.map(m => (
                     <button key={m.id} onClick={() => setMethod(m.id)} style={{
                       flexShrink: 0, padding: '6px 14px', borderRadius: 20,
-                      border: method === m.id ? 'none' : '1px solid var(--bg-2)',
+                      border: method === m.id ? 'none' : '1px solid var(--bg-3)',
                       background: method === m.id ? 'var(--accent)' : 'var(--card)',
                       color: method === m.id ? '#0a1f2e' : 'var(--ink-dim)',
                       fontFamily: 'var(--sans)', fontSize: '0.7rem', fontWeight: 600,
@@ -462,7 +474,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
                 {activeMethod && (
-                  <div style={{ background: 'var(--card)', border: '1.5px solid var(--bg-2)', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}>
+                  <div style={{ background: 'var(--card)', border: '1.5px solid var(--bg-3)', borderRadius: 12, padding: '14px 16px', marginBottom: 12 }}>
                     {activeMethod.network && (
                       <p style={{ fontSize: '0.56rem', fontWeight: 700, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
                         Network: {activeMethod.network}
