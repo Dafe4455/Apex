@@ -114,7 +114,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           top: 0; left: 0; bottom: 0;
           z-index: 50;
-          transition: transform 0.25s ease;
         }
         .db-sidebar-logo {
           padding: 22px 18px 18px;
@@ -252,7 +251,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           top: 0; left: 0; right: 0;
           z-index: 60;
           background: #0a1a26 !important;
-          padding: 12px 18px;
+          padding: 14px 20px;
           align-items: center;
           justify-content: space-between;
           border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -267,65 +266,77 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         .db-mobile-logo span { color: var(--accent); }
 
-        /* ── BOTTOM NAV ── */
+        /* ── BOTTOM NAV — redesigned ── */
         .db-bottom-nav {
           display: none;
           position: fixed;
           bottom: 0; left: 0; right: 0;
           z-index: 60;
-          background: #0a1a26;
-          border-top: 1px solid rgba(255,255,255,0.07);
-          padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+          background: rgba(10, 26, 38, 0.97);
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+          border-top: 1px solid rgba(255,255,255,0.06);
+          padding: 0 0 env(safe-area-inset-bottom);
         }
         .db-bottom-nav-inner {
           display: flex;
           justify-content: space-around;
           align-items: center;
+          height: 58px;
         }
         .db-bn-item {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 5px;
-          padding: 4px 8px;
-          text-decoration: none;
-          border-radius: 12px;
-          transition: background 0.15s;
+          justify-content: center;
+          gap: 4px;
           flex: 1;
+          height: 100%;
+          text-decoration: none;
           background: none;
           border: none;
           cursor: pointer;
+          position: relative;
+          padding: 0;
+          transition: opacity 0.15s;
         }
-        .db-bn-item:active { background: rgba(56,189,248,0.06); }
-        .db-bn-icon {
-          width: 42px; height: 42px;
-          background: rgba(255,255,255,0.07);
-          border-radius: 12px;
-          display: flex; align-items: center; justify-content: center;
-          transition: background 0.15s, box-shadow 0.15s;
+        .db-bn-item:active { opacity: 0.6; }
+
+        /* Active top-line indicator */
+        .db-bn-item.active::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 50%;
+          transform: translateX(-50%);
+          width: 20px; height: 1.5px;
+          background: var(--accent);
+          border-radius: 0 0 2px 2px;
         }
-        .db-bn-item.active .db-bn-icon {
-          background: rgba(56,189,248,0.15);
-          box-shadow: 0 0 0 1px rgba(56,189,248,0.25);
-        }
-        .db-bn-label {
-          font-family: var(--mono);
-          font-size: 0.5rem;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: #2d5a78;
+
+        .db-bn-item svg {
+          color: #2a4d64;
           transition: color 0.15s;
         }
-        .db-bn-item.active .db-bn-label { color: #38bdf8; }
-        .db-bn-item svg { color: #2d5a78; transition: color 0.15s; }
-        .db-bn-item.active svg { color: #38bdf8; }
+        .db-bn-item.active svg { color: #e8f4fd; }
+
+        .db-bn-label {
+          font-family: var(--mono);
+          font-size: 0.48rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #2a4d64;
+          transition: color 0.15s;
+          line-height: 1;
+        }
+        .db-bn-item.active .db-bn-label { color: #7aaec8; }
 
         /* ── BOTTOM SHEET ── */
         .db-sheet-overlay {
           position: fixed; inset: 0;
-          background: rgba(0,0,0,0.55);
+          background: rgba(0,0,0,0.6);
           z-index: 70;
           animation: fadeIn 0.2s ease;
+          backdrop-filter: blur(2px);
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -333,81 +344,83 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           bottom: 0; left: 0; right: 0;
           z-index: 71;
-          background: #0e2132;
+          background: #0d2234;
           border-radius: 20px 20px 0 0;
-          border-top: 1px solid rgba(255,255,255,0.08);
-          padding: 0 0 calc(20px + env(safe-area-inset-bottom));
-          animation: slideUp 0.25s cubic-bezier(0.32,0.72,0,1);
+          border-top: 1px solid rgba(255,255,255,0.07);
+          padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+          animation: slideUp 0.28s cubic-bezier(0.32,0.72,0,1);
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         .db-sheet-handle {
-          width: 36px; height: 4px;
-          background: rgba(255,255,255,0.15);
+          width: 32px; height: 3px;
+          background: rgba(255,255,255,0.12);
           border-radius: 2px;
-          margin: 12px auto 4px;
+          margin: 14px auto 6px;
         }
         .db-sheet-title {
           font-family: var(--mono);
-          font-size: 0.58rem;
-          letter-spacing: 0.18em;
+          font-size: 0.56rem;
+          letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: #4d7a96;
+          color: #2d5a78;
           text-align: center;
-          padding: 8px 0 16px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          padding: 6px 0 18px;
         }
         .db-sheet-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 12px;
-          padding: 20px 20px 8px;
+          gap: 10px;
+          padding: 0 16px 8px;
         }
         .db-sheet-item {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           text-decoration: none;
-          padding: 14px 8px;
+          padding: 18px 8px 14px;
           border-radius: 14px;
-          background: rgba(255,255,255,0.04);
-          border: 1px solid rgba(255,255,255,0.06);
+          background: rgba(255,255,255,0.03);
+          border: 1px solid rgba(255,255,255,0.05);
           transition: background 0.15s, border-color 0.15s;
         }
-        .db-sheet-item:active { background: rgba(56,189,248,0.08); border-color: rgba(56,189,248,0.2); }
+        .db-sheet-item:active {
+          background: rgba(56,189,248,0.07);
+          border-color: rgba(56,189,248,0.18);
+        }
         .db-sheet-item-icon {
-          width: 44px; height: 44px;
+          width: 40px; height: 40px;
           border-radius: 12px;
           display: flex; align-items: center; justify-content: center;
         }
         .db-sheet-item-label {
           font-family: var(--mono);
-          font-size: 0.58rem;
-          letter-spacing: 0.06em;
+          font-size: 0.56rem;
+          letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #c8dfed;
+          color: #7aaec8;
         }
         .db-sheet-signout {
-          margin: 8px 20px 0;
+          margin: 6px 16px 0;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          padding: 14px;
+          padding: 13px;
           border-radius: 12px;
-          background: rgba(248,113,113,0.06);
-          border: 1px solid rgba(248,113,113,0.12);
+          background: rgba(248,113,113,0.05);
+          border: 1px solid rgba(248,113,113,0.1);
           font-family: var(--mono);
-          font-size: 0.6rem;
-          letter-spacing: 0.1em;
+          font-size: 0.58rem;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
           color: #f87171;
           cursor: pointer;
-          width: calc(100% - 40px);
+          width: calc(100% - 32px);
           transition: background 0.15s;
         }
-        .db-sheet-signout:active { background: rgba(248,113,113,0.12); }
+        .db-sheet-signout:active { background: rgba(248,113,113,0.1); }
 
         @media (max-width: 768px) {
           .db-sidebar { display: none; }
@@ -415,7 +428,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .db-topbar { display: none; }
           .db-mobile-bar { display: flex; }
           .db-bottom-nav { display: block; }
-          .db-content { padding: 68px 16px 100px; }
+          .db-content { padding: 64px 16px 80px; }
           .db-shell { background: #0a1a26 !important; }
         }
       `}</style>
@@ -455,10 +468,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* MOBILE TOPBAR */}
         <div className="db-mobile-bar">
           <span className="db-mobile-logo">APEX<span>•</span>MARKETS</span>
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ color: '#4d7a96' }}>
-            <circle cx="9" cy="5" r="1.2" fill="currentColor" />
-            <circle cx="9" cy="9" r="1.2" fill="currentColor" />
-            <circle cx="9" cy="13" r="1.2" fill="currentColor" />
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: '#2d5a78' }}>
+            <circle cx="8" cy="4" r="1.2" fill="currentColor" />
+            <circle cx="8" cy="8" r="1.2" fill="currentColor" />
+            <circle cx="8" cy="12" r="1.2" fill="currentColor" />
           </svg>
         </div>
 
@@ -483,66 +496,56 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             {/* Home */}
             <Link href="/dashboard" className={`db-bn-item ${pathname === '/dashboard' ? 'active' : ''}`}>
-              <div className="db-bn-icon">
-                <svg width="20" height="20" viewBox="0 0 13 13" fill="none">
-                  <rect x="1" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                  <rect x="7" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                  <rect x="1" y="7" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                  <rect x="7" y="7" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                </svg>
-              </div>
+              <svg width="18" height="18" viewBox="0 0 13 13" fill="none">
+                <rect x="1" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
+                <rect x="7" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
+                <rect x="1" y="7" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
+                <rect x="7" y="7" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
+              </svg>
               <span className="db-bn-label">Home</span>
             </Link>
 
             {/* Markets */}
             <Link href="/dashboard/markets" className={`db-bn-item ${pathname === '/dashboard/markets' ? 'active' : ''}`}>
-              <div className="db-bn-icon">
-                <svg width="20" height="20" viewBox="0 0 13 13" fill="none">
-                  <path d="M1 10l3-4 2.5 2 3.5-5 2 2.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" strokeLinejoin="miter" />
-                </svg>
-              </div>
+              <svg width="18" height="18" viewBox="0 0 13 13" fill="none">
+                <path d="M1 10l3-4 2.5 2 3.5-5 2 2.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" strokeLinejoin="miter" />
+              </svg>
               <span className="db-bn-label">Markets</span>
             </Link>
 
             {/* Trade */}
             <Link href="/dashboard/trade" className={`db-bn-item ${pathname === '/dashboard/trade' ? 'active' : ''}`}>
-              <div className="db-bn-icon">
-                <svg width="20" height="20" viewBox="0 0 13 13" fill="none">
-                  <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
-                  <path d="M6.5 4v3l2 1.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
-                </svg>
-              </div>
+              <svg width="18" height="18" viewBox="0 0 13 13" fill="none">
+                <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
+                <path d="M6.5 4v3l2 1.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+              </svg>
               <span className="db-bn-label">Trade</span>
             </Link>
 
-            {/* Wallet — opens sheet */}
+            {/* Wallet */}
             <button
               className={`db-bn-item ${walletActive ? 'active' : ''}`}
               onClick={() => { setWalletOpen(true); setMoreOpen(false); }}
             >
-              <div className="db-bn-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <rect x="2" y="5" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
-                  <path d="M2 8h16" stroke="currentColor" strokeWidth="1.3" />
-                  <circle cx="14.5" cy="12" r="1.2" fill="currentColor" />
-                  <path d="M6 3l8 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                </svg>
-              </div>
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <rect x="2" y="5" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                <path d="M2 8h16" stroke="currentColor" strokeWidth="1.3" />
+                <circle cx="14.5" cy="12" r="1.2" fill="currentColor" />
+                <path d="M6 3l8 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
               <span className="db-bn-label">Wallet</span>
             </button>
 
-            {/* More — opens sheet */}
+            {/* More */}
             <button
               className={`db-bn-item ${moreActive ? 'active' : ''}`}
               onClick={() => { setMoreOpen(true); setWalletOpen(false); }}
             >
-              <div className="db-bn-icon">
-                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                  <circle cx="4" cy="10" r="1.5" fill="currentColor" />
-                  <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-                  <circle cx="16" cy="10" r="1.5" fill="currentColor" />
-                </svg>
-              </div>
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                <circle cx="4" cy="10" r="1.5" fill="currentColor" />
+                <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+                <circle cx="16" cy="10" r="1.5" fill="currentColor" />
+              </svg>
               <span className="db-bn-label">More</span>
             </button>
 
@@ -558,7 +561,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="db-sheet-title">Wallet</div>
               <div className="db-sheet-grid">
                 <Link href="/dashboard/deposit" className="db-sheet-item" onClick={() => setWalletOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(74,222,128,0.1)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(74,222,128,0.08)' }}>
                     <svg width="22" height="22" viewBox="0 0 13 13" fill="none">
                       <path d="M6.5 1v8M4 7l2.5 2.5L9 7M1 11h11" stroke="#4ade80" strokeWidth="1.1" strokeLinecap="square" />
                     </svg>
@@ -566,7 +569,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="db-sheet-item-label">Deposit</span>
                 </Link>
                 <Link href="/dashboard/withdraw" className="db-sheet-item" onClick={() => setWalletOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(248,113,113,0.1)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(248,113,113,0.08)' }}>
                     <svg width="22" height="22" viewBox="0 0 13 13" fill="none">
                       <path d="M6.5 9V1M4 3l2.5-2.5L9 3M1 11h11" stroke="#f87171" strokeWidth="1.1" strokeLinecap="square" />
                     </svg>
@@ -574,7 +577,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="db-sheet-item-label">Withdraw</span>
                 </Link>
                 <Link href="/dashboard/history" className="db-sheet-item" onClick={() => setWalletOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(56,189,248,0.1)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(56,189,248,0.08)' }}>
                     <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
                       <circle cx="10" cy="10" r="7" stroke="#38bdf8" strokeWidth="1.3" />
                       <path d="M10 6v4l3 2" stroke="#38bdf8" strokeWidth="1.3" strokeLinecap="round" />
@@ -596,7 +599,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="db-sheet-title">More</div>
               <div className="db-sheet-grid">
                 <Link href="/dashboard/support" className="db-sheet-item" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(56,189,248,0.1)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(56,189,248,0.08)' }}>
                     <svg width="22" height="22" viewBox="0 0 13 13" fill="none">
                       <circle cx="6.5" cy="6.5" r="5" stroke="#38bdf8" strokeWidth="1.1" />
                       <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="#38bdf8" strokeWidth="1.1" strokeLinecap="square" />
@@ -606,7 +609,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="db-sheet-item-label">Support</span>
                 </Link>
                 <Link href="/dashboard/settings" className="db-sheet-item" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(148,163,184,0.1)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(148,163,184,0.08)' }}>
                     <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
                       <circle cx="10" cy="10" r="2.5" stroke="#94a3b8" strokeWidth="1.3" />
                       <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="#94a3b8" strokeWidth="1.3" strokeLinecap="round" />
@@ -615,7 +618,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="db-sheet-item-label">Settings</span>
                 </Link>
                 <Link href="/dashboard/notifications" className="db-sheet-item" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(251,191,36,0.1)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(251,191,36,0.08)' }}>
                     <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
                       <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="#fbbf24" strokeWidth="1.3" />
                       <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="#fbbf24" strokeWidth="1.3" strokeLinecap="round" />
@@ -624,7 +627,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <span className="db-sheet-item-label">Alerts</span>
                 </Link>
                 <Link href="/dashboard/kyc" className="db-sheet-item" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-item-icon" style={{ background: 'rgba(167,139,250,0.1)' }}>
+                  <div className="db-sheet-item-icon" style={{ background: 'rgba(167,139,250,0.08)' }}>
                     <svg width="22" height="22" viewBox="0 0 20 20" fill="none">
                       <rect x="3" y="5" width="14" height="10" rx="2" stroke="#a78bfa" strokeWidth="1.3" />
                       <circle cx="7.5" cy="9.5" r="1.5" stroke="#a78bfa" strokeWidth="1.1" />
