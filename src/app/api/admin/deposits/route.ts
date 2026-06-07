@@ -49,7 +49,7 @@ export async function PATCH(req: Request) {
     await prisma.$transaction([
       prisma.deposit.update({
         where: { id: depositId },
-        data:  { status: 'CONFIRMED', adminNote },
+        data:  { status: 'COMPLETED', adminNote },
       }),
       prisma.user.update({
         where: { id: deposit.userId },
