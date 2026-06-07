@@ -1,32 +1,38 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import Providers from './providers';
+import SWRegister from './sw-register';
 
 export const metadata: Metadata = {
   title: 'Apex Markets',
   description: 'Global easy access to equities, derivatives, crypto, and FX.',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Apex Markets',
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  icons: {
+    apple: 'icons/icon-192.png',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#0a1a26',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#0a1a26" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta name="apple-mobile-web-app-title" content="Apex Markets" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-      </head>
       <body style={{ margin: 0, padding: 0, background: '#0a1a26' }}>
         <Providers>{children}</Providers>
-        <script dangerouslySetInnerHTML={{ __html: `
-          if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-              navigator.serviceWorker.register('/sw.js');
-            });
-          }
-        `}} />
+        <SWRegister />
       </body>
     </html>
   );
