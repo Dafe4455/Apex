@@ -11,10 +11,6 @@ type Asset = {
   changePercent: number;
 };
 
-const CRYPTO_SYMBOLS_MAP: Record<string, string> = {
-  BTC: 'BTCUSDT', ETH: 'ETHUSDT', SOL: 'SOLUSDT', BNB: 'BNBUSDT',
-};
-
 function fmt(n: number, d = 2) {
   return (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 }
@@ -31,6 +27,28 @@ function MiniSparkline({ positive }: { positive: boolean }) {
   );
 }
 
+function ChangeBadge({ value }: { value: number }) {
+  const pos = value >= 0;
+  return (
+    <span style={{
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: 3,
+      padding: '3px 8px',
+      borderRadius: 6,
+      background: pos ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
+      border: `1px solid ${pos ? 'rgba(74,222,128,0.2)' : 'rgba(248,113,113,0.2)'}`,
+      fontFamily: 'var(--mono)',
+      fontSize: '0.7rem',
+      fontWeight: 600,
+      color: pos ? '#4ade80' : '#f87171',
+      letterSpacing: '0.02em',
+    }}>
+      {pos ? '▲' : '▼'} {pos ? '+' : ''}{fmt(value)}%
+    </span>
+  );
+}
+
 export default function MarketsPage() {
   const router = useRouter();
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -39,11 +57,15 @@ export default function MarketsPage() {
   const [tab, setTab] = useState<'ALL' | 'CRYPTO' | 'STOCKS'>('ALL');
   const [sortKey, setSortKey] = useState<'price' | 'changePercent' | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const fetchAssets = useCallback(async () => {
     try {
       const res = await fetch('/api/market');
-      if (res.ok) setAssets(await res.json());
+      if (res.ok) {
+        setAssets(await res.json());
+        setLastUpdated(new Date());
+      }
     } catch {}
     finally { setLoading(false); }
   }, []);
@@ -94,11 +116,11 @@ export default function MarketsPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
         :root {
-          --bg:#112838;--bg-1:#0e2132;--bg-2:#1a3a50;--bg-3:#245068;
-          --card:#172f42;--ink:#e8f4fd;--ink-2:#c8dfed;--ink-dim:#7aaec8;
+          --bg:#0f2535;--bg-1:#0b1e2c;--bg-2:#1a3a50;--bg-3:#234d67;
+          --card:#132f45;--ink:#f0f8ff;--ink-2:#d6ecf8;--ink-dim:#8dbdd8;
           --ink-faint:#4d7a96;--accent:#38bdf8;
-          --green:#4ade80;--green-d:#0d3320;
-          --red:#f87171;--red-d:#2a0d0d;
+          --green:#4ade80;--green-bg:rgba(74,222,128,0.1);--green-border:rgba(74,222,128,0.2);
+          --red:#f87171;--red-bg:rgba(248,113,113,0.1);--red-border:rgba(248,113,113,0.2);
           --sans:'DM Sans',system-ui,sans-serif;
           --mono:'DM Mono','SF Mono',monospace;
         }
@@ -107,52 +129,74 @@ export default function MarketsPage() {
 
         .mkt-wrap { max-width: 900px; padding-bottom: 40px; }
 
-        /* Page title */
+        /* Header */
+        .mkt-header { margin-bottom: 20px; }
         .mkt-title {
           font-size: 1.4rem; font-weight: 700; color: var(--ink);
-          letter-spacing: -0.02em; margin-bottom: 2px;
+          letter-spacing: -0.02em; margin-bottom: 4px;
+        }
+        .mkt-header-row {
+          display: flex; align-items: center; justify-content: space-between;
         }
         .mkt-sub {
-          font-size: 0.65rem; color: var(--ink-faint);
+          font-size: 0.6rem; color: var(--ink-faint);
           font-family: var(--mono); letter-spacing: 0.06em;
+          display: flex; align-items: center; gap: 6px;
+        }
+        .live-dot {
+          width: 5px; height: 5px; border-radius: 50%;
+          background: var(--green); animation: blink 2s ease-in-out infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .last-updated {
+          font-family: var(--mono); font-size: 0.55rem;
+          color: var(--ink-faint); letter-spacing: 0.04em;
         }
 
         /* Gainers / Losers strip */
         .mover-strip {
           display: grid; grid-template-columns: 1fr 1fr;
-          gap: 10px; margin-bottom: 16px;
+          gap: 10px; margin-bottom: 18px;
         }
         .mover-strip-card {
           background: var(--card); border: 1px solid var(--bg-2);
-          border-radius: 12px; padding: 12px 14px;
+          border-radius: 12px; padding: 14px 16px;
         }
         .strip-label {
-          font-size: 0.55rem; font-weight: 700; letter-spacing: 0.12em;
-          text-transform: uppercase; margin-bottom: 8px;
+          font-size: 0.54rem; font-weight: 700; letter-spacing: 0.12em;
+          text-transform: uppercase; margin-bottom: 10px;
+          display: flex; align-items: center; gap: 5px;
         }
         .strip-label.up { color: var(--green); }
         .strip-label.dn { color: var(--red); }
         .strip-row {
           display: flex; justify-content: space-between; align-items: center;
-          margin-bottom: 5px;
+          padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
         }
-        .strip-row:last-child { margin-bottom: 0; }
+        .strip-row:last-child { border-bottom: none; padding-bottom: 0; }
         .strip-sym {
           font-family: var(--mono); font-size: 0.68rem;
           font-weight: 500; color: var(--ink);
         }
-        .strip-chg {
-          font-family: var(--mono); font-size: 0.65rem; font-weight: 600;
+        .strip-price {
+          font-family: var(--mono); font-size: 0.6rem; color: var(--ink-faint);
         }
-        .strip-chg.up { color: var(--green); }
-        .strip-chg.dn { color: var(--red); }
+        .strip-chg {
+          font-family: var(--mono); font-size: 0.65rem; font-weight: 700;
+          padding: 2px 6px; border-radius: 4px;
+        }
+        .strip-chg.up { color: var(--green); background: var(--green-bg); }
+        .strip-chg.dn { color: var(--red); background: var(--red-bg); }
 
         /* Controls */
         .mkt-controls {
           display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;
         }
+        .controls-row {
+          display: flex; gap: 10px; align-items: center;
+        }
         .search-box {
-          display: flex; align-items: center; gap: 8px;
+          flex: 1; display: flex; align-items: center; gap: 8px;
           background: var(--card); border: 1px solid var(--bg-2);
           border-radius: 10px; padding: 9px 14px;
           transition: border-color 0.15s;
@@ -172,8 +216,7 @@ export default function MarketsPage() {
           color: var(--ink-faint); cursor: pointer; transition: all 0.15s;
         }
         .tab-btn.active {
-          background: var(--accent); border-color: var(--accent);
-          color: #0a1f2e;
+          background: var(--accent); border-color: var(--accent); color: #0a1f2e;
         }
         .tab-btn:hover:not(.active) { color: var(--ink-dim); border-color: var(--bg-3); }
 
@@ -184,7 +227,7 @@ export default function MarketsPage() {
         }
         .mkt-thead {
           display: grid;
-          grid-template-columns: 2.2fr 1.2fr 1.4fr 1fr 1.2fr 1.5fr;
+          grid-template-columns: 2.2fr 1.4fr 1.6fr 1fr 1.8fr;
           padding: 10px 16px;
           border-bottom: 1px solid var(--bg-2);
           background: var(--bg-1);
@@ -201,8 +244,8 @@ export default function MarketsPage() {
 
         .mkt-row {
           display: grid;
-          grid-template-columns: 2.2fr 1.2fr 1.4fr 1fr 1.2fr 1.5fr;
-          align-items: center; padding: 12px 16px;
+          grid-template-columns: 2.2fr 1.4fr 1.6fr 1fr 1.8fr;
+          align-items: center; padding: 13px 16px;
           border-bottom: 1px solid rgba(255,255,255,0.03);
           transition: background 0.12s;
         }
@@ -211,48 +254,56 @@ export default function MarketsPage() {
 
         .asset-cell { display: flex; align-items: center; gap: 10px; }
         .asset-logo {
-          width: 34px; height: 34px; border-radius: 50%;
-          object-fit: cover; flex-shrink: 0;
-          background: var(--bg-2);
+          width: 36px; height: 36px; border-radius: 50%;
+          object-fit: cover; flex-shrink: 0; background: var(--bg-2);
         }
         .asset-logo-placeholder {
-          width: 34px; height: 34px; border-radius: 50%;
+          width: 36px; height: 36px; border-radius: 50%;
           background: var(--bg-2); display: flex; align-items: center;
           justify-content: center; font-size: 0.65rem; font-weight: 700;
           color: var(--ink-dim); flex-shrink: 0;
         }
         .asset-sym { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; color: var(--ink); }
-        .asset-name { font-size: 0.58rem; font-weight: 300; color: var(--ink-faint); margin-top: 1px; }
+        .asset-name { font-size: 0.58rem; font-weight: 300; color: var(--ink-faint); margin-top: 2px; }
 
-        .price-cell { font-family: var(--mono); font-size: 0.72rem; font-weight: 500; color: var(--ink); }
-        .chg-cell { font-family: var(--mono); font-size: 0.68rem; font-weight: 600; }
-        .chg-cell.up { color: var(--green); }
-        .chg-cell.dn { color: var(--red); }
-        .spark-cell {}
-
-        .trade-cell { display: flex; gap: 5px; }
-        .btn-buy {
-          background: var(--accent); color: #0a1f2e; border: none;
-          border-radius: 7px; padding: 6px 12px;
-          font-family: var(--sans); font-size: 0.62rem; font-weight: 700;
-          cursor: pointer; transition: opacity 0.12s, transform 0.1s;
+        .price-cell {
+          font-family: var(--mono); font-size: 0.75rem;
+          font-weight: 600; color: var(--ink);
         }
-        .btn-buy:hover { opacity: 0.85; transform: translateY(-1px); }
+
+        /* Buy / Sell buttons */
+        .trade-cell { display: flex; gap: 6px; }
+        .btn-buy {
+          background: var(--green-bg);
+          color: var(--green);
+          border: 1px solid var(--green-border);
+          border-radius: 7px; padding: 6px 14px;
+          font-family: var(--sans); font-size: 0.62rem; font-weight: 700;
+          cursor: pointer; transition: all 0.15s;
+          letter-spacing: 0.03em;
+        }
+        .btn-buy:hover {
+          background: var(--green); color: #0a2e14;
+          border-color: var(--green); transform: translateY(-1px);
+        }
         .btn-buy:active { transform: scale(0.97); }
         .btn-sell {
-          background: transparent; color: var(--ink-2);
-          border: 1px solid var(--bg-3); border-radius: 7px;
-          padding: 6px 12px; font-family: var(--sans);
-          font-size: 0.62rem; font-weight: 600; cursor: pointer;
-          transition: background 0.12s, transform 0.1s;
+          background: var(--red-bg);
+          color: var(--red);
+          border: 1px solid var(--red-border);
+          border-radius: 7px; padding: 6px 14px;
+          font-family: var(--sans); font-size: 0.62rem; font-weight: 700;
+          cursor: pointer; transition: all 0.15s;
+          letter-spacing: 0.03em;
         }
-        .btn-sell:hover { background: var(--red-d); color: var(--red); border-color: var(--red); transform: translateY(-1px); }
+        .btn-sell:hover {
+          background: var(--red); color: #2a0505;
+          border-color: var(--red); transform: translateY(-1px);
+        }
         .btn-sell:active { transform: scale(0.97); }
 
         /* Empty / Loading */
-        .mkt-empty {
-          padding: 48px 24px; text-align: center;
-        }
+        .mkt-empty { padding: 48px 24px; text-align: center; }
         .mkt-empty p { font-size: 0.7rem; color: var(--ink-faint); font-weight: 300; }
         .spinner {
           width: 28px; height: 28px;
@@ -264,21 +315,30 @@ export default function MarketsPage() {
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Mobile adjustments */
+        /* Mobile */
         @media (max-width: 640px) {
-          .mkt-thead { grid-template-columns: 2fr 1.2fr 1fr 1.4fr; }
-          .mkt-row   { grid-template-columns: 2fr 1.2fr 1fr 1.4fr; }
+          .mkt-thead { grid-template-columns: 2fr 1.3fr 1.6fr 1.6fr; }
+          .mkt-row   { grid-template-columns: 2fr 1.3fr 1.6fr 1.6fr; }
           .spark-col { display: none; }
-          .vol-col   { display: none; }
         }
       `}</style>
 
       <div className="mkt-wrap">
 
-        {/* Title */}
-        <div style={{ marginBottom: 16 }}>
-          <h1 className="mkt-title">Markets</h1>
-          <p className="mkt-sub">Live prices · Updates every 30s</p>
+        {/* Header */}
+        <div className="mkt-header">
+          <div className="mkt-header-row">
+            <h1 className="mkt-title">Markets</h1>
+            {lastUpdated && (
+              <span className="last-updated">
+                Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              </span>
+            )}
+          </div>
+          <div className="mkt-sub">
+            <span className="live-dot" />
+            Live prices · Refreshes every 30s
+          </div>
         </div>
 
         {/* Gainers / Losers */}
@@ -289,6 +349,7 @@ export default function MarketsPage() {
               {gainers.map(a => (
                 <div key={a.symbol} className="strip-row">
                   <span className="strip-sym">{a.symbol}</span>
+                  <span className="strip-price">${fmt(a.price)}</span>
                   <span className="strip-chg up">+{fmt(a.changePercent)}%</span>
                 </div>
               ))}
@@ -298,6 +359,7 @@ export default function MarketsPage() {
               {losers.map(a => (
                 <div key={a.symbol} className="strip-row">
                   <span className="strip-sym">{a.symbol}</span>
+                  <span className="strip-price">${fmt(a.price)}</span>
                   <span className="strip-chg dn">{fmt(a.changePercent)}%</span>
                 </div>
               ))}
@@ -307,16 +369,18 @@ export default function MarketsPage() {
 
         {/* Controls */}
         <div className="mkt-controls">
-          <div className="search-box">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="6" cy="6" r="4.5" stroke="#4d7a96" strokeWidth="1.2" />
-              <path d="M9.5 9.5L12 12" stroke="#4d7a96" strokeWidth="1.2" strokeLinecap="round" />
-            </svg>
-            <input
-              placeholder="Search assets…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+          <div className="controls-row">
+            <div className="search-box">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <circle cx="6" cy="6" r="4.5" stroke="#4d7a96" strokeWidth="1.2" />
+                <path d="M9.5 9.5L12 12" stroke="#4d7a96" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+              <input
+                placeholder="Search assets…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
           </div>
           <div className="tab-row">
             {(['ALL', 'CRYPTO', 'STOCKS'] as const).map(t => (
@@ -331,15 +395,14 @@ export default function MarketsPage() {
         <div className="mkt-table-wrap">
           <div className="mkt-thead">
             <span className="mkt-th">Asset</span>
-            <span className="mkt-th">Ticker</span>
             <span className={`mkt-th ${sortKey === 'price' ? 'sorted' : ''}`} onClick={() => handleSort('price')}>
               Price <span className="sort-arrow">{sortKey === 'price' ? (sortDir === 'desc' ? '↓' : '↑') : '↕'}</span>
             </span>
             <span className={`mkt-th ${sortKey === 'changePercent' ? 'sorted' : ''}`} onClick={() => handleSort('changePercent')}>
-              24h <span className="sort-arrow">{sortKey === 'changePercent' ? (sortDir === 'desc' ? '↓' : '↑') : '↕'}</span>
+              24h Change <span className="sort-arrow">{sortKey === 'changePercent' ? (sortDir === 'desc' ? '↓' : '↑') : '↕'}</span>
             </span>
             <span className="mkt-th spark-col">Trend</span>
-            <span className="mkt-th">Quick Trade</span>
+            <span className="mkt-th">Trade</span>
           </div>
 
           {loading ? (
@@ -355,7 +418,8 @@ export default function MarketsPage() {
             <div key={a.symbol} className="mkt-row">
               <div className="asset-cell">
                 {a.logoUrl
-                  ? <img src={a.logoUrl} alt={a.symbol} className="asset-logo" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  ? <img src={a.logoUrl} alt={a.symbol} className="asset-logo"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   : <div className="asset-logo-placeholder">{a.symbol.slice(0, 2)}</div>
                 }
                 <div>
@@ -363,13 +427,8 @@ export default function MarketsPage() {
                   <div className="asset-name">{a.name}</div>
                 </div>
               </div>
-              <span className="asset-sym" style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--ink-dim)' }}>
-                {a.symbol}
-              </span>
               <span className="price-cell">${fmt(a.price)}</span>
-              <span className={`chg-cell ${a.changePercent >= 0 ? 'up' : 'dn'}`}>
-                {a.changePercent >= 0 ? '+' : ''}{fmt(a.changePercent)}%
-              </span>
+              <span><ChangeBadge value={a.changePercent} /></span>
               <span className="spark-col">
                 <MiniSparkline positive={a.changePercent >= 0} />
               </span>
