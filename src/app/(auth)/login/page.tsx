@@ -162,43 +162,7 @@ export default function LoginPage() {
           line-height: 1.1;
         }
 
-        /* ── MARKET STRIP (mirrors dashboard top movers) ── */
-        .market-strip {
-          background: var(--navy-card);
-          border: 1px solid var(--navy-border);
-          border-radius: 12px;
-          padding: 12px 16px;
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 28px;
-          gap: 8px;
-          overflow: hidden;
-        }
-        .market-item {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 3px;
-          flex: 1;
-        }
-        .market-item + .market-item {
-          border-left: 1px solid var(--navy-border);
-        }
-        .market-ticker {
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          letter-spacing: 0.1em;
-          color: var(--white-faint);
-          text-transform: uppercase;
-        }
-        .market-val {
-          font-family: var(--mono);
-          font-size: 0.7rem;
-          font-weight: 500;
-          color: var(--green);
-        }
-        .market-val.down { color: var(--red); }
-
+       
         /* ── FORM ── */
         .field {
           margin-bottom: 16px;
@@ -359,27 +323,9 @@ export default function LoginPage() {
           </div>
 
           <p className="login-welcome">Welcome back,</p>
-          <h1 className="login-title">Sign in</h1>
+          <h3 className="login-title">Sign in</h3>
 
-          {/* Market strip — matches dashboard's top movers */}
-          <div className="market-strip">
-            <div className="market-item">
-              <span className="market-ticker">BTC</span>
-              <span className="market-val">+1.53%</span>
-            </div>
-            <div className="market-item">
-              <span className="market-ticker">ETH</span>
-              <span className="market-val">+3.89%</span>
-            </div>
-            <div className="market-item">
-              <span className="market-ticker">SOL</span>
-              <span className="market-val">+3.24%</span>
-            </div>
-            <div className="market-item">
-              <span className="market-ticker">Gold</span>
-              <span className="market-val down">−0.23%</span>
-            </div>
-          </div>
+         
 
           <form onSubmit={handleSubmit}>
             {error && <div className="error-msg">{error}</div>}
