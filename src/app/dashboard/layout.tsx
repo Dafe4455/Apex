@@ -335,7 +335,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.48rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #2a4a6a;
+          color: #d2f6f7;
           transition: color 0.15s;
           line-height: 1;
         }
