@@ -146,8 +146,8 @@ export default function LoginPage() {
         }
 
         .login-welcome {
-          font-size: 0.75rem;
-          font-weight: 400;
+          font-size: 0.55rem;
+          font-weight: 100;
           color: var(--white-dim);
           letter-spacing: 0.04em;
           margin-bottom: 4px;
