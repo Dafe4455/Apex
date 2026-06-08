@@ -104,10 +104,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           --sans: 'Manrope', system-ui, sans-serif;
         }
 
-        html, body { background: var(--bg-1) !important; }
+        html, body {
+          background: var(--bg-1) !important;
+          min-height: 100vh;
+          min-height: 100dvh;
+        }
 
         .db-shell {
           min-height: 100vh;
+          min-height: 100dvh;
           background: var(--bg) !important;
           font-family: var(--sans);
           display: flex;
@@ -286,7 +291,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           border-top: 1px solid rgba(255,255,255,0.06);
-          padding: 0 0 env(safe-area-inset-bottom);
+          padding-bottom: max(env(safe-area-inset-bottom), 16px);
         }
         .db-bottom-nav-inner {
           display: flex;
@@ -353,7 +358,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           background: var(--bg-1);
           border-radius: 20px 20px 0 0;
           border-top: 1px solid rgba(255,255,255,0.06);
-          padding: 0 0 calc(20px + env(safe-area-inset-bottom));
+          padding: 0 0 max(env(safe-area-inset-bottom), 24px);
           animation: slideUp 0.28s cubic-bezier(0.32,0.72,0,1);
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -459,7 +464,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .db-topbar { display: none; }
           .db-mobile-bar { display: flex; }
           .db-bottom-nav { display: block; }
-          .db-content { padding: 64px 16px 80px; }
+          .db-content { padding: 64px 16px calc(80px + max(env(safe-area-inset-bottom), 16px)); }
           .db-shell { background: var(--bg) !important; }
         }
       `}</style>
