@@ -117,29 +117,7 @@ export default function LoginPage() {
           box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,212,170,0.04);
         }
 
-        /* Live badge — matches dashboard top-right */
-        .live-badge {
-          position: absolute;
-          top: 24px; right: 24px;
-          background: rgba(74,222,128,0.12);
-          border: 1px solid rgba(74,222,128,0.3);
-          border-radius: 999px;
-          padding: 4px 12px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          font-family: var(--mono);
-          font-size: 0.65rem;
-          letter-spacing: 0.08em;
-          color: var(--green);
-        }
-        .live-dot {
-          width: 6px; height: 6px;
-          border-radius: 50%;
-          background: var(--green);
-          box-shadow: 0 0 6px var(--green);
-          animation: pulse 2s ease-in-out infinite;
-        }
+        
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.4; }
@@ -318,10 +296,7 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="login-card">
-          <div className="live-badge">
-            <span className="live-dot" />
-            Live
-          </div>
+          
 
           <p className="login-welcome">Welcome back,</p>
           <h3 className="login-title">Sign in</h3>
