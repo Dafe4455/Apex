@@ -23,391 +23,371 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Mono:wght@400;500&family=Manrope:wght@300;400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --cream: #f5f0e8;
-          --cream-dark: #ede7d9;
-          --cream-darker: #e0d9cc;
-          --ink: #1a1512;
-          --ink-mid: #3d352e;
-          --ink-light: #7a6e65;
-          --red: #c9170a;
-          --red-dark: #9e1108;
-          --serif: 'Playfair Display', Georgia, serif;
-          --mono: 'DM Mono', monospace;
-          --sans: 'Manrope', sans-serif;
+          --navy:        #0b1929;
+          --navy-mid:    #0f2235;
+          --navy-card:   #132840;
+          --navy-border: #1e3a55;
+          --navy-hover:  #1a3350;
+          --white:       #e8f4f8;
+          --white-dim:   #8aafc4;
+          --white-faint: #4a6a80;
+          --cyan:        #00d4aa;
+          --cyan-dim:    rgba(0,212,170,0.12);
+          --cyan-glow:   rgba(0,212,170,0.25);
+          --green:       #4ade80;
+          --red:         #f87171;
+          --sans:        'Syne', sans-serif;
+          --mono:        'DM Mono', monospace;
         }
 
-        .auth-shell {
+        html, body { height: 100%; }
+
+        .login-shell {
           min-height: 100vh;
-          background: var(--cream);
+          background: var(--navy);
           font-family: var(--sans);
           display: flex;
-        }
-
-        /* ── LEFT PANEL ── */
-        .auth-left {
-          width: 420px;
-          flex-shrink: 0;
-          background: var(--ink);
-          padding: 48px 44px;
-          display: flex;
           flex-direction: column;
-          justify-content: space-between;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
           position: relative;
           overflow: hidden;
         }
 
-        .auth-left::before {
+        /* Background grid lines like the dashboard's subtle depth */
+        .login-shell::before {
           content: '';
           position: absolute;
-          bottom: -80px; right: -80px;
-          width: 320px; height: 320px;
-          border: 1px solid rgba(255,255,255,0.04);
-          border-radius: 50%;
-        }
-        .auth-left::after {
-          content: '';
-          position: absolute;
-          bottom: -40px; right: -40px;
-          width: 220px; height: 220px;
-          border: 1px solid rgba(255,255,255,0.03);
-          border-radius: 50%;
-        }
-
-        .auth-brand {
-          font-family: var(--serif);
-          font-size: 1.4rem;
-          font-weight: 900;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--cream);
-        }
-        .auth-brand span { color: var(--red); }
-
-        .auth-panel-body { position: relative; z-index: 1; }
-
-        .auth-panel-tag {
-          font-family: var(--mono);
-          font-size: 0.62rem;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          color: var(--red);
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 20px;
-        }
-        .auth-panel-tag::before {
-          content: '';
-          display: inline-block;
-          width: 20px; height: 1px;
-          background: var(--red);
-        }
-
-        .auth-panel-headline {
-          font-family: var(--serif);
-          font-size: 2.4rem;
-          font-weight: 900;
-          color: var(--cream);
-          line-height: 1.1;
-          margin-bottom: 20px;
-        }
-        .auth-panel-headline em {
-          font-style: italic;
-          color: var(--red);
-        }
-
-        .auth-panel-desc {
-          font-size: 0.85rem;
-          line-height: 1.75;
-          color: #666;
-          font-weight: 300;
-          margin-bottom: 36px;
-        }
-
-        .auth-panel-stats {
-          display: flex;
-          flex-direction: column;
-          gap: 1px;
-          background: #2a2420;
-        }
-        .auth-stat {
-          background: #1e1916;
-          padding: 14px 16px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .auth-stat-label {
-          font-family: var(--mono);
-          font-size: 0.62rem;
-          letter-spacing: 0.1em;
-          color: #555;
-          text-transform: uppercase;
-        }
-        .auth-stat-val {
-          font-family: var(--mono);
-          font-size: 0.82rem;
-          color: #c8bfb5;
-        }
-        .auth-stat-val.up { color: #4ade80; }
-
-        .auth-panel-footer {
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          letter-spacing: 0.08em;
-          color: #333;
-          line-height: 1.6;
-        }
-
-        /* ── RIGHT PANEL ── */
-        .auth-right {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 48px;
-          position: relative;
-        }
-
-        .auth-right::before {
-          content: '';
-          position: absolute;
-          top: 40px; right: 40px; bottom: 40px; left: 40px;
-          border: 1px solid var(--cream-darker);
+          inset: 0;
+          background-image:
+            linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
+          background-size: 48px 48px;
           pointer-events: none;
         }
 
-        .auth-form-wrap {
-          width: 100%;
-          max-width: 400px;
+        /* Ambient glow top-left */
+        .login-shell::after {
+          content: '';
+          position: absolute;
+          top: -120px; left: -120px;
+          width: 480px; height: 480px;
+          background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 65%);
+          pointer-events: none;
         }
 
-        .auth-form-tag {
-          font-family: var(--mono);
-          font-size: 0.62rem;
-          letter-spacing: 0.2em;
+        /* ── HEADER / BRAND ── */
+        .login-brand {
+          font-family: var(--sans);
+          font-size: 0.8rem;
+          font-weight: 700;
+          letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: var(--red);
-          margin-bottom: 10px;
+          color: var(--white);
           display: flex;
           align-items: center;
-          gap: 8px;
-        }
-        .auth-form-tag::before {
-          content: '';
-          display: inline-block;
-          width: 18px; height: 1px;
-          background: var(--red);
-        }
-
-        .auth-form-title {
-          font-family: var(--serif);
-          font-size: 2.2rem;
-          font-weight: 900;
-          color: var(--ink);
-          line-height: 1.1;
-          margin-bottom: 8px;
-        }
-
-        .auth-form-sub {
-          font-size: 0.85rem;
-          color: var(--ink-light);
-          font-weight: 300;
+          gap: 6px;
           margin-bottom: 40px;
+          position: relative;
+          z-index: 1;
         }
-        .auth-form-sub a {
-          color: var(--red);
-          text-decoration: none;
-          font-weight: 500;
+        .login-brand-dot {
+          width: 7px; height: 7px;
+          border-radius: 50%;
+          background: var(--cyan);
+          box-shadow: 0 0 8px var(--cyan);
         }
-        .auth-form-sub a:hover { text-decoration: underline; }
 
-        .field {
-          margin-bottom: 20px;
+        /* ── CARD ── */
+        .login-card {
+          width: 100%;
+          max-width: 400px;
+          background: var(--navy-mid);
+          border: 1px solid var(--navy-border);
+          border-radius: 20px;
+          padding: 36px 32px;
+          position: relative;
+          z-index: 1;
+          box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,212,170,0.04);
         }
-        .field label {
-          display: block;
+
+        /* Live badge — matches dashboard top-right */
+        .live-badge {
+          position: absolute;
+          top: 24px; right: 24px;
+          background: rgba(74,222,128,0.12);
+          border: 1px solid rgba(74,222,128,0.3);
+          border-radius: 999px;
+          padding: 4px 12px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
           font-family: var(--mono);
           font-size: 0.65rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: var(--ink-mid);
-          margin-bottom: 8px;
+          letter-spacing: 0.08em;
+          color: var(--green);
         }
-        .field input {
-          width: 100%;
-          background: transparent;
-          border: 1px solid var(--cream-darker);
-          padding: 13px 16px;
-          font-family: var(--mono);
-          font-size: 0.85rem;
-          color: var(--ink);
-          outline: none;
-          transition: border-color 0.2s;
-          appearance: none;
+        .live-dot {
+          width: 6px; height: 6px;
+          border-radius: 50%;
+          background: var(--green);
+          box-shadow: 0 0 6px var(--green);
+          animation: pulse 2s ease-in-out infinite;
         }
-        .field input::placeholder { color: var(--ink-light); opacity: 0.6; }
-        .field input:focus { border-color: var(--ink); }
-        .field input.error-input { border-color: var(--red); }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.4; }
+        }
 
-        .field-row {
+        .login-welcome {
+          font-size: 0.75rem;
+          font-weight: 400;
+          color: var(--white-dim);
+          letter-spacing: 0.04em;
+          margin-bottom: 4px;
+        }
+
+        .login-title {
+          font-size: 2rem;
+          font-weight: 800;
+          color: var(--white);
+          letter-spacing: -0.01em;
+          margin-bottom: 28px;
+          line-height: 1.1;
+        }
+
+        /* ── MARKET STRIP (mirrors dashboard top movers) ── */
+        .market-strip {
+          background: var(--navy-card);
+          border: 1px solid var(--navy-border);
+          border-radius: 12px;
+          padding: 12px 16px;
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 28px;
+          gap: 8px;
+          overflow: hidden;
+        }
+        .market-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 3px;
+          flex: 1;
+        }
+        .market-item + .market-item {
+          border-left: 1px solid var(--navy-border);
+        }
+        .market-ticker {
+          font-family: var(--mono);
+          font-size: 0.6rem;
+          letter-spacing: 0.1em;
+          color: var(--white-faint);
+          text-transform: uppercase;
+        }
+        .market-val {
+          font-family: var(--mono);
+          font-size: 0.7rem;
+          font-weight: 500;
+          color: var(--green);
+        }
+        .market-val.down { color: var(--red); }
+
+        /* ── FORM ── */
+        .field {
+          margin-bottom: 16px;
+        }
+        .field-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 8px;
         }
-        .field-row label {
-          margin-bottom: 0;
+        .field label {
           font-family: var(--mono);
-          font-size: 0.65rem;
-          letter-spacing: 0.15em;
+          font-size: 0.62rem;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: var(--ink-mid);
+          color: var(--white-dim);
         }
         .forgot-link {
           font-family: var(--mono);
-          font-size: 0.62rem;
-          letter-spacing: 0.08em;
-          color: var(--ink-light);
+          font-size: 0.6rem;
+          letter-spacing: 0.06em;
+          color: var(--white-faint);
           text-decoration: none;
           transition: color 0.2s;
         }
-        .forgot-link:hover { color: var(--red); }
+        .forgot-link:hover { color: var(--cyan); }
+
+        .field input {
+          width: 100%;
+          background: var(--navy-card);
+          border: 1px solid var(--navy-border);
+          border-radius: 10px;
+          padding: 13px 16px;
+          font-family: var(--mono);
+          font-size: 0.85rem;
+          color: var(--white);
+          outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          appearance: none;
+        }
+        .field input::placeholder { color: var(--white-faint); }
+        .field input:focus {
+          border-color: var(--cyan);
+          box-shadow: 0 0 0 3px var(--cyan-dim);
+        }
+        .field input.error-input {
+          border-color: var(--red);
+          box-shadow: 0 0 0 3px rgba(248,113,113,0.1);
+        }
 
         .error-msg {
-          background: rgba(201,23,10,0.06);
-          border-left: 2px solid var(--red);
+          background: rgba(248,113,113,0.08);
+          border: 1px solid rgba(248,113,113,0.2);
+          border-radius: 10px;
           padding: 11px 14px;
           font-family: var(--mono);
           font-size: 0.72rem;
           color: var(--red);
           letter-spacing: 0.04em;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
         }
 
         .submit-btn {
           width: 100%;
-          background: var(--red);
-          color: white;
+          background: var(--cyan);
+          color: var(--navy);
           border: none;
+          border-radius: 10px;
           padding: 15px;
-          font-family: var(--mono);
-          font-size: 0.78rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
+          font-family: var(--sans);
+          font-size: 0.85rem;
+          font-weight: 700;
+          letter-spacing: 0.06em;
           cursor: pointer;
-          transition: background 0.2s;
+          transition: opacity 0.2s, box-shadow 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
           margin-top: 8px;
+          box-shadow: 0 4px 24px var(--cyan-glow);
         }
-        .submit-btn:hover:not(:disabled) { background: var(--red-dark); }
-        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .submit-btn:hover:not(:disabled) {
+          opacity: 0.9;
+          box-shadow: 0 6px 32px var(--cyan-glow);
+        }
+        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .spinner {
           width: 14px; height: 14px;
-          border: 1.5px solid rgba(255,255,255,0.3);
-          border-top-color: white;
+          border: 2px solid rgba(11,25,41,0.3);
+          border-top-color: var(--navy);
           border-radius: 50%;
           animation: spin 0.7s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .divider {
+        /* ── FOOTER ── */
+        .login-footer {
+          margin-top: 24px;
           display: flex;
+          flex-direction: column;
           align-items: center;
-          gap: 12px;
-          margin: 24px 0;
+          gap: 10px;
         }
-        .divider-line {
-          flex: 1;
-          height: 1px;
-          background: var(--cream-darker);
+        .login-signup {
+          font-size: 0.8rem;
+          color: var(--white-dim);
+          font-weight: 400;
         }
-        .divider-text {
+        .login-signup a {
+          color: var(--cyan);
+          text-decoration: none;
+          font-weight: 600;
+        }
+        .login-signup a:hover { text-decoration: underline; }
+
+        .login-trust {
           font-family: var(--mono);
           font-size: 0.6rem;
-          letter-spacing: 0.12em;
-          color: var(--ink-light);
-          text-transform: uppercase;
-        }
-
-        .auth-footer-note {
-          margin-top: 28px;
-          font-family: var(--mono);
-          font-size: 0.62rem;
-          letter-spacing: 0.06em;
-          color: var(--ink-light);
+          letter-spacing: 0.08em;
+          color: var(--white-faint);
           text-align: center;
-          line-height: 1.6;
+          line-height: 1.7;
         }
-
-        @media (max-width: 768px) {
-          .auth-left { display: none; }
-          .auth-right { padding: 32px 24px; }
-          .auth-right::before { inset: 20px; }
+        .trust-pills {
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+          flex-wrap: wrap;
+          margin-top: 4px;
+        }
+        .trust-pill {
+          background: var(--navy-card);
+          border: 1px solid var(--navy-border);
+          border-radius: 999px;
+          padding: 3px 10px;
+          font-family: var(--mono);
+          font-size: 0.58rem;
+          letter-spacing: 0.08em;
+          color: var(--white-faint);
         }
       `}</style>
 
-      <div className="auth-left">
-        <div className="auth-brand">Apex<span>•</span>Markets</div>
-
-        <div className="auth-panel-body">
-          <p className="auth-panel-tag">Live markets</p>
-          <h2 className="auth-panel-headline">
-            Your edge<br />starts <em>now.</em>
-          </h2>
-          <p className="auth-panel-desc">
-            Access global markets with institutional-grade execution. Equities, crypto, FX, and commodities — all in one terminal.
-          </p>
-
-          <div className="auth-panel-stats">
-            <div className="auth-stat">
-              <span className="auth-stat-label">BTC / USD</span>
-              <span className="auth-stat-val up">67,420 ▲ +2.38%</span>
-            </div>
-            <div className="auth-stat">
-              <span className="auth-stat-label">NVDA</span>
-              <span className="auth-stat-val up">875.40 ▲ +4.62%</span>
-            </div>
-            <div className="auth-stat">
-              <span className="auth-stat-label">EUR / USD</span>
-              <span className="auth-stat-val">1.0842 +0.12%</span>
-            </div>
-            <div className="auth-stat">
-              <span className="auth-stat-label">Gold Spot</span>
-              <span className="auth-stat-val" style={{ color: "#f87171" }}>2,318.50 ▼ −0.23%</span>
-            </div>
-          </div>
+      <div className="login-shell">
+        {/* Brand */}
+        <div className="login-brand">
+          APEX
+          <span className="login-brand-dot" />
+          MARKETS
         </div>
 
-        <p className="auth-panel-footer">
-          © 2026 Apex Markets Ltd.<br />
-          FCA Regulated · Funds Segregated · 99.9% Uptime
-        </p>
-      </div>
+        {/* Card */}
+        <div className="login-card">
+          <div className="live-badge">
+            <span className="live-dot" />
+            Live
+          </div>
 
-      <div className="auth-right">
-        <div className="auth-form-wrap">
-          <p className="auth-form-tag">Secure login</p>
-          <h1 className="auth-form-title">Welcome back.</h1>
-          <p className="auth-form-sub">
-            No account?{" "}
-            <Link href="/signup">Create one free</Link>
-          </p>
+          <p className="login-welcome">Welcome back,</p>
+          <h1 className="login-title">Sign in</h1>
+
+          {/* Market strip — matches dashboard's top movers */}
+          <div className="market-strip">
+            <div className="market-item">
+              <span className="market-ticker">BTC</span>
+              <span className="market-val">+1.53%</span>
+            </div>
+            <div className="market-item">
+              <span className="market-ticker">ETH</span>
+              <span className="market-val">+3.89%</span>
+            </div>
+            <div className="market-item">
+              <span className="market-ticker">SOL</span>
+              <span className="market-val">+3.24%</span>
+            </div>
+            <div className="market-item">
+              <span className="market-ticker">Gold</span>
+              <span className="market-val down">−0.23%</span>
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit}>
             {error && <div className="error-msg">{error}</div>}
 
             <div className="field">
-              <label>Email address</label>
+              <div className="field-header">
+                <label>Email address</label>
+              </div>
               <input
                 type="email"
                 placeholder="you@example.com"
@@ -420,9 +400,9 @@ export default function LoginPage() {
             </div>
 
             <div className="field">
-              <div className="field-row">
+              <div className="field-header">
                 <label>Password</label>
-                <Link href="/forgot-password" className="forgot-link">Forgot password?</Link>
+                <Link href="/forgot-password" className="forgot-link">Forgot?</Link>
               </div>
               <input
                 type="password"
@@ -445,16 +425,23 @@ export default function LoginPage() {
                 <>
                   Sign In
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" />
+                    <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </>
               )}
             </button>
           </form>
 
-          <p className="auth-footer-note">
-            Protected by 256-bit encryption · SOC 2 compliant
-          </p>
+          <div className="login-footer">
+            <p className="login-signup">
+              No account? <Link href="/signup">Create one free</Link>
+            </p>
+            <div className="trust-pills">
+              <span className="trust-pill">FCA Regulated</span>
+              <span className="trust-pill">256-bit SSL</span>
+              <span className="trust-pill">SOC 2</span>
+            </div>
+          </div>
         </div>
       </div>
     </>
