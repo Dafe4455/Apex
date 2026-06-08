@@ -2,6 +2,7 @@ import { auth } from "@root/auth";
 import { NextResponse } from "next/server";
 
 const supportedLocales = ["en", "fr", "es", "pt", "ja", "de"];
+const defaultLocale = "en";
 
 const publicRoutes  = ["/", "/login", "/signup", "/admin/login", "/manifest.json", "/sw.js", "/icon-192.png", "/icon-512.png", "/offline"];
 const authRoutes    = ["/login", "/signup"];
