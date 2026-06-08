@@ -163,8 +163,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#1e3f56' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #2a5470', borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f2535' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #1a3a50', borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
@@ -175,11 +175,11 @@ export default function DashboardPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
         :root {
-          --bg:#1e3f56;
-          --bg-1:#18374c;
-          --bg-2:#2a5470;
-          --bg-3:#346080;
-          --card:#244d66;
+          --bg:#0f2535;
+          --bg-1:#0b1e2c;
+          --bg-2:#1a3a50;
+          --bg-3:#234d67;
+          --card:#132f45;
           --ink:#f0f8ff;
           --ink-2:#d6ecf8;
           --ink-dim:#8dbdd8;
@@ -286,9 +286,9 @@ export default function DashboardPage() {
         .btn-sell:hover{background:var(--bg-2);}
 
         /* ── SHEET ── */
-        .sheet-overlay{position:fixed;inset:0;background:rgba(10,24,36,0.7);z-index:200;backdrop-filter:blur(3px);animation:fadeIn 0.2s ease;}
+        .sheet-overlay{position:fixed;inset:0;background:rgba(5,14,22,0.75);z-index:200;backdrop-filter:blur(3px);animation:fadeIn 0.2s ease;}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .sheet{position:fixed;bottom:0;left:0;right:0;background:#1a3a50;border-radius:24px 24px 0 0;border-top:1px solid var(--bg-3);padding:0 20px 40px;z-index:201;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-width:480px;margin:0 auto;}
+        .sheet{position:fixed;bottom:0;left:0;right:0;background:#0e2738;border-radius:24px 24px 0 0;border-top:1px solid var(--bg-3);padding:0 20px 40px;z-index:201;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-width:480px;margin:0 auto;}
         @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
         @keyframes dspin{to{transform:rotate(360deg)}}
         .sheet-handle{width:36px;height:4px;background:var(--bg-3);border-radius:2px;margin:12px auto 20px;}
