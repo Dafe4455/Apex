@@ -326,7 +326,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           border-radius: 0 0 2px 2px;
         }
         .db-bn-item svg {
-          color: #2a4a6a;
+          color: #d2f6f7;
           transition: color 0.15s;
         }
         .db-bn-item.active svg { color: var(--ink); }
