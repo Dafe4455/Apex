@@ -177,9 +177,9 @@ export default function DashboardPage() {
         :root {
           --bg:#0f2535;
           --bg-1:#0b1e2c;
-          --bg-2:#1a3a50;
+          --bg-2:#06242e;
           --bg-3:#234d67;
-          --card:#132f45;
+          --card:#06242e;
           --ink:#f0f8ff;
           --ink-2:#d6ecf8;
           --ink-dim:#8dbdd8;
