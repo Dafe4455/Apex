@@ -154,12 +154,12 @@ export default function LoginPage() {
         }
 
         .login-title {
-          font-size: 2rem;
-          font-weight: 800;
+          font-size: 1.5rem;
+          font-weight: 400;
           color: var(--white);
           letter-spacing: -0.01em;
           margin-bottom: 28px;
-          line-height: 1.1;
+          line-height: 1;
         }
 
        
