@@ -15,6 +15,11 @@ function fmt(n: number, d = 2) {
   return (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
+function fmtPrice(n: number) {
+  if (n >= 1000) return '$' + (n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return '$' + fmt(n, 2);
+}
+
 function MiniSparkline({ positive }: { positive: boolean }) {
   const pts = positive
     ? '0,18 10,14 20,16 30,8 40,11 50,4 60,6'
@@ -34,8 +39,8 @@ function ChangeBadge({ value }: { value: number }) {
       display: 'inline-flex',
       alignItems: 'center',
       gap: 2,
-      padding: '2px 5px',
-      borderRadius: 4,
+      padding: '2px 6px',
+      borderRadius: 5,
       background: pos ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
       border: `1px solid ${pos ? 'rgba(74,222,128,0.2)' : 'rgba(248,113,113,0.2)'}`,
       fontFamily: 'var(--mono)',
@@ -268,7 +273,7 @@ export default function MarketsPage() {
         .asset-name { font-size: 0.58rem; font-weight: 300; color: var(--ink-faint); margin-top: 2px; }
 
         .price-cell {
-          font-family: var(--mono); font-size: 0.75rem;
+          font-family: var(--mono); font-size: 0.72rem; padding-right: 6px;
           font-weight: 600; color: var(--ink);
         }
 
@@ -428,7 +433,7 @@ export default function MarketsPage() {
                   <div className="asset-name">{a.name}</div>
                 </div>
               </div>
-              <span className="price-cell">${fmt(a.price)}</span>
+              <span className="price-cell">{fmtPrice(a.price)}</span>
               <span><ChangeBadge value={a.changePercent} /></span>
               <span className="spark-col">
                 <MiniSparkline positive={a.changePercent >= 0} />
