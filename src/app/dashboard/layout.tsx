@@ -326,7 +326,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           border-radius: 0 0 2px 2px;
         }
         .db-bn-item svg {
-          color: #d2f6f7;
+          color: #759fa1;
           transition: color 0.15s;
         }
         .db-bn-item.active svg { color: var(--ink); }
@@ -335,7 +335,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.48rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #d2f6f7;
+          color: #759fa1;
           transition: color 0.15s;
           line-height: 1;
         }
