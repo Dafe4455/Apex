@@ -34,7 +34,7 @@ function ChangeBadge({ value }: { value: number }) {
       display: 'inline-flex',
       alignItems: 'center',
       gap: 2,
-      padding: '2px 6px',
+      padding: '2px 5px',
       borderRadius: 5,
       background: pos ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
       border: `1px solid ${pos ? 'rgba(74,222,128,0.2)' : 'rgba(248,113,113,0.2)'}`,
