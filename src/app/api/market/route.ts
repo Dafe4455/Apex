@@ -23,25 +23,24 @@ const STOCK_META: Record<string, { name: string; logoUrl: string }> = {
 
 async function fetchCrypto() {
   try {
-    const results = await Promise.all(
-      CRYPTO_SYMBOLS.map(async (sym) => {
-        const [tickerRes, statsRes] = await Promise.all([
-          fetch(`https://api.binance.com/api/v3/ticker/price?symbol=${sym}`),
-          fetch(`https://api.binance.com/api/v3/ticker/24hr?symbol=${sym}`),
-        ]);
-        const ticker = await tickerRes.json();
-        const stats  = await statsRes.json();
-        const base   = sym.replace('USDT', '');
-        return {
-          symbol:        base,
-          name:          CRYPTO_META[base]?.name ?? base,
-          logoUrl:       CRYPTO_META[base]?.logoUrl ?? '',
-          price:         parseFloat(ticker.price),
-          changePercent: parseFloat(stats.priceChangePercent),
-        };
-      })
+    const res = await fetch(
+      'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum,solana,binancecoin&order=market_cap_desc&sparkline=false&price_change_percentage=24h',
+      { next: { revalidate: 30 } }
     );
-    return results;
+    if (!res.ok) return [];
+    const data = await res.json();
+
+    const idMap: Record<string, string> = {
+      bitcoin: 'BTC', ethereum: 'ETH', solana: 'SOL', binancecoin: 'BNB',
+    };
+
+    return data.map((coin: any) => ({
+      symbol:        idMap[coin.id] ?? coin.symbol.toUpperCase(),
+      name:          coin.name,
+      logoUrl:       coin.image,
+      price:         coin.current_price ?? 0,
+      changePercent: coin.price_change_percentage_24h ?? 0,
+    }));
   } catch {
     return [];
   }
