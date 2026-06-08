@@ -33,16 +33,17 @@ function ChangeBadge({ value }: { value: number }) {
     <span style={{
       display: 'inline-flex',
       alignItems: 'center',
-      gap: 3,
-      padding: '3px 8px',
-      borderRadius: 6,
+      gap: 2,
+      padding: '2px 6px',
+      borderRadius: 5,
       background: pos ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
       border: `1px solid ${pos ? 'rgba(74,222,128,0.2)' : 'rgba(248,113,113,0.2)'}`,
       fontFamily: 'var(--mono)',
-      fontSize: '0.7rem',
+      fontSize: '0.63rem',
       fontWeight: 600,
       color: pos ? '#4ade80' : '#f87171',
       letterSpacing: '0.02em',
+      whiteSpace: 'nowrap',
     }}>
       {pos ? '▲' : '▼'} {pos ? '+' : ''}{fmt(value)}%
     </span>
