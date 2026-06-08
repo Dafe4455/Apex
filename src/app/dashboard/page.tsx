@@ -213,7 +213,7 @@ export default function DashboardPage() {
 
         /* ── HERO CARD ── */
         .hero-card{margin:0 16px 6px;background:var(--card);border-radius:20px;padding:22px 20px 12px;border:1px solid var(--bg-3);position:relative;overflow:hidden;}
-        .hero-card::before{content:'';position:absolute;top:-60px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(56,189,248,0.08) 0%,transparent 85%);pointer-events:none;}
+        .hero-card::before{content:'';position:absolute;top:-60px;right:-40px;width:180px;height:180px;background:radial-gradient(circle,rgba(56,189,248,0.08) 0%,transparent 72%);pointer-events:none;}
         .bal-eyebrow{font-size:0.58rem;font-weight:600;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;}
         .bal-amount{font-size:2.6rem;font-weight:700;color:var(--ink);letter-spacing:-0.03em;line-height:1;margin-bottom:8px;}
         .bal-amount sup{font-size:1rem;font-weight:500;vertical-align:super;margin-right:1px;}
