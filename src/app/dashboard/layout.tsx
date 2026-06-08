@@ -329,7 +329,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           color: #2a4a6a;
           transition: color 0.15s;
         }
-        .db-bn-item.active svg { color: var(--ink); }
+        .db-bn-item.active svg { color: var(--mint); }
         .db-bn-label {
           font-family: var(--mono);
           font-size: 0.48rem;
