@@ -287,7 +287,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           bottom: 0; left: 0; right: 0;
           z-index: 60;
-          background: rgba(11, 30, 44, 0.97);
+          background: rgba(11, 37, 44, 0.97);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           border-top: 1px solid rgba(255,255,255,0.06);
