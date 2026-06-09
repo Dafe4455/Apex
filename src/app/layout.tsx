@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Providers from './providers';
 import SWRegister from './sw-register';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export const metadata: Metadata = {
   title: 'Apex Markets',
@@ -25,14 +26,17 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: 'cover', // enables env(safe-area-inset-*) in PWA standalone mode
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body style={{ margin: 0, padding: 0, background: '#0a1a26' }}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <LanguageSwitcher />
+          {children}
+        </Providers>
         <SWRegister />
       </body>
     </html>
