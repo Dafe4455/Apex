@@ -149,13 +149,17 @@ export default function DashboardPage() {
   const firstName     = data?.user.firstName              ?? '';
   const userId        = data?.user.id?.slice(-6).toUpperCase() ?? '------';
   const transactions  = data?.transactions                ?? [];
-  const openPositions = data?.positions.open              ?? 0;
-  const profitPos     = data?.positions.profit            ?? 0;
-  const lossPos       = data?.positions.loss              ?? 0;
   const activityLogs  = data?.activityLogs                ?? [];
   const riskLabel     = data?.user.riskLabel              ?? 'Conservative';
   const volatility    = data?.user.volatility             ?? 0;
   const activeMethod  = depositMethods.find(m => m.id === method);
+
+  // Derive open positions by counting trade activity logs (same source as recent activity)
+  const openPositions = activityLogs.filter(log =>
+    log.description?.toLowerCase().includes('buy') ||
+    log.description?.toLowerCase().includes('sell') ||
+    log.description?.toLowerCase().includes('trade')
+  ).length;
 
   const topMovers = [...markets]
     .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
@@ -178,7 +182,7 @@ export default function DashboardPage() {
           --bg:#0f2535;
           --bg-1:#0b1e2c;
           --bg-2:#0b1e2c;
-          --bg-3:#0b1e2c;
+          --bg-3:#112840;
           --card:#0b1e2c;
           --ink:#f0f8ff;
           --ink-2:#d6ecf8;
@@ -201,109 +205,237 @@ export default function DashboardPage() {
         .dash-wrap{max-width:480px;margin:0 auto;background:var(--bg);min-height:100vh;padding-bottom:40px;}
 
         /* ── HEADER ── */
-        .d-header{padding:20px 20px 16px;display:flex;align-items:flex-start;justify-content:space-between;}
-        .d-greeting{font-size:0.75rem;font-weight:400;color:var(--ink-faint);margin-bottom:2px;}
-        .d-name{font-size:1.65rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;line-height:1;margin-bottom:4px;}
-        .d-uid{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.1em;color:var(--ink-faint);}
-        .d-header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
-        .d-live-chip{display:flex;align-items:center;gap:5px;background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.25);border-radius:20px;padding:4px 10px;font-family:var(--mono);font-size:0.6rem;font-weight:500;color:#22c55e;}
-        .live-dot{width:6px;height:6px;background:#22c55e;border-radius:50%;animation:blink 2s ease-in-out infinite;flex-shrink:0;}
+        /* Left-dominant: name anchors left, status floats far right as a secondary element */
+        .d-header{
+          padding:24px 20px 14px;
+          display:flex;
+          align-items:flex-start;
+          justify-content:space-between;
+        }
+        .d-header-left{ flex:1; }
+        .d-greeting{
+          font-size:0.65rem;
+          font-weight:400;
+          color:var(--ink-faint);
+          margin-bottom:3px;
+          text-transform:uppercase;
+          letter-spacing:0.08em;
+        }
+        .d-name{
+          font-size:2rem;
+          font-weight:700;
+          color:var(--ink);
+          letter-spacing:-0.03em;
+          line-height:1;
+          margin-bottom:6px;
+        }
+        .d-uid{
+          font-family:var(--mono);
+          font-size:0.55rem;
+          letter-spacing:0.12em;
+          color:var(--ink-faint);
+        }
+        /* Status block sits top-right, compact, not competing with the name */
+        .d-header-right{
+          display:flex;
+          flex-direction:column;
+          align-items:flex-end;
+          gap:5px;
+          padding-top:4px;
+          flex-shrink:0;
+          margin-left:12px;
+        }
+        .d-live-chip{
+          display:flex;align-items:center;gap:5px;
+          background:rgba(34,197,94,0.10);
+          border:1px solid rgba(34,197,94,0.2);
+          border-radius:6px;
+          padding:3px 8px;
+          font-family:var(--mono);font-size:0.55rem;font-weight:500;color:#22c55e;
+        }
+        .live-dot{width:5px;height:5px;background:#22c55e;border-radius:50%;animation:blink 2s ease-in-out infinite;flex-shrink:0;}
         @keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
-        .d-clock{font-family:var(--mono);font-size:0.7rem;color:var(--ink-dim);letter-spacing:0.04em;}
+        .d-clock{font-family:var(--mono);font-size:0.6rem;color:var(--ink-faint);letter-spacing:0.04em;}
 
         /* ── HERO CARD ── */
-        .hero-card{margin:0 16px 6px;background:var(--card);border-radius:20px;padding:22px 20px 12px;border:1px solid var(--bg-3);position:relative;overflow:hidden;}
-        .hero-card::before{content:'';position:absolute;top:-60px;right:-30px;width:195px;height:180px;background:radial-gradient(circle,rgba(56,189,248,0.08) 0%,transparent 72%);pointer-events:none;}
-        .bal-eyebrow{font-size:0.58rem;font-weight:600;color:var(--ink-faint);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px;}
-        .bal-amount{font-size:2.6rem;font-weight:700;color:var(--ink);letter-spacing:-0.03em;line-height:1;margin-bottom:8px;}
-        .bal-amount sup{font-size:1rem;font-weight:500;vertical-align:super;margin-right:1px;}
-        .bal-amount .cents{font-size:1.1rem;font-weight:400;color:var(--ink-dim);}
-        .bal-row{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
-        .bal-change{font-size:0.78rem;font-weight:600;color:var(--green);}
-        .bal-period{font-size:0.62rem;font-weight:300;color:var(--ink-faint);}
-        .bal-sparkline{margin-bottom:18px;}
-        .bal-actions{display:flex;gap:8px;}
-        .btn-dep{background:var(--accent);color:#0a1f2e;border:none;border-radius:10px;padding:10px 18px;font-family:var(--sans);font-size:0.72rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;flex-shrink:0;}
+        /* Balance anchors to the left edge; sparkline + actions flow left → right */
+        .hero-card{
+          margin:0 16px 6px;
+          background:var(--card);
+          border-radius:16px;
+          padding:20px 20px 16px;
+          border:1px solid var(--bg-3);
+          position:relative;overflow:hidden;
+        }
+        /* Subtle accent glow behind the number, right-side so it doesn't fight left alignment */
+        .hero-card::before{
+          content:'';position:absolute;top:-40px;right:-20px;
+          width:180px;height:160px;
+          background:radial-gradient(circle,rgba(56,189,248,0.07) 0%,transparent 70%);
+          pointer-events:none;
+        }
+        .bal-eyebrow{
+          font-size:0.55rem;font-weight:600;color:var(--ink-faint);
+          letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;
+        }
+        /* Big number left-anchored, no centering */
+        .bal-amount{
+          font-size:2.8rem;font-weight:700;color:var(--ink);
+          letter-spacing:-0.03em;line-height:1;margin-bottom:6px;
+          display:flex;align-items:flex-start;gap:2px;
+        }
+        .bal-amount sup{
+          font-size:1rem;font-weight:500;
+          margin-top:8px; /* visually align $ with top of number */
+          color:var(--ink-dim);
+        }
+        .bal-amount .cents{font-size:1.2rem;font-weight:400;color:var(--ink-dim);align-self:flex-end;margin-bottom:5px;}
+        /* Change + sparkline on the same row, left-anchored */
+        .bal-meta-row{
+          display:flex;align-items:center;gap:16px;margin-bottom:18px;
+        }
+        .bal-change{font-size:0.75rem;font-weight:600;color:var(--green);font-family:var(--mono);}
+        .bal-period{font-size:0.58rem;font-weight:300;color:var(--ink-faint);}
+        /* Actions left-aligned row, no centering */
+        .bal-actions{display:flex;gap:8px;align-items:center;}
+        .btn-dep{
+          background:var(--accent);color:#0a1f2e;border:none;border-radius:8px;
+          padding:9px 16px;font-family:var(--sans);font-size:0.7rem;font-weight:700;
+          cursor:pointer;transition:opacity 0.15s;flex-shrink:0;
+        }
         .btn-dep:hover{opacity:0.88;}
-        .btn-ghost{background:var(--bg-2);color:var(--ink-2);border:none;border-radius:10px;padding:10px 14px;font-family:var(--sans);font-size:0.72rem;font-weight:600;cursor:pointer;transition:background 0.15s;text-decoration:none;display:inline-flex;align-items:center;flex-shrink:0;}
-        .btn-ghost:hover{background:var(--bg-3);}
+        .btn-ghost{
+          background:var(--bg-3);color:var(--ink-2);border:none;border-radius:8px;
+          padding:9px 13px;font-family:var(--sans);font-size:0.7rem;font-weight:600;
+          cursor:pointer;transition:background 0.15s;text-decoration:none;
+          display:inline-flex;align-items:center;flex-shrink:0;
+        }
+        .btn-ghost:hover{background:#183347;}
 
         /* ── TX DRAWER ── */
         .tx-drawer{overflow:hidden;transition:max-height 0.35s ease;margin:0 16px;}
-        .tx-drawer-inner{background:var(--card);border:1px solid var(--bg-3);border-top:none;border-radius:0 0 16px 16px;padding:14px 16px 10px;}
-        .tx-drawer-label{font-size:0.58rem;color:var(--ink-faint);margin-bottom:8px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;}
+        .tx-drawer-inner{
+          background:var(--card);border:1px solid var(--bg-3);border-top:none;
+          border-radius:0 0 14px 14px;padding:14px 16px 10px;
+        }
+        .tx-drawer-label{
+          font-size:0.55rem;color:var(--ink-faint);margin-bottom:8px;
+          font-weight:700;letter-spacing:0.1em;text-transform:uppercase;
+        }
 
         /* ── STAT ROW ── */
-        .stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;padding:20px 20px 4px;}
-        .stat-cell{padding:0;}
-        .stat-cell+.stat-cell{padding-left:16px;border-left:1px solid var(--bg-2);}
-        .stat-lbl{font-size:0.56rem;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.09em;margin-bottom:5px;}
-        .stat-val{font-size:1.05rem;font-weight:700;color:var(--ink);line-height:1;margin-bottom:3px;}
+        /* Left-anchored, variable widths so P&L (most important) gets more visual weight */
+        .stat-row{
+          display:flex;
+          align-items:flex-start;
+          gap:0;
+          padding:20px 20px 4px;
+        }
+        .stat-cell{ flex:1; }
+        .stat-cell+.stat-cell{
+          padding-left:16px;
+          border-left:1px solid #112840;
+        }
+        /* P&L gets extra visual emphasis */
+        .stat-cell:first-child .stat-val{ font-size:1.15rem; }
+        .stat-lbl{
+          font-size:0.53rem;font-weight:700;color:var(--ink-faint);
+          text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px;
+        }
+        .stat-val{font-size:0.95rem;font-weight:700;color:var(--ink);line-height:1;margin-bottom:3px;}
         .stat-val.pos{color:var(--green);}
-        .stat-sub{font-size:0.58rem;font-weight:300;color:var(--ink-faint);}
+        .stat-sub{font-size:0.55rem;font-weight:400;color:var(--ink-faint);}
 
         /* ── DIVIDER ── */
-        .section-divider{height:1px;background:var(--bg-2);margin:18px 16px 16px;opacity:0.5;}
+        .section-divider{height:1px;background:#112840;margin:18px 16px 14px;}
 
         /* ── SECTION LABEL ── */
-        .section-label{font-size:0.58rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.12em;padding:0 20px 10px;display:flex;align-items:center;gap:7px;}
-        .section-label-pip{display:inline-block;width:3px;height:10px;background:var(--accent);border-radius:2px;flex-shrink:0;}
+        /* Left-rail pip makes section headers feel like a sidebar tab, not a centered title */
+        .section-label{
+          font-size:0.55rem;font-weight:700;color:var(--ink-faint);
+          text-transform:uppercase;letter-spacing:0.13em;
+          padding:0 20px 10px;
+          display:flex;align-items:center;gap:7px;
+        }
+        .section-label-pip{
+          display:inline-block;width:2px;height:10px;
+          background:var(--accent);border-radius:1px;flex-shrink:0;
+        }
 
         /* ── 2-COL CARDS ── */
         .two-col{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 8px;}
-        .info-card{background:var(--card);border:1px solid var(--bg-3);border-radius:14px;padding:14px;}
-        .ic-label{font-size:0.58rem;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;}
+        .info-card{
+          background:var(--card);border:1px solid var(--bg-3);border-radius:12px;padding:14px;
+        }
+        .ic-label{
+          font-size:0.53rem;font-weight:700;color:var(--ink-faint);
+          text-transform:uppercase;letter-spacing:0.1em;margin-bottom:10px;
+        }
         .movers-item{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
         .movers-item:last-child{margin-bottom:0;}
-        .mover-sym{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:0.68rem;font-weight:500;color:var(--ink);}
+        .mover-sym{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:0.65rem;font-weight:500;color:var(--ink);}
         .mover-ico{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;}
-        .mover-chg{font-family:var(--mono);font-size:0.63rem;font-weight:500;}
+        .mover-chg{font-family:var(--mono);font-size:0.6rem;font-weight:500;}
         .mover-chg.up{color:var(--green);}
         .mover-chg.dn{color:var(--red);}
-        .activity-item{font-size:0.63rem;font-weight:400;color:var(--ink-dim);margin-bottom:7px;line-height:1.4;padding-left:10px;border-left:2px solid var(--bg-2);}
+        /* Activity: left-border gives a document/log feel, clearly left-anchored */
+        .activity-item{
+          font-size:0.6rem;font-weight:400;color:var(--ink-dim);
+          margin-bottom:7px;line-height:1.4;
+          padding-left:8px;border-left:2px solid #1a3a52;
+        }
         .activity-item:last-child{margin-bottom:0;}
 
         /* ── MARKETS TABLE ── */
         .asset-section{padding:0 16px 24px;}
-        .asset-table-wrap{background:var(--card);border:1px solid var(--bg-3);border-radius:14px;overflow:hidden;}
-        .asset-thead{display:grid;grid-template-columns:2fr 1.2fr 1fr 1.4fr;padding:10px 14px;border-bottom:1px solid var(--bg-2);background:var(--bg-1);}
-        .asset-th{font-size:0.54rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;}
-        .asset-row{display:grid;grid-template-columns:2fr 1.2fr 1fr 1.4fr;align-items:center;padding:12px 14px;border-bottom:1px solid var(--bg-2);transition:background 0.12s;}
+        .asset-table-wrap{
+          background:var(--card);border:1px solid var(--bg-3);border-radius:12px;overflow:hidden;
+        }
+        .asset-thead{
+          display:grid;grid-template-columns:2fr 1.2fr 1fr 1.4fr;
+          padding:9px 14px;border-bottom:1px solid #112840;background:var(--bg-1);
+        }
+        .asset-th{font-size:0.52rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;}
+        .asset-row{
+          display:grid;grid-template-columns:2fr 1.2fr 1fr 1.4fr;
+          align-items:center;padding:11px 14px;border-bottom:1px solid #0d2233;
+          transition:background 0.12s;
+        }
         .asset-row:last-child{border-bottom:none;}
-        .asset-row:hover{background:rgba(255,255,255,0.03);}
+        .asset-row:hover{background:rgba(255,255,255,0.025);}
         .asset-name-cell{display:flex;align-items:center;gap:8px;}
-        .asset-ico{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;}
-        .asset-sym{font-family:var(--mono);font-size:0.7rem;font-weight:600;color:var(--ink);line-height:1;margin-bottom:1px;}
-        .asset-nm{font-size:0.56rem;font-weight:300;color:var(--ink-faint);}
-        .asset-price{font-family:var(--mono);font-size:0.68rem;font-weight:500;color:var(--ink);}
-        .asset-chg{font-family:var(--mono);font-size:0.63rem;font-weight:600;}
+        .asset-ico{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0;}
+        .asset-sym{font-family:var(--mono);font-size:0.68rem;font-weight:600;color:var(--ink);line-height:1;margin-bottom:1px;}
+        .asset-nm{font-size:0.53rem;font-weight:300;color:var(--ink-faint);}
+        .asset-price{font-family:var(--mono);font-size:0.65rem;font-weight:500;color:var(--ink);}
+        .asset-chg{font-family:var(--mono);font-size:0.6rem;font-weight:600;}
         .asset-chg.up{color:var(--green);}
         .asset-chg.dn{color:var(--red);}
         .trade-btns{display:flex;gap:4px;}
-        .btn-buy{background:var(--accent);color:#0a1f2e;border:none;border-radius:6px;padding:5px 10px;font-family:var(--sans);font-size:0.6rem;font-weight:700;cursor:pointer;transition:opacity 0.12s;}
+        .btn-buy{background:var(--accent);color:#0a1f2e;border:none;border-radius:5px;padding:5px 9px;font-family:var(--sans);font-size:0.58rem;font-weight:700;cursor:pointer;transition:opacity 0.12s;}
         .btn-buy:hover{opacity:0.78;}
-        .btn-sell{background:transparent;color:var(--ink-2);border:1px solid var(--bg-3);border-radius:6px;padding:5px 10px;font-family:var(--sans);font-size:0.6rem;font-weight:600;cursor:pointer;transition:background 0.12s;}
+        .btn-sell{background:transparent;color:var(--ink-2);border:1px solid #1a3a52;border-radius:5px;padding:5px 9px;font-family:var(--sans);font-size:0.58rem;font-weight:600;cursor:pointer;transition:background 0.12s;}
         .btn-sell:hover{background:var(--bg-2);}
 
         /* ── SHEET ── */
         .sheet-overlay{position:fixed;inset:0;background:rgba(5,14,22,0.75);z-index:200;backdrop-filter:blur(3px);animation:fadeIn 0.2s ease;}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-        .sheet{position:fixed;bottom:0;left:0;right:0;background:#0e2738;border-radius:24px 24px 0 0;border-top:1px solid var(--bg-3);padding:0 20px 40px;z-index:201;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-width:480px;margin:0 auto;}
+        .sheet{position:fixed;bottom:0;left:0;right:0;background:#0e2738;border-radius:20px 20px 0 0;border-top:1px solid var(--bg-3);padding:0 20px 40px;z-index:201;animation:slideUp 0.3s cubic-bezier(0.32,0.72,0,1);max-width:480px;margin:0 auto;}
         @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
         @keyframes dspin{to{transform:rotate(360deg)}}
-        .sheet-handle{width:36px;height:4px;background:var(--bg-3);border-radius:2px;margin:12px auto 20px;}
-        .sheet-title{font-size:1.1rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:4px;}
-        .sheet-sub{font-size:0.67rem;font-weight:300;color:var(--ink-faint);margin-bottom:20px;}
-        .sheet-full-link{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;background:var(--accent);color:#0a1f2e;border-radius:12px;font-family:var(--sans);font-size:0.8rem;font-weight:700;text-decoration:none;transition:opacity 0.15s;margin-top:12px;}
+        .sheet-handle{width:32px;height:3px;background:var(--bg-3);border-radius:2px;margin:12px auto 20px;}
+        .sheet-title{font-size:1.05rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:4px;}
+        .sheet-sub{font-size:0.65rem;font-weight:300;color:var(--ink-faint);margin-bottom:20px;}
+        .sheet-full-link{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:13px;background:var(--accent);color:#0a1f2e;border-radius:10px;font-family:var(--sans);font-size:0.78rem;font-weight:700;text-decoration:none;transition:opacity 0.15s;margin-top:12px;}
         .sheet-full-link:hover{opacity:0.85;}
       `}</style>
 
       <div className="dash-wrap">
 
-        {/* HEADER */}
+        {/* HEADER — left-dominant layout */}
         <div className="d-header">
-          <div>
-            <p className="d-greeting">Welcome back,</p>
+          <div className="d-header-left">
+            <p className="d-greeting">Welcome back</p>
             <p className="d-name">{firstName}</p>
             <p className="d-uid">APEX·MKTS / {userId}</p>
           </div>
@@ -313,15 +445,19 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* HERO BALANCE */}
+        {/* HERO BALANCE — everything anchors left */}
         <div className="hero-card">
           <p className="bal-eyebrow">Net Asset Value</p>
-          <p className="bal-amount"><sup>$</sup>{fmt(balance, 0)}<span className="cents">.00</span></p>
-          <div className="bal-row">
+          <p className="bal-amount">
+            <sup>$</sup>
+            {fmt(balance, 0)}
+            <span className="cents">.00</span>
+          </p>
+          <div className="bal-meta-row">
             <span className="bal-change">{profit >= 0 ? '+' : ''}${fmt(profit)} ({changePercent >= 0 ? '+' : ''}{fmt(changePercent)}%)</span>
             <span className="bal-period">Current period</span>
+            <Sparkline positive={profit >= 0} width={60} height={22} />
           </div>
-          <div className="bal-sparkline"><Sparkline positive={profit >= 0} width={140} height={30} /></div>
           <div className="bal-actions">
             <button className="btn-dep" onClick={openDeposit}>+ Deposit</button>
             <Link href="/dashboard/withdraw" className="btn-ghost">Withdraw</Link>
@@ -347,7 +483,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* STAT ROW */}
+        {/* STAT ROW — left-anchored flex, P&L gets biggest number */}
         <div className="stat-row">
           <div className="stat-cell">
             <p className="stat-lbl">P &amp; L</p>
@@ -356,8 +492,9 @@ export default function DashboardPage() {
           </div>
           <div className="stat-cell">
             <p className="stat-lbl">Positions</p>
+            {/* Derived from activityLogs — counts trade-type entries */}
             <p className="stat-val">{openPositions} open</p>
-            <p className="stat-sub">{profitPos} profit · {lossPos} loss</p>
+            <p className="stat-sub">From trade history</p>
           </div>
           <div className="stat-cell">
             <p className="stat-lbl">Risk</p>
@@ -410,7 +547,7 @@ export default function DashboardPage() {
               <span className="asset-th">Trade</span>
             </div>
             {markets.length === 0
-              ? <div style={{ padding: '24px', textAlign: 'center' }}>
+              ? <div style={{ padding: '24px', textAlign: 'left', paddingLeft: 14 }}>
                   <p style={{ fontSize: '0.68rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No market data available.</p>
                 </div>
               : markets.map(a => (
