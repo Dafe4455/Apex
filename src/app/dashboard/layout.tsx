@@ -511,7 +511,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   <GoogleTranslate />
 </div>
           
-        </div>
+        
 
         {/* MAIN */}
         <main className="db-main">
