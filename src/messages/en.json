@@ -1,5 +1,29 @@
 {
-  "common": {
-    "loading": "Loading..."
+  "nav": {
+    "home": "Home",
+    "markets": "Markets",
+    "trade": "Trade",
+    "wallet": "Wallet",
+    "more": "More"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "netAssetValue": "Net Asset Value",
+    "currentPeriod": "Current period",
+    "deposit": "+ Deposit",
+    "withdraw": "Withdraw",
+    "history": "History",
+    "pnl": "P & L",
+    "realised": "Realised",
+    "positions": "Positions",
+    "open": "open",
+    "profit": "profit",
+    "loss": "loss",
+    "sentiment": "Sentiment",
+    "neutral": "Neutral",
+    "marketOverview": "Market Overview",
+    "topMovers": "Top Movers",
+    "recentActivity": "Recent Activity",
+    "live": "Live"
   }
 }
