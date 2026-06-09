@@ -18,26 +18,33 @@ export default function LanguageSwitcher() {
   const currentLocale = pathname.split("/")[1] ?? "en";
 
   function switchLocale(locale: string) {
-    // Save to cookie
     document.cookie = `locale=${locale};path=/;max-age=${60 * 60 * 24 * 365}`;
-
-    // Swap locale in current path e.g. /en/dashboard → /fr/dashboard
     const segments = pathname.split("/");
     segments[1] = locale;
     router.push(segments.join("/"));
   }
 
   return (
-    <select
-      value={currentLocale}
-      onChange={(e) => switchLocale(e.target.value)}
-      className="bg-transparent text-sm border border-white/20 rounded px-2 py-1 cursor-pointer"
-    >
-      {languages.map((lang) => (
-        <option key={lang.code} value={lang.code}>
-          {lang.flag} {lang.label}
-        </option>
-      ))}
-    </select>
+    <div style={{ position: "fixed", top: 16, right: 16, zIndex: 9999 }}>
+      <select
+        value={currentLocale}
+        onChange={(e) => switchLocale(e.target.value)}
+        style={{
+          background: "#0f2a3d",
+          color: "#00d4ff",
+          border: "1px solid #00d4ff40",
+          borderRadius: 6,
+          padding: "4px 8px",
+          fontSize: 13,
+          cursor: "pointer",
+        }}
+      >
+        {languages.map((lang) => (
+          <option key={lang.code} value={lang.code} style={{ background: "#0f2a3d" }}>
+            {lang.flag} {lang.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
