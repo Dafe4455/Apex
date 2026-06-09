@@ -1,5 +1,29 @@
 {
-  "common": {
-    "loading": "Cargando..."
+  "nav": {
+    "home": "Inicio",
+    "markets": "Mercados",
+    "trade": "Operar",
+    "wallet": "Cartera",
+    "more": "Más"
+  },
+  "dashboard": {
+    "welcome": "Bienvenido de nuevo",
+    "netAssetValue": "Valor neto de activos",
+    "currentPeriod": "Período actual",
+    "deposit": "+ Depósito",
+    "withdraw": "Retirar",
+    "history": "Historial",
+    "pnl": "P & G",
+    "realised": "Realizado",
+    "positions": "Posiciones",
+    "open": "abiertas",
+    "profit": "ganancia",
+    "loss": "pérdida",
+    "sentiment": "Sentimiento",
+    "neutral": "Neutral",
+    "marketOverview": "Resumen del mercado",
+    "topMovers": "Más activos",
+    "recentActivity": "Actividad reciente",
+    "live": "En vivo"
   }
 }
