@@ -7,7 +7,12 @@ const defaultLocale = "en";
 const publicRoutes  = ["/", "/login", "/signup", "/admin/login", "/manifest.json", "/sw.js", "/icon-192.png", "/icon-512.png", "/offline"];
 const authRoutes    = ["/login", "/signup"];
 
-function getLocale(req: Request): string {
+function getLocale(req: Request & { cookies: any }): string {
+  // 1. Respect saved cookie
+  const saved = req.cookies.get?.("locale")?.value;
+  if (saved && supportedLocales.includes(saved)) return saved;
+
+  // 2. Fall back to Accept-Language
   const acceptLanguage = req.headers.get("accept-language") ?? "";
   const preferred = acceptLanguage
     .split(",")
@@ -38,28 +43,25 @@ export default auth((req) => {
   const isAuthRoute   = authRoutes.includes(cleanPath);
   const isAdminRoute  = cleanPath.startsWith("/dashboard/admin");
 
-  // 1. If no locale prefix yet, redirect to add it
   if (!hasLocale) {
-    const locale = getLocale(req);
+    const locale = getLocale(req as any);
     const localeUrl = new URL(`/${locale}${rawPath}`, nextUrl);
     localeUrl.search = nextUrl.search;
     return NextResponse.redirect(localeUrl);
   }
 
-  // 2. Auth guards (using cleanPath, no locale prefix)
   if (isAuthRoute && isLoggedIn) {
-    return NextResponse.redirect(new URL(`/${getLocale(req)}/dashboard`, nextUrl));
+    return NextResponse.redirect(new URL(`/${getLocale(req as any)}/dashboard`, nextUrl));
   }
 
   if (!isPublicRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL(`/${getLocale(req)}/login`, nextUrl));
+    return NextResponse.redirect(new URL(`/${getLocale(req as any)}/login`, nextUrl));
   }
 
   if (isAdminRoute && role !== "ADMIN") {
-    return NextResponse.redirect(new URL(`/${getLocale(req)}/dashboard`, nextUrl));
+    return NextResponse.redirect(new URL(`/${getLocale(req as any)}/dashboard`, nextUrl));
   }
 
-  // 3. Rewrite /en/dashboard → /dashboard (pages stay where they are)
   const rewriteUrl = new URL(cleanPath || "/", nextUrl);
   rewriteUrl.search = nextUrl.search;
   return NextResponse.rewrite(rewriteUrl);
