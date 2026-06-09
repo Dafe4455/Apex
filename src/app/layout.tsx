@@ -4,7 +4,7 @@ import SWRegister from './sw-register';
 
 export const metadata: Metadata = {
   title: 'Apex Markets',
-  description: 'Global access to equities, derivatives, crypto, and FX.',
+  description: 'Global easy access to equities, derivatives, crypto, and FX.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
@@ -30,9 +30,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" translate="no">
+    <html lang="en">
       <head>
-        <meta name="google" content="notranslate" />
         <style dangerouslySetInnerHTML={{ __html: `
           .goog-te-banner-frame,
           .goog-te-banner-frame.skiptranslate,
