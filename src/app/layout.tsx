@@ -30,8 +30,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" translate="no">
       <head>
+        <meta name="google" content="notranslate" />
         <style dangerouslySetInnerHTML={{ __html: `
           .goog-te-banner-frame,
           .goog-te-banner-frame.skiptranslate,
