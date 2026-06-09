@@ -13,43 +13,121 @@ const languages = [
 
 export default function GoogleTranslate() {
   const [current, setCurrent] = useState('en');
+  const [open, setOpen] = useState(false);
 
   function switchLocale(langCode: string) {
     setCurrent(langCode);
+    setOpen(false);
 
     if (langCode === 'en') {
-      // Remove cookie to go back to English
       document.cookie = 'googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       document.cookie = 'googtrans=; path=/; domain=' + window.location.hostname + '; expires=Thu, 01 Jan 1970 00:00:00 GMT';
     } else {
-      // Set googtrans cookie — format must be /en/fr
       document.cookie = `googtrans=/en/${langCode}; path=/`;
       document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname}`;
     }
 
-    // Reload to apply
     window.location.reload();
   }
 
+  const selected = languages.find(l => l.code === current)!;
+
   return (
-    <select
-      value={current}
-      onChange={(e) => switchLocale(e.target.value)}
-      style={{
-        background: '#0f2a3d',
-        color: '#38bdf8',
-        border: '1px solid rgba(56,189,248,0.25)',
-        borderRadius: 6,
-        padding: '4px 8px',
-        fontSize: 12,
-        cursor: 'pointer',
-      }}
-    >
-      {languages.map((lang) => (
-        <option key={lang.code} value={lang.code} style={{ background: '#0f2a3d' }}>
-          {lang.flag} {lang.label}
-        </option>
-      ))}
-    </select>
+    <div style={{ position: 'relative' }}>
+      {/* Trigger button */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          borderRadius: 10,
+          padding: '8px 14px',
+          color: '#e2e8f0',
+          fontSize: 14,
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <span style={{ fontSize: 18 }}>{selected.flag}</span>
+        <span>{selected.label}</span>
+        <span style={{ color: '#64748b', fontSize: 10, marginLeft: 2 }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 40,
+            }}
+          />
+          <div style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            zIndex: 50,
+            background: '#0f1f2e',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 14,
+            overflow: 'hidden',
+            minWidth: 200,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          }}>
+            {languages.map((lang, i) => (
+              <button
+                key={lang.code}
+                onClick={() => switchLocale(lang.code)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  padding: '14px 18px',
+                  background: lang.code === current ? 'rgba(56,189,248,0.08)' : 'transparent',
+                  border: 'none',
+                  borderBottom: i < languages.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                  color: lang.code === current ? '#38bdf8' : '#e2e8f0',
+                  fontSize: 15,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  gap: 12,
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{ fontSize: 20 }}>{lang.flag}</span>
+                  <span>{lang.label}</span>
+                </span>
+                {lang.code === current && (
+                  <span style={{
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    border: '2px solid #38bdf8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <span style={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      background: '#38bdf8',
+                      display: 'block',
+                    }} />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
