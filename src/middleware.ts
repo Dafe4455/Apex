@@ -7,19 +7,6 @@ const defaultLocale = "en";
 const publicRoutes  = ["/", "/login", "/signup", "/admin/login", "/manifest.json", "/sw.js", "/icon-192.png", "/icon-512.png", "/offline"];
 const authRoutes    = ["/login", "/signup"];
 
-function getLocale(req: Request & { cookies: any }): string {
-  // 1. Respect saved cookie
-  const saved = req.cookies.get?.("locale")?.value;
-  if (saved && supportedLocales.includes(saved)) return saved;
-
-  // 2. Fall back to Accept-Language
-  const acceptLanguage = req.headers.get("accept-language") ?? "";
-  const preferred = acceptLanguage
-    .split(",")
-    .map((lang) => lang.split(";")[0].trim().split("-")[0].toLowerCase());
-  return preferred.find((lang) => supportedLocales.includes(lang)) ?? defaultLocale;
-}
-
 function stripLocale(pathname: string): string {
   const segments = pathname.split("/");
   if (supportedLocales.includes(segments[1])) {
@@ -43,23 +30,31 @@ export default auth((req) => {
   const isAuthRoute   = authRoutes.includes(cleanPath);
   const isAdminRoute  = cleanPath.startsWith("/dashboard/admin");
 
+  // Check googtrans cookie — if present, Google Translate is handling it
+  const googtrans = req.cookies.get("googtrans")?.value;
+  const gtLocale  = googtrans?.split("/")?.[2]; // e.g. "/en/fr" → "fr"
+
+  // Pick locale: googtrans cookie wins, else default
+  const locale = (gtLocale && supportedLocales.includes(gtLocale))
+    ? gtLocale
+    : defaultLocale;
+
   if (!hasLocale) {
-    const locale = getLocale(req as any);
     const localeUrl = new URL(`/${locale}${rawPath}`, nextUrl);
     localeUrl.search = nextUrl.search;
     return NextResponse.redirect(localeUrl);
   }
 
   if (isAuthRoute && isLoggedIn) {
-    return NextResponse.redirect(new URL(`/${getLocale(req as any)}/dashboard`, nextUrl));
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, nextUrl));
   }
 
   if (!isPublicRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL(`/${getLocale(req as any)}/login`, nextUrl));
+    return NextResponse.redirect(new URL(`/${locale}/login`, nextUrl));
   }
 
   if (isAdminRoute && role !== "ADMIN") {
-    return NextResponse.redirect(new URL(`/${getLocale(req as any)}/dashboard`, nextUrl));
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, nextUrl));
   }
 
   const rewriteUrl = new URL(cleanPath || "/", nextUrl);
