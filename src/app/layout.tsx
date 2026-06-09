@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Providers from './providers';
 import SWRegister from './sw-register';
-import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 export const metadata: Metadata = {
   title: 'Apex Markets',
