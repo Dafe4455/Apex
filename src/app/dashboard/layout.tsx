@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-
+import GoogleTranslate from '@/components/GoogleTranslate';
 const navItems = [
   {
     href: '/dashboard',
@@ -494,6 +494,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
             ))}
           </nav>
+          <GoogleTranslate />
           <div className="db-sidebar-footer">
             <button className="db-signout" onClick={() => signOut({ callbackUrl: '/login' })}>
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
