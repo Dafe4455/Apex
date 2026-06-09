@@ -4,7 +4,7 @@ import SWRegister from './sw-register';
 
 export const metadata: Metadata = {
   title: 'Apex Markets',
-  description: 'Global easy access to equities, derivatives, crypto, and FX.',
+  description: 'Global access to equities, derivatives, crypto, and FX.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
