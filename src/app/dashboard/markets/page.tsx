@@ -130,7 +130,7 @@ export default function MarketsPage() {
           --sans:'DM Sans',system-ui,sans-serif;
           --mono:'DM Mono','SF Mono',monospace;
         }
-        *{box-sizing:border-box;margin:0;padding:0;}
+        *{box-sizing:border-box;margin:0;padding:8;}
         body{background:var(--bg);font-family:var(--sans);}
 
         .mkt-wrap { max-width: 900px; padding-bottom: 40px; }
