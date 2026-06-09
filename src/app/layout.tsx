@@ -1,6 +1,17 @@
 import type { Metadata, Viewport } from 'next';
 import Providers from './providers';
 import SWRegister from './sw-register';
+<head>
+  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async />
+  <script dangerouslySetInnerHTML={{ __html: `
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        autoDisplay: false
+      }, 'google_translate_element');
+    }
+  `}} />
+</head>
 
 export const metadata: Metadata = {
   title: 'Apex Markets',
