@@ -1,17 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import Providers from './providers';
 import SWRegister from './sw-register';
-<head>
-  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async />
-  <script dangerouslySetInnerHTML={{ __html: `
-    function googleTranslateElementInit() {
-      new google.translate.TranslateElement({
-        pageLanguage: 'en',
-        autoDisplay: false
-      }, 'google_translate_element');
-    }
-  `}} />
-</head>
 
 export const metadata: Metadata = {
   title: 'Apex Markets',
@@ -42,11 +31,23 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
+          async
+        />
+        <script dangerouslySetInnerHTML={{ __html: `
+          function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+              pageLanguage: 'en',
+              autoDisplay: false
+            }, 'google_translate_element');
+          }
+        `}} />
+      </head>
       <body style={{ margin: 0, padding: 0, background: '#0a1a26' }}>
-        <Providers>
-          
-          {children}
-        </Providers>
+        <div id="google_translate_element" style={{ display: 'none' }} />
+        <Providers>{children}</Providers>
         <SWRegister />
       </body>
     </html>
