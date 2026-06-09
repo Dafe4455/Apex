@@ -32,6 +32,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
+        <style dangerouslySetInnerHTML={{ __html: `
+          .goog-te-banner-frame { display: none !important; }
+          body { top: 0 !important; }
+        `}} />
         <script
           src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
           async
