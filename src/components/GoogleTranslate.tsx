@@ -47,32 +47,30 @@ export default function GoogleTranslate() {
   }
 
   return (
-    <>
-      {/* Hidden Google widget */}
-      <div id="google_translate_element" style={{ display: 'none' }} />
+  <>
+    {/* Hidden Google widget */}
+    <div id="google_translate_element" style={{ display: 'none' }} />
 
-      {/* Your own custom UI */}
-      <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 9999 }}>
-        <select
-          value={current}
-          onChange={(e) => switchLanguage(e.target.value)}
-          style={{
-            background: '#0f2a3d',
-            color: '#00d4ff',
-            border: '1px solid #00d4ff40',
-            borderRadius: 6,
-            padding: '4px 8px',
-            fontSize: 13,
-            cursor: 'pointer',
-          }}
-        >
-          {languages.map((lang) => (
-            <option key={lang.code} value={lang.code} style={{ background: '#0f2a3d' }}>
-              {lang.flag} {lang.label}
-            </option>
-          ))}
-        </select>
-      </div>
-    </>
-  );
+    {/* Custom select — no fixed positioning */}
+    <select
+      value={current}
+      onChange={(e) => switchLocale(e.target.value)}
+      style={{
+        background: '#0f2a3d',
+        color: '#38bdf8',
+        border: '1px solid rgba(56,189,248,0.25)',
+        borderRadius: 6,
+        padding: '4px 8px',
+        fontSize: 12,
+        cursor: 'pointer',
+      }}
+    >
+      {languages.map((lang) => (
+        <option key={lang.code} value={lang.code} style={{ background: '#0f2a3d' }}>
+          {lang.flag} {lang.label}
+        </option>
+      ))}
+    </select>
+  </>
+);
         }
