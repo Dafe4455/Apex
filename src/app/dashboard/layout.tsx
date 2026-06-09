@@ -251,7 +251,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         .db-topbar-sep { color: var(--bg-2); }
 
-        /* ── CONTENT ── */
+        /* ── CONTENT (desktop) ── */
         .db-content {
           flex: 1;
           padding: 28px 32px;
@@ -270,6 +270,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           align-items: center;
           justify-content: space-between;
           border-bottom: 1px solid rgba(255,255,255,0.05);
+          height: 52px;
         }
         .db-mobile-logo {
           font-family: var(--mono);
@@ -381,7 +382,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         /* ── SHEET ROWS ── */
         .db-sheet-rows { padding: 4px 0; }
-
         .db-sheet-row {
           display: flex;
           align-items: center;
@@ -396,7 +396,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           text-align: left;
         }
         .db-sheet-row:active { background: rgba(255,255,255,0.03); }
-
         .db-sheet-row-icon {
           width: 16px;
           flex-shrink: 0;
@@ -404,10 +403,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           align-items: center;
           justify-content: center;
         }
-
-        .db-sheet-row-text {
-          flex: 1;
-        }
+        .db-sheet-row-text { flex: 1; }
         .db-sheet-row-label {
           font-family: var(--mono);
           font-size: 0.7rem;
@@ -424,17 +420,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           letter-spacing: 0.04em;
           color: var(--inl);
         }
-        .db-sheet-row-arrow {
-          color: var(--bg-3);
-          flex-shrink: 0;
-        }
-
+        .db-sheet-row-arrow { color: var(--bg-3); flex-shrink: 0; }
         .db-sheet-row-divider {
           height: 1px;
           background: rgba(255,255,255,0.04);
           margin: 0 20px;
         }
-
         .db-sheet-signout-row {
           display: flex;
           align-items: center;
@@ -464,8 +455,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .db-topbar { display: none; }
           .db-mobile-bar { display: flex; }
           .db-bottom-nav { display: block; }
-          .db-content { padding: 64px 16px calc(80px + max(env(safe-area-inset-bottom), 16px)); }
           .db-shell { background: var(--bg) !important; }
+
+          /*
+           * KEY FIX: on mobile, db-content must have:
+           * - zero horizontal padding (the page itself handles its own side spacing)
+           * - zero max-width (let it fill the full viewport width)
+           * - top padding = mobile topbar height (52px)
+           * - bottom padding = bottom nav height + safe area
+           */
+          .db-content {
+            padding: 52px 0 calc(74px + max(env(safe-area-inset-bottom), 0px));
+            max-width: 100%;
+            width: 100%;
+          }
         }
       `}</style>
 
