@@ -505,9 +505,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </aside>
 
-        {/* MOBILE TOPBAR */}
-        <div className="db-mobile-bar">
-          <span className="db-mobile-logo">APEX<span>•</span>MARKETS</span>
+       {/* MOBILE TOPBAR */}
+<div className="db-mobile-bar">
+  <span className="db-mobile-logo">APEX<span>•</span>MARKETS</span>
+  <GoogleTranslate />
+</div>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ color: '#2a4a6a' }}>
             <circle cx="8" cy="4" r="1.2" fill="currentColor" />
             <circle cx="8" cy="8" r="1.2" fill="currentColor" />
