@@ -37,7 +37,7 @@ export default function GoogleTranslate() {
     };
   }, []);
 
-  function switchLanguage(langCode: string) {
+  function switchLocale(langCode: string) {
     setCurrent(langCode);
     const select = document.querySelector('.goog-te-combo') as HTMLSelectElement;
     if (select) {
@@ -47,30 +47,27 @@ export default function GoogleTranslate() {
   }
 
   return (
-  <>
-    {/* Hidden Google widget */}
-    <div id="google_translate_element" style={{ display: 'none' }} />
-
-    {/* Custom select — no fixed positioning */}
-    <select
-      value={current}
-      onChange={(e) => switchLocale(e.target.value)}
-      style={{
-        background: '#0f2a3d',
-        color: '#38bdf8',
-        border: '1px solid rgba(56,189,248,0.25)',
-        borderRadius: 6,
-        padding: '4px 8px',
-        fontSize: 12,
-        cursor: 'pointer',
-      }}
-    >
-      {languages.map((lang) => (
-        <option key={lang.code} value={lang.code} style={{ background: '#0f2a3d' }}>
-          {lang.flag} {lang.label}
-        </option>
-      ))}
-    </select>
-  </>
-);
-        }
+    <>
+      <div id="google_translate_element" style={{ display: 'none' }} />
+      <select
+        value={current}
+        onChange={(e) => switchLocale(e.target.value)}
+        style={{
+          background: '#0f2a3d',
+          color: '#38bdf8',
+          border: '1px solid rgba(56,189,248,0.25)',
+          borderRadius: 6,
+          padding: '4px 8px',
+          fontSize: 12,
+          cursor: 'pointer',
+        }}
+      >
+        {languages.map((lang) => (
+          <option key={lang.code} value={lang.code} style={{ background: '#0f2a3d' }}>
+            {lang.flag} {lang.label}
+          </option>
+        ))}
+      </select>
+    </>
+  );
+}
