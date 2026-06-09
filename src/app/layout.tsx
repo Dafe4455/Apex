@@ -33,8 +33,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <head>
         <style dangerouslySetInnerHTML={{ __html: `
-          .goog-te-banner-frame { display: none !important; }
-          body { top: 0 !important; }
+          .goog-te-banner-frame,
+          .goog-te-banner-frame.skiptranslate,
+          iframe.goog-te-banner-frame {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+          }
+          body {
+            top: 0 !important;
+            position: static !important;
+          }
+        `}} />
+        <script dangerouslySetInnerHTML={{ __html: `
+          var _gtKill = setInterval(function() {
+            var banner = document.querySelector('iframe.goog-te-banner-frame');
+            if (banner) {
+              banner.style.display = 'none';
+              banner.style.height = '0';
+              document.body.style.top = '0';
+            }
+          }, 300);
+          setTimeout(function() { clearInterval(_gtKill); }, 5000);
         `}} />
         <script
           src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"
