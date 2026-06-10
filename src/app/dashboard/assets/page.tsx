@@ -457,7 +457,7 @@ export default function AssetsPage() {
                         </span>
                       </div>
 
-                      <Link href={`/trade?asset=${pos.symbol}`} style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                      <Link href={`dashboard/trade?asset=${pos.symbol}`} style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                         <ChevronRight size={16} />
                       </Link>
                     </div>
