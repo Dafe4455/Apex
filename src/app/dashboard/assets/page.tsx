@@ -267,10 +267,11 @@ export default function AssetsPage() {
         }
 
         .pos-row {
-          display: flex; align-items: center; gap: 12px;
-          padding: 14px 16px; border-bottom: 1px solid var(--border);
-          transition: background 0.15s; cursor: default;
-        }
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  transition: background 0.15s; cursor: default;
+  overflow: hidden;  /* ← add this */
+          }
         .pos-row:last-child { border-bottom: none; }
         .pos-row:hover { background: rgba(255,255,255,0.02); }
 
