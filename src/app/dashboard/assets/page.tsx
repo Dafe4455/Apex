@@ -119,11 +119,11 @@ export default function AssetsPage() {
   // ── live prices for open positions ────────────────────────────────────────
 
   const fetchLivePrices = async (positions: Position[]) => {
-    const openSymbols = [...new Set(
+    const openSymbols = Array.from(new Set(
       positions
         .filter(p => p.status === 'OPEN')
         .map(p => p.symbol)
-    )];
+    ));
 
     for (const sym of openSymbols) {
       const apiSym = PRICE_SYMBOL_MAP[sym] ?? sym.replace('USD', '');
