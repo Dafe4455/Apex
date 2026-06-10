@@ -25,6 +25,7 @@ type Position = {
 type Trade = {
   id: string;
   asset: string | null;
+  action: string | null;  // ← add this
   amount: number;
   status: string;
   createdAt: string;
