@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@root/auth';
 import { prisma } from '@/lib/prisma';
+import { TransactionType } from '@prisma/client';
 
 export async function GET() {
   const session = await auth();
@@ -21,7 +22,7 @@ export async function GET() {
       orderBy: { openedAt: 'desc' },
     }),
     prisma.transaction.findMany({
-      where: { userId: user.id, type: 'Trade' },
+      where: { userId: user.id, type: TransactionType.Trade },
       orderBy: { createdAt: 'desc' },
     }),
   ]);
