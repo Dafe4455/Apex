@@ -165,19 +165,24 @@ export default function AssetsPage() {
   // ── render helpers ────────────────────────────────────────────────────────
 
   const PnlChip = ({ value }: { value: number }) => (
-    <span style={{
-      color: value >= 0 ? 'var(--green)' : 'var(--red)',
-      background: value >= 0 ? 'rgba(34,212,122,0.08)' : 'rgba(248,113,113,0.08)',
-      border: `1px solid ${value >= 0 ? 'rgba(34,212,122,0.2)' : 'rgba(248,113,113,0.2)'}`,
-      borderRadius: 6,
-      padding: '2px 8px',
-      fontFamily: 'var(--mono)',
-      fontSize: '0.68rem',
-      fontWeight: 700,
-    }}>
-      {value >= 0 ? '+' : ''}{fmtUsd(value)}
-    </span>
-  );
+  <span style={{
+    color: value >= 0 ? 'var(--green)' : 'var(--red)',
+    background: value >= 0 ? 'rgba(34,212,122,0.08)' : 'rgba(248,113,113,0.08)',
+    border: `1px solid ${value >= 0 ? 'rgba(34,212,122,0.2)' : 'rgba(248,113,113,0.2)'}`,
+    borderRadius: 6,
+    padding: '2px 8px',
+    fontFamily: 'var(--mono)',
+    fontSize: '0.68rem',
+    fontWeight: 700,
+    maxWidth: 140,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    display: 'inline-block',
+  }}>
+    {value >= 0 ? '+' : ''}{fmtUsd(value)}
+  </span>
+);
 
   // ── empty state ───────────────────────────────────────────────────────────
 
