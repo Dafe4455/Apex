@@ -65,7 +65,7 @@ function getPriceSymbol(symbol: string) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function TradePage() {
-  const [assets, setAssets]             = useState<MarketAsset[]>([]);
+  const [assets, setAssets]               = useState<MarketAsset[]>([]);
   const [assetsLoading, setAssetsLoading] = useState(true);
 
   const [asset, setAsset]               = useState('BTCUSD');
@@ -89,7 +89,7 @@ export default function TradePage() {
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const activeAsset = useMemo(
-    () => assets.find(a => a.symbol === asset),
+    () => (assets ?? []).find(a => a.symbol === asset),
     [assets, asset],
   );
   const assetType    = useMemo(() => getType(asset), [asset]);
@@ -97,8 +97,10 @@ export default function TradePage() {
   const positionSize = useMemo(() => Number(amount) * leverage, [amount, leverage]);
   const priceUp      = prevPrice !== null && price !== null && price >= prevPrice;
 
+  // ── Safety-guarded filtered list ──────────────────────────────────────────
+
   const filteredAssets = useMemo(() =>
-    assets.filter(a =>
+    (assets ?? []).filter(a =>
       a.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
       a.name.toLowerCase().includes(searchQuery.toLowerCase()),
     ), [assets, searchQuery]);
@@ -114,9 +116,8 @@ export default function TradePage() {
     fetch('/api/markets')
       .then(r => r.json())
       .then((data: MarketAsset[]) => {
-        setAssets(data);
-        // seed first asset price from markets response
-        const first = data.find(a => a.symbol === 'BTCUSD') ?? data[0];
+        setAssets(data ?? []);
+        const first = (data ?? []).find(a => a.symbol === 'BTCUSD') ?? data?.[0];
         if (first) {
           setAsset(first.symbol);
           if (first.price) setPrice(first.price);
@@ -130,7 +131,7 @@ export default function TradePage() {
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get('asset');
-    if (p && assets.find(a => a.symbol === p)) setAsset(p);
+    if (p && (assets ?? []).find(a => a.symbol === p)) setAsset(p);
   }, [assets]);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
@@ -306,8 +307,14 @@ export default function TradePage() {
           color: var(--ink); display: flex; align-items: center; gap: 6px;
           letter-spacing: -0.02em;
         }
-        .chevron { color: var(--faint); transition: transform 0.2s; }
-        .chevron.open { transform: rotate(180deg); }
+
+        /* ── Chevron wrapper (replaces className on Lucide icon) ── */
+        .chevron-wrap {
+          display: flex; align-items: center;
+          color: var(--faint);
+          transition: transform 0.2s;
+        }
+        .chevron-wrap.open { transform: rotate(180deg); }
 
         /* ── Dropdown ── */
         .asset-dropdown {
@@ -549,7 +556,6 @@ export default function TradePage() {
             <div className="asset-selector" ref={dropdownRef}>
               <button className="asset-btn" onClick={() => setDropdownOpen(v => !v)}>
                 <span className="asset-name">
-                  {/* Logo in header */}
                   {activeAsset?.logoUrl && (
                     <img
                       src={activeAsset.logoUrl}
@@ -558,7 +564,10 @@ export default function TradePage() {
                     />
                   )}
                   {asset}
-                  <ChevronDown size={16} className={`chevron ${dropdownOpen ? 'open' : ''}`} />
+                  {/* FIX: wrap chevron in a span instead of passing className to Lucide */}
+                  <span className={`chevron-wrap ${dropdownOpen ? 'open' : ''}`}>
+                    <ChevronDown size={16} />
+                  </span>
                 </span>
                 <TypeBadge type={assetType} />
               </button>
