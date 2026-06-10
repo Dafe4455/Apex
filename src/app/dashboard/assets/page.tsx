@@ -416,7 +416,7 @@ export default function AssetsPage() {
   fontWeight: 700, overflow: 'hidden',
 }}>
   {meta.img
-    ? <img src={meta.img} alt={sym} style={{ width: 26, height: 26, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+    ? <img src={meta.img} alt={pos.symbol} style={{ width: 26, height: 26, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
     : meta.icon
   }
 </div>
