@@ -9,26 +9,28 @@ import { Toaster, toast } from 'react-hot-toast';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type MarketAsset = {
-  symbol:        string;
-  name:          string;
-  logoUrl:       string;
-  price:         number;
-  changePercent: number;
-};
+type PriceData = { price: number; change24h: number };
 
-// ── Asset type inference (for badge + marketType field) ───────────────────────
+// ── Static asset list (no API dependency) ─────────────────────────────────────
 
-const FOREX_SYMS  = ['EURUSD', 'GBPUSD', 'USDJPY'];
-const COMM_SYMS   = ['USOIL', 'UKOIL', 'XAUUSD'];
-const STOCK_SYMS  = ['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMZN', 'GOOGL'];
-
-function getType(symbol: string) {
-  if (FOREX_SYMS.includes(symbol))  return 'FOREX';
-  if (COMM_SYMS.includes(symbol))   return 'COMMODITIES';
-  if (STOCK_SYMS.includes(symbol))  return 'STOCKS';
-  return 'CRYPTO';
-}
+const ALL_ASSETS = [
+  { symbol: 'BTCUSD', name: 'Bitcoin',             type: 'CRYPTO' },
+  { symbol: 'ETHUSD', name: 'Ethereum',            type: 'CRYPTO' },
+  { symbol: 'SOLUSD', name: 'Solana',              type: 'CRYPTO' },
+  { symbol: 'BNBUSD', name: 'BNB',                 type: 'CRYPTO' },
+  { symbol: 'AAPL',   name: 'Apple Inc.',          type: 'STOCKS' },
+  { symbol: 'TSLA',   name: 'Tesla, Inc.',         type: 'STOCKS' },
+  { symbol: 'NVDA',   name: 'NVIDIA Corp.',        type: 'STOCKS' },
+  { symbol: 'MSFT',   name: 'Microsoft Corp.',     type: 'STOCKS' },
+  { symbol: 'AMZN',   name: 'Amazon.com Inc.',     type: 'STOCKS' },
+  { symbol: 'GOOGL',  name: 'Alphabet Inc.',       type: 'STOCKS' },
+  { symbol: 'USOIL',  name: 'WTI Crude Oil',       type: 'COMMODITIES' },
+  { symbol: 'UKOIL',  name: 'Brent Crude Oil',     type: 'COMMODITIES' },
+  { symbol: 'XAUUSD', name: 'Gold',                type: 'COMMODITIES' },
+  { symbol: 'EURUSD', name: 'Euro / US Dollar',    type: 'FOREX' },
+  { symbol: 'GBPUSD', name: 'British Pound / USD', type: 'FOREX' },
+  { symbol: 'USDJPY', name: 'US Dollar / Yen',     type: 'FOREX' },
+];
 
 const TYPE_BADGE: Record<string, { bg: string; color: string }> = {
   CRYPTO:      { bg: 'rgba(251,191,36,0.12)',  color: '#fbbf24' },
@@ -51,7 +53,7 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
-// ── Price symbol mapping (strip USD for API) ──────────────────────────────────
+// ── Price symbol mapping ──────────────────────────────────────────────────────
 
 const PRICE_SYMBOL_MAP: Record<string, string> = {
   USOIL: 'USOIL', UKOIL: 'UKOIL', XAUUSD: 'XAUUSD',
@@ -65,9 +67,6 @@ function getPriceSymbol(symbol: string) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function TradePage() {
-  const [assets, setAssets]               = useState<MarketAsset[]>([]);
-  const [assetsLoading, setAssetsLoading] = useState(true);
-
   const [asset, setAsset]               = useState('BTCUSD');
   const [price, setPrice]               = useState<number | null>(null);
   const [prevPrice, setPrevPrice]       = useState<number | null>(null);
@@ -84,55 +83,36 @@ export default function TradePage() {
   const [bids, setBids]                 = useState<{ price: string; amount: string }[]>([]);
   const [asks, setAsks]                 = useState<{ price: string; amount: string }[]>([]);
 
+  // Lazy prices — only fetched when dropdown opens
+  const [dropdownPrices, setDropdownPrices] = useState<Record<string, PriceData>>({});
+
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
-  const activeAsset = useMemo(
-    () => (assets ?? []).find(a => a.symbol === asset),
-    [assets, asset],
-  );
-  const assetType    = useMemo(() => getType(asset), [asset]);
+  const activeAsset  = useMemo(() => ALL_ASSETS.find(a => a.symbol === asset), [asset]);
+  const assetType    = useMemo(() => activeAsset?.type ?? 'CRYPTO', [activeAsset]);
   const baseSymbol   = useMemo(() => getPriceSymbol(asset), [asset]);
   const positionSize = useMemo(() => Number(amount) * leverage, [amount, leverage]);
   const priceUp      = prevPrice !== null && price !== null && price >= prevPrice;
 
-  // ── Safety-guarded filtered list ──────────────────────────────────────────
-
   const filteredAssets = useMemo(() =>
-    (assets ?? []).filter(a =>
+    ALL_ASSETS.filter(a =>
       a.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
       a.name.toLowerCase().includes(searchQuery.toLowerCase()),
-    ), [assets, searchQuery]);
+    ), [searchQuery]);
 
   const priceFormatter = useMemo(() =>
     new Intl.NumberFormat('en-US', {
       style: 'currency', currency: 'USD', minimumFractionDigits: 2,
     }), []);
 
-  // ── Load asset list from /api/markets ────────────────────────────────────
-
-  useEffect(() => {
-    fetch('/api/markets')
-      .then(r => r.json())
-      .then((data: MarketAsset[]) => {
-        setAssets(data ?? []);
-        const first = (data ?? []).find(a => a.symbol === 'BTCUSD') ?? data?.[0];
-        if (first) {
-          setAsset(first.symbol);
-          if (first.price) setPrice(first.price);
-        }
-      })
-      .catch(() => {})
-      .finally(() => setAssetsLoading(false));
-  }, []);
-
   // ── Read asset from URL param ─────────────────────────────────────────────
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search).get('asset');
-    if (p && (assets ?? []).find(a => a.symbol === p)) setAsset(p);
-  }, [assets]);
+    if (p && ALL_ASSETS.find(a => a.symbol === p)) setAsset(p);
+  }, []);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
 
@@ -145,7 +125,24 @@ export default function TradePage() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // ── Fetch balance via NextAuth session ────────────────────────────────────
+  // ── Lazy-fetch prices when dropdown opens ─────────────────────────────────
+
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    ALL_ASSETS.forEach(async (a) => {
+      const sym = getPriceSymbol(a.symbol);
+      try {
+        const res = await fetch(`/api/price?symbol=${sym}`);
+        const data = await res.json();
+        if (data.price) setDropdownPrices(prev => ({
+          ...prev,
+          [a.symbol]: { price: data.price, change24h: data.change24h ?? 0 },
+        }));
+      } catch {}
+    });
+  }, [dropdownOpen]);
+
+  // ── Fetch balance ─────────────────────────────────────────────────────────
 
   const fetchBalance = useCallback(async () => {
     try {
@@ -183,13 +180,13 @@ export default function TradePage() {
           })),
         );
       } catch {
-        // silent — keep last price
+        // silent
       } finally {
         setPriceLoading(false);
       }
     };
 
-    if (asset) { fetchPrice(); }
+    fetchPrice();
     const id = setInterval(fetchPrice, 30_000);
     return () => clearInterval(id);
   }, [asset, baseSymbol]);
@@ -215,12 +212,8 @@ export default function TradePage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action:     orderType,
-          asset:      baseSymbol,
-          amount:     numAmount,
-          price,
-          leverage,
-          marginType,
+          action: orderType, asset: baseSymbol,
+          amount: numAmount, price, leverage, marginType,
           marketType: assetType,
         }),
       });
@@ -290,7 +283,6 @@ export default function TradePage() {
 
         .card { background: var(--card); border: 1px solid var(--bg-2); border-radius: 14px; }
 
-        /* ── Header ── */
         .trade-header {
           display: flex; align-items: center; justify-content: space-between;
           padding: 14px 18px; flex-wrap: wrap; gap: 12px;
@@ -307,16 +299,12 @@ export default function TradePage() {
           color: var(--ink); display: flex; align-items: center; gap: 6px;
           letter-spacing: -0.02em;
         }
-
-        /* ── Chevron wrapper (replaces className on Lucide icon) ── */
         .chevron-wrap {
           display: flex; align-items: center;
-          color: var(--faint);
-          transition: transform 0.2s;
+          color: var(--faint); transition: transform 0.2s;
         }
         .chevron-wrap.open { transform: rotate(180deg); }
 
-        /* ── Dropdown ── */
         .asset-dropdown {
           position: absolute; top: calc(100% + 6px); left: 0;
           width: 300px; background: var(--card);
@@ -349,15 +337,11 @@ export default function TradePage() {
         }
         .dropdown-item:hover { background: rgba(56,189,248,0.05); }
         .dropdown-item-left { display: flex; align-items: center; gap: 10px; }
-        .dropdown-logo {
-          width: 28px; height: 28px; border-radius: 50%; object-fit: cover;
-          background: var(--bg-2); flex-shrink: 0;
-        }
-        .dropdown-logo-placeholder {
+        .dropdown-icon {
           width: 28px; height: 28px; border-radius: 50%;
           background: var(--bg-2); display: flex; align-items: center;
           justify-content: center; font-family: var(--mono); font-size: 0.6rem;
-          color: var(--faint); flex-shrink: 0;
+          color: var(--faint); flex-shrink: 0; font-weight: 700;
         }
         .dropdown-item-sym {
           font-family: var(--mono); font-size: 0.75rem; font-weight: 600;
@@ -365,14 +349,9 @@ export default function TradePage() {
         }
         .dropdown-item-name { font-size: 0.6rem; color: var(--faint); }
         .dropdown-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-        .dropdown-item-price {
-          font-family: var(--mono); font-size: 0.68rem; color: var(--ink-2);
-        }
-        .dropdown-item-chg {
-          font-family: var(--mono); font-size: 0.6rem; font-weight: 700;
-        }
+        .dropdown-item-price { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-2); }
+        .dropdown-item-chg   { font-family: var(--mono); font-size: 0.6rem; font-weight: 700; }
 
-        /* ── Price display ── */
         .price-display {
           font-family: var(--mono); font-size: 1.8rem; font-weight: 600;
           letter-spacing: -0.03em; transition: color 0.4s;
@@ -381,17 +360,12 @@ export default function TradePage() {
         .price-display.down { color: var(--red); }
         .price-display.flat { color: var(--ink); }
 
-        /* ── Layout cols ── */
         .left-col  { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-        .right-col {
-          width: 100%; display: flex; flex-direction: column;
-          gap: 10px; padding-bottom: 20px;
-        }
+        .right-col { width: 100%; display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
         @media (min-width: 1024px) {
           .right-col { width: 320px; overflow-y: auto; padding-bottom: 0; }
         }
 
-        /* ── Chart ── */
         .chart-wrap {
           flex: 1; position: relative; overflow: hidden;
           border-radius: 14px; min-height: 380px;
@@ -399,7 +373,6 @@ export default function TradePage() {
         @media (min-width: 1024px) { .chart-wrap { min-height: unset; } }
         .chart-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
-        /* ── Order panel ── */
         .order-panel { padding: 16px; }
         .order-toggle {
           display: flex; background: var(--bg-1); border: 1px solid var(--bg-2);
@@ -416,7 +389,6 @@ export default function TradePage() {
         .order-btn.inactive     { background: none; color: var(--faint); }
         .order-btn.inactive:hover { color: var(--dim); }
 
-        /* ── Leverage ── */
         .lev-row { margin-bottom: 14px; }
         .lev-label {
           display: flex; justify-content: space-between; font-size: 0.58rem;
@@ -448,14 +420,12 @@ export default function TradePage() {
         .lev-preset:hover { color: var(--dim); border-color: var(--bg-3); }
         .lev-preset.active { background: rgba(56,189,248,0.1); color: var(--accent); border-color: rgba(56,189,248,0.3); }
 
-        /* ── Balance ── */
         .balance-row {
           display: flex; justify-content: space-between; align-items: center;
           font-family: var(--mono); font-size: 0.65rem;
           color: var(--faint); margin-bottom: 10px;
         }
 
-        /* ── Amount field ── */
         .amount-field {
           background: var(--bg-1); border: 1px solid var(--bg-2); border-radius: 8px;
           padding: 10px 14px; display: flex; align-items: center;
@@ -470,7 +440,6 @@ export default function TradePage() {
         }
         .amount-field .unit { font-family: var(--mono); font-size: 0.62rem; color: var(--faint); margin-left: 4px; }
 
-        /* ── Pct buttons ── */
         .pct-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
         .pct-btn {
           background: var(--bg-1); border: 1px solid var(--bg-2); border-radius: 6px;
@@ -479,7 +448,6 @@ export default function TradePage() {
         }
         .pct-btn:hover { background: var(--bg-2); color: var(--dim); }
 
-        /* ── Summary box ── */
         .summary-box {
           background: var(--bg-1); border: 1px solid var(--bg-2); border-radius: 8px;
           padding: 10px 14px; margin-bottom: 14px;
@@ -491,7 +459,6 @@ export default function TradePage() {
         .summary-row:last-child { margin-bottom: 0; }
         .summary-row span.val { color: var(--ink-2); }
 
-        /* ── Execute button ── */
         .exec-btn {
           width: 100%; padding: 13px; border: none; border-radius: 10px;
           font-family: var(--mono); font-size: 0.75rem; font-weight: 700;
@@ -504,7 +471,6 @@ export default function TradePage() {
         .exec-btn:active:not(:disabled) { transform: scale(0.98); }
         .exec-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* ── Order book ── */
         .orderbook { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; }
         .ob-header {
           display: flex; justify-content: space-between;
@@ -532,7 +498,6 @@ export default function TradePage() {
           font-family: var(--mono); font-size: 0.8rem; font-weight: 600;
         }
 
-        /* ── Scrollbar ── */
         .dropdown-list::-webkit-scrollbar,
         .right-col::-webkit-scrollbar { width: 4px; }
         .dropdown-list::-webkit-scrollbar-track,
@@ -540,7 +505,7 @@ export default function TradePage() {
         .dropdown-list::-webkit-scrollbar-thumb,
         .right-col::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 2px; }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin  { to { transform: rotate(360deg); } }
         @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
       `}</style>
 
@@ -551,20 +516,11 @@ export default function TradePage() {
         {/* ── LEFT COLUMN ── */}
         <div className="left-col">
 
-          {/* Header */}
           <div className="card trade-header">
             <div className="asset-selector" ref={dropdownRef}>
               <button className="asset-btn" onClick={() => setDropdownOpen(v => !v)}>
                 <span className="asset-name">
-                  {activeAsset?.logoUrl && (
-                    <img
-                      src={activeAsset.logoUrl}
-                      alt={asset}
-                      style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'cover' }}
-                    />
-                  )}
                   {asset}
-                  {/* FIX: wrap chevron in a span instead of passing className to Lucide */}
                   <span className={`chevron-wrap ${dropdownOpen ? 'open' : ''}`}>
                     <ChevronDown size={16} />
                   </span>
@@ -572,7 +528,6 @@ export default function TradePage() {
                 <TypeBadge type={assetType} />
               </button>
 
-              {/* Dropdown */}
               {dropdownOpen && (
                 <div className="asset-dropdown">
                   <div className="dropdown-search">
@@ -585,69 +540,49 @@ export default function TradePage() {
                     />
                   </div>
                   <div className="dropdown-list">
-                    {assetsLoading
-                      ? Array.from({ length: 5 }).map((_, i) => (
-                          <div key={i} style={{
-                            padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10,
-                          }}>
-                            <div style={{
-                              width: 28, height: 28, borderRadius: '50%',
-                              background: 'var(--bg-2)',
-                              animation: 'pulse 1.4s ease-in-out infinite',
-                            }} />
-                            <div style={{
-                              flex: 1, height: 12, borderRadius: 4,
-                              background: 'var(--bg-2)',
-                              animation: 'pulse 1.4s ease-in-out infinite',
-                            }} />
+                    {filteredAssets.map(a => {
+                      const dp = dropdownPrices[a.symbol];
+                      const chgColor = dp && dp.change24h >= 0 ? 'var(--green)' : 'var(--red)';
+                      return (
+                        <button
+                          key={a.symbol}
+                          className="dropdown-item"
+                          onClick={() => {
+                            setAsset(a.symbol);
+                            setDropdownOpen(false);
+                            setSearchQuery('');
+                          }}
+                        >
+                          <div className="dropdown-item-left">
+                            <div className="dropdown-icon">{a.symbol[0]}</div>
+                            <div>
+                              <div className="dropdown-item-sym">{a.symbol}</div>
+                              <div className="dropdown-item-name">{a.name}</div>
+                            </div>
                           </div>
-                        ))
-                      : filteredAssets.map(a => {
-                          const type = getType(a.symbol);
-                          const chgColor = a.changePercent >= 0 ? 'var(--green)' : 'var(--red)';
-                          return (
-                            <button
-                              key={a.symbol}
-                              className="dropdown-item"
-                              onClick={() => {
-                                setAsset(a.symbol);
-                                setDropdownOpen(false);
-                                setSearchQuery('');
-                              }}
-                            >
-                              <div className="dropdown-item-left">
-                                {a.logoUrl
-                                  ? <img src={a.logoUrl} alt={a.symbol} className="dropdown-logo" />
-                                  : <div className="dropdown-logo-placeholder">{a.symbol[0]}</div>
-                                }
-                                <div>
-                                  <div className="dropdown-item-sym">{a.symbol}</div>
-                                  <div className="dropdown-item-name">{a.name}</div>
-                                </div>
-                              </div>
-                              <div className="dropdown-item-right">
-                                <TypeBadge type={type} />
-                                {a.price > 0 && (
-                                  <>
-                                    <span className="dropdown-item-price">
-                                      ${a.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                    </span>
-                                    <span className="dropdown-item-chg" style={{ color: chgColor }}>
-                                      {a.changePercent >= 0 ? '+' : ''}{a.changePercent.toFixed(2)}%
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })
-                    }
+                          <div className="dropdown-item-right">
+                            <TypeBadge type={a.type} />
+                            {dp ? (
+                              <>
+                                <span className="dropdown-item-price">
+                                  ${dp.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                                <span className="dropdown-item-chg" style={{ color: chgColor }}>
+                                  {dp.change24h >= 0 ? '+' : ''}{dp.change24h.toFixed(2)}%
+                                </span>
+                              </>
+                            ) : (
+                              <span style={{ fontFamily: 'var(--mono)', fontSize: '0.6rem', color: 'var(--faint)' }}>—</span>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Live price */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               {priceLoading && (
                 <Loader2 size={14} style={{ color: 'var(--faint)', animation: 'spin 1s linear infinite' }} />
@@ -663,23 +598,18 @@ export default function TradePage() {
             </div>
           </div>
 
-          {/* TradingView chart */}
           <div className="card chart-wrap" style={{ flex: 1 }}>
             <iframe
               src={`https://s.tradingview.com/widgetembed/?symbol=${asset}&interval=15&theme=dark&style=1&locale=en&hide_top_toolbar=0&hide_legend=0&save_image=0`}
               allowTransparency
             />
           </div>
-
         </div>
 
         {/* ── RIGHT COLUMN ── */}
         <div className="right-col">
 
-          {/* Order panel */}
           <div className="card order-panel">
-
-            {/* Buy / Sell toggle */}
             <div className="order-toggle">
               <button
                 className={`order-btn buy ${orderType === 'BUY' ? 'active' : 'inactive'}`}
@@ -691,7 +621,6 @@ export default function TradePage() {
               >↓ Sell</button>
             </div>
 
-            {/* Leverage */}
             <div className="lev-row">
               <div className="lev-label">
                 <span>Leverage &amp; Margin</span>
@@ -724,7 +653,6 @@ export default function TradePage() {
               </div>
             </div>
 
-            {/* Balance */}
             <div className="balance-row">
               <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <Wallet size={11} /> Balance
@@ -734,7 +662,6 @@ export default function TradePage() {
               </span>
             </div>
 
-            {/* Amount */}
             <div className="amount-field">
               <label>Margin</label>
               <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -746,7 +673,6 @@ export default function TradePage() {
               </div>
             </div>
 
-            {/* Pct shortcuts */}
             <div className="pct-grid">
               {[0.25, 0.5, 0.75, 1].map(pct => (
                 <button key={pct} className="pct-btn" onClick={() => setPercentage(pct)}>
@@ -755,7 +681,6 @@ export default function TradePage() {
               ))}
             </div>
 
-            {/* Summary */}
             {amount && Number(amount) > 0 && (
               <div className="summary-box">
                 <div className="summary-row">
@@ -781,7 +706,6 @@ export default function TradePage() {
               </div>
             )}
 
-            {/* Execute */}
             <button
               className={`exec-btn ${orderType === 'BUY' ? 'buy' : 'sell'}`}
               onClick={handleTrade}
@@ -794,7 +718,6 @@ export default function TradePage() {
             </button>
           </div>
 
-          {/* Order book */}
           <div className="card orderbook">
             <div className="ob-header">
               <span>Price (USD)</span>
