@@ -153,8 +153,9 @@ export default function TradePage() {
   // ── Lazy-fetch prices when dropdown opens ─────────────────────────────────
 
   useEffect(() => {
-    if (!dropdownOpen) return;
-    ALL_ASSETS.forEach(async (a) => {
+  // remove: if (!dropdownOpen) return;
+  ALL_ASSETS.forEach(async (a) => {
+    
       const sym = getPriceSymbol(a.symbol);
       try {
         const res = await fetch(`/api/price?symbol=${sym}`);
@@ -165,7 +166,7 @@ export default function TradePage() {
         }));
       } catch {}
     });
-  }, [dropdownOpen]);
+  }, [dropdownOpen]
 
   // ── Fetch balance ─────────────────────────────────────────────────────────
 
