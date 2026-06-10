@@ -51,9 +51,9 @@ const ASSET_ICONS: Record<string, string> = {
   USOIL:  '🛢',
   UKOIL:  '🛢',
   XAUUSD: '🥇',
-  EURUSD: '€',
-  GBPUSD: '£',
-  USDJPY: '¥',
+  EURUSD: '🇪🇺',
+  GBPUSD: '🇬🇧',
+  USDJPY: '🇯🇵',
 };
 // ── Type badge ────────────────────────────────────────────────────────────────
 
