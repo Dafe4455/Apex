@@ -40,23 +40,23 @@ type AssetsData = {
 
 // ── Asset meta (icon colours matching dashboard aesthetic) ────────────────────
 
-const ASSET_META: Record<string, { label: string; bg: string; col: string; icon: string }> = {
-  BTC:    { label: 'Bitcoin',        bg: '#f7931a22', col: '#f7931a', icon: '₿' },
-  ETH:    { label: 'Ethereum',       bg: '#627eea22', col: '#627eea', icon: 'Ξ' },
-  SOL:    { label: 'Solana',         bg: '#9945ff22', col: '#9945ff', icon: '◎' },
-  BNB:    { label: 'BNB',            bg: '#f3ba2f22', col: '#f3ba2f', icon: 'B' },
-  AAPL:   { label: 'Apple',          bg: '#aaaaaa22', col: '#aaaaaa', icon: '' },
-  TSLA:   { label: 'Tesla',          bg: '#e31937 22', col: '#e31937', icon: 'T' },
-  NVDA:   { label: 'NVIDIA',         bg: '#76b90022', col: '#76b900', icon: 'N' },
-  MSFT:   { label: 'Microsoft',      bg: '#00a4ef22', col: '#00a4ef', icon: 'M' },
-  AMZN:   { label: 'Amazon',         bg: '#ff990022', col: '#ff9900', icon: 'A' },
-  GOOGL:  { label: 'Alphabet',       bg: '#4285f422', col: '#4285f4', icon: 'G' },
-  USOIL:  { label: 'WTI Crude',      bg: '#64748b22', col: '#94a3b8', icon: '⬡' },
-  UKOIL:  { label: 'Brent Crude',    bg: '#64748b22', col: '#94a3b8', icon: '⬡' },
-  XAUUSD: { label: 'Gold',           bg: '#eab30822', col: '#eab308', icon: '◈' },
-  EURUSD: { label: 'EUR/USD',        bg: '#00c9b122', col: '#00c9b1', icon: '€' },
-  GBPUSD: { label: 'GBP/USD',        bg: '#00c9b122', col: '#00c9b1', icon: '£' },
-  USDJPY: { label: 'USD/JPY',        bg: '#00c9b122', col: '#00c9b1', icon: '¥' },
+const ASSET_META: Record<string, { label: string; bg: string; col: string; icon: string; img?: string }> = {
+  BTC:    { label: 'Bitcoin',     bg: '#f7931a22', col: '#f7931a', icon: '₿', img: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png' },
+  ETH:    { label: 'Ethereum',    bg: '#627eea22', col: '#627eea', icon: 'Ξ', img: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png' },
+  SOL:    { label: 'Solana',      bg: '#9945ff22', col: '#9945ff', icon: '◎', img: 'https://assets.coingecko.com/coins/images/4128/small/solana.png' },
+  BNB:    { label: 'BNB',         bg: '#f3ba2f22', col: '#f3ba2f', icon: 'B', img: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png' },
+  AAPL:   { label: 'Apple',       bg: '#aaaaaa22', col: '#aaaaaa', icon: '', img: 'https://logo.clearbit.com/apple.com' },
+  TSLA:   { label: 'Tesla',       bg: '#e3193722', col: '#e31937', icon: 'T', img: 'https://logo.clearbit.com/tesla.com' },
+  NVDA:   { label: 'NVIDIA',      bg: '#76b90022', col: '#76b900', icon: 'N', img: 'https://logo.clearbit.com/nvidia.com' },
+  MSFT:   { label: 'Microsoft',   bg: '#00a4ef22', col: '#00a4ef', icon: 'M', img: 'https://logo.clearbit.com/microsoft.com' },
+  AMZN:   { label: 'Amazon',      bg: '#ff990022', col: '#ff9900', icon: 'A', img: 'https://logo.clearbit.com/amazon.com' },
+  GOOGL:  { label: 'Alphabet',    bg: '#4285f422', col: '#4285f4', icon: 'G', img: 'https://logo.clearbit.com/google.com' },
+  USOIL:  { label: 'WTI Crude',   bg: '#64748b22', col: '#94a3b8', icon: '⬡' },
+  UKOIL:  { label: 'Brent Crude', bg: '#64748b22', col: '#94a3b8', icon: '⬡' },
+  XAUUSD: { label: 'Gold',        bg: '#eab30822', col: '#eab308', icon: '◈' },
+  EURUSD: { label: 'EUR/USD',     bg: '#00c9b122', col: '#00c9b1', icon: '€' },
+  GBPUSD: { label: 'GBP/USD',     bg: '#00c9b122', col: '#00c9b1', icon: '£' },
+  USDJPY: { label: 'USD/JPY',     bg: '#00c9b122', col: '#00c9b1', icon: '¥' },
 };
 
 const PRICE_SYMBOL_MAP: Record<string, string> = {
