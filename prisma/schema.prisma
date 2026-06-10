@@ -250,11 +250,32 @@ model MarketPrice {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 }
+model Position {
+  id         String    @id @default(cuid())
+  userId     String
+  asset      String
+  symbol     String
+  quantity   Float     @default(0)
+  entryPrice Float     @default(0)
+  currentPnl Float     @default(0)
+  side       String    @default("LONG")
+  status     String    @default("OPEN")
+  leverage   Float     @default(1)
+  marketType String    @default("CRYPTO")
+  openedAt   DateTime  @default(now())
+  closedAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model Transaction {
   id        String            @id @default(cuid())
   type      TransactionType
   asset     String?
   amount    Float
+  price     Float?
+  action    String?
+  leverage  Float?
   status    TransactionStatus @default(PENDING)
   userId    String
   user      User              @relation(fields: [userId], references: [id])
