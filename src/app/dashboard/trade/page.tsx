@@ -590,12 +590,13 @@ export default function TradePage() {
                         >
                           <div className="dropdown-item-left">
                             <div className="dropdown-icon">
-                              {logo
-                                ? <img src={logo} alt={a.symbol}
-                                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                                : a.symbol[0]
-                              }
-                            </div>
+  {logo
+    ? <img src={logo} alt={a.symbol}
+        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+    : <span style={{ fontSize: '1.1rem' }}>{ASSET_ICONS[a.symbol] ?? a.symbol[0]}</span>
+  }
+</div>
+                            
                             <div>
                               <div className="dropdown-item-sym">{a.symbol}</div>
                               <div className="dropdown-item-name">{a.name}</div>
