@@ -190,7 +190,7 @@ export default function AssetsPage() {
         {message}
       </p>
       {cta && (
-        <Link href="/trade" style={{
+        <Link href="/dashboard/trade" style={{
           background: 'var(--cyan)', color: 'var(--bg)',
           borderRadius: 8, padding: '9px 20px',
           fontFamily: 'var(--mono)', fontSize: '0.7rem',
