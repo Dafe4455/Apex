@@ -38,6 +38,16 @@ const navItems = [
     ),
   },
   {
+    href: '/dashboard/assets',
+    label: 'Assets',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+        <path d="M1 10l3-4 2.5 2 3.5-5 2 2.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" strokeLinejoin="miter" />
+        <circle cx="6.5" cy="6.5" r="2" stroke="currentColor" strokeWidth="1.1" />
+      </svg>
+    ),
+  },
+  {
     href: '/dashboard/deposit',
     label: 'Deposit',
     icon: (
@@ -79,7 +89,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [walletOpen, setWalletOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const walletActive = ['/dashboard/deposit', '/dashboard/withdraw', '/dashboard/history'].includes(pathname);
+  const walletActive = ['/dashboard/deposit', '/dashboard/withdraw', '/dashboard/history', '/dashboard/assets'].includes(pathname);
   const moreActive   = ['/dashboard/support', '/dashboard/settings', '/dashboard/notifications', '/dashboard/kyc'].includes(pathname);
 
   return (
@@ -457,13 +467,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .db-bottom-nav { display: block; }
           .db-shell { background: var(--bg) !important; }
 
-          /*
-           * KEY FIX: on mobile, db-content must have:
-           * - zero horizontal padding (the page itself handles its own side spacing)
-           * - zero max-width (let it fill the full viewport width)
-           * - top padding = mobile topbar height (52px)
-           * - bottom padding = bottom nav height + safe area
-           */
           .db-content {
             padding: 52px 0 calc(74px + max(env(safe-area-inset-bottom), 0px));
             max-width: 100%;
@@ -505,13 +508,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </aside>
 
-       {/* MOBILE TOPBAR */}
-<div className="db-mobile-bar">
-  <span className="db-mobile-logo">APEX<span>•</span>MARKETS</span>
-  <GoogleTranslate />
-</div>
-          
-        
+        {/* MOBILE TOPBAR */}
+        <div className="db-mobile-bar">
+          <span className="db-mobile-logo">APEX<span>•</span>MARKETS</span>
+          <GoogleTranslate />
+        </div>
 
         {/* MAIN */}
         <main className="db-main">
@@ -593,6 +594,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="db-sheet-handle" />
               <div className="db-sheet-title">Wallet</div>
               <div className="db-sheet-rows">
+
+                {/* Assets */}
+                <Link href="/dashboard/assets" className="db-sheet-row" onClick={() => setWalletOpen(false)}>
+                  <div className="db-sheet-row-icon">
+                    <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
+                      <path d="M1 10l3-4 2.5 2 3.5-5 2 2.5" stroke="#38bdf8" strokeWidth="1.1" strokeLinecap="square" strokeLinejoin="miter" />
+                      <circle cx="6.5" cy="6.5" r="2" stroke="#38bdf8" strokeWidth="1.1" />
+                    </svg>
+                  </div>
+                  <div className="db-sheet-row-text">
+                    <span className="db-sheet-row-label">Assets</span>
+                    <span className="db-sheet-row-sub">Positions, P&amp;L and trade history</span>
+                  </div>
+                  <div className="db-sheet-row-arrow"><ChevronRight /></div>
+                </Link>
+                <div className="db-sheet-row-divider" />
+
+                {/* Deposit */}
                 <Link href="/dashboard/deposit" className="db-sheet-row" onClick={() => setWalletOpen(false)}>
                   <div className="db-sheet-row-icon">
                     <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
@@ -606,6 +625,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <div className="db-sheet-row-arrow"><ChevronRight /></div>
                 </Link>
                 <div className="db-sheet-row-divider" />
+
+                {/* Withdraw */}
                 <Link href="/dashboard/withdraw" className="db-sheet-row" onClick={() => setWalletOpen(false)}>
                   <div className="db-sheet-row-icon">
                     <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
@@ -619,6 +640,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <div className="db-sheet-row-arrow"><ChevronRight /></div>
                 </Link>
                 <div className="db-sheet-row-divider" />
+
+                {/* History */}
                 <Link href="/dashboard/history" className="db-sheet-row" onClick={() => setWalletOpen(false)}>
                   <div className="db-sheet-row-icon">
                     <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
@@ -632,6 +655,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   </div>
                   <div className="db-sheet-row-arrow"><ChevronRight /></div>
                 </Link>
+
               </div>
             </div>
           </>
