@@ -47,6 +47,14 @@ const ASSET_LOGOS: Record<string, string> = {
   GOOGL:  'https://img.logo.dev/google.com?token=pk_NdDz5eDOQFSlkWRQEkcXfQ',
 };
 
+const ASSET_ICONS: Record<string, string> = {
+  USOIL:  '🛢',
+  UKOIL:  '🛢',
+  XAUUSD: '🥇',
+  EURUSD: '€',
+  GBPUSD: '£',
+  USDJPY: '¥',
+};
 // ── Type badge ────────────────────────────────────────────────────────────────
 
 const TYPE_BADGE: Record<string, { bg: string; color: string }> = {
