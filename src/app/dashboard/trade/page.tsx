@@ -50,7 +50,7 @@ const ASSET_LOGOS: Record<string, string> = {
 const ASSET_ICONS: Record<string, string> = {
   USOIL:  '🛢',
   UKOIL:  '🛢',
-  XAUUSD: '🥇',
+  XAUUSD: '🪙',
   EURUSD: '🇪🇺',
   GBPUSD: '🇬🇧',
   USDJPY: '🇯🇵',
