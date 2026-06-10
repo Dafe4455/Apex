@@ -10,22 +10,23 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { action, asset, amount, price } = body;
+    const { action, asset, amount, price, leverage = 1, marginType = 'ISOLATED', marketType = 'CRYPTO' } = body;
 
-    // Validation
     if (!action || !asset || !amount || !price) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
     if (!['BUY', 'SELL'].includes(action)) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
+
     const numAmount = Number(amount);
     const numPrice  = Number(price);
+    const numLev    = Number(leverage) || 1;
+
     if (isNaN(numAmount) || numAmount <= 0) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
     }
 
-    // Fetch user
     const user = await prisma.user.findUnique({
       where:  { email: session.user.email },
       select: { id: true, portfolioBalance: true },
@@ -34,24 +35,71 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // BUY: must have enough balance
     if (action === 'BUY' && user.portfolioBalance < numAmount) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // Create Transaction record
+      // 1. Transaction record
       const transaction = await tx.transaction.create({
         data: {
-          userId: user.id,
-          type:   'Trade',
-          asset:  `${action}:${asset}`,
-          amount: numAmount,
-          status: 'COMPLETED',
+          userId:   user.id,
+          type:     'Trade' as any,
+          asset:    `${action}:${asset}`,
+          amount:   numAmount,
+          price:    numPrice,
+          action,
+          leverage: numLev,
+          status:   'COMPLETED' as any,
         },
       });
 
-      // Update balance: BUY deducts margin, SELL credits
+      // 2. Position logic
+      const side     = action === 'BUY' ? 'LONG' : 'SHORT';
+      const quantity = (numAmount * numLev) / numPrice;
+
+      if (action === 'BUY') {
+        // Open a new OPEN position
+        await tx.position.create({
+          data: {
+            userId:     user.id,
+            asset,
+            symbol:     asset,
+            quantity,
+            entryPrice: numPrice,
+            currentPnl: 0,
+            side,
+            status:     'OPEN',
+            leverage:   numLev,
+            marketType,
+          },
+        });
+      } else {
+        // SELL: close the oldest open LONG position for this asset
+        const openPos = await tx.position.findFirst({
+          where: { userId: user.id, symbol: asset, status: 'OPEN', side: 'LONG' },
+          orderBy: { openedAt: 'asc' },
+        });
+
+        if (openPos) {
+          const pnl = (numPrice - openPos.entryPrice) * openPos.quantity;
+          await tx.position.update({
+            where: { id: openPos.id },
+            data: {
+              status:     'CLOSED',
+              currentPnl: pnl,
+              closedAt:   new Date(),
+            },
+          });
+          // Credit realised P&L to user
+          await tx.user.update({
+            where: { id: user.id },
+            data:  { realisedPnl: { increment: pnl } },
+          });
+        }
+      }
+
+      // 3. Balance update
       const balanceDelta = action === 'BUY' ? -numAmount : numAmount;
       const updatedUser  = await tx.user.update({
         where:  { id: user.id },
@@ -59,7 +107,7 @@ export async function POST(req: NextRequest) {
         select: { portfolioBalance: true },
       });
 
-      // Log activity
+      // 4. Activity log
       await tx.activityLog.create({
         data: {
           userId:      user.id,
@@ -76,9 +124,9 @@ export async function POST(req: NextRequest) {
       newBalance: result.newBalance,
     });
 
- } catch (err: any) {
-  console.error('[trade] error:', err?.message);
-  console.error('[trade] stack:', err?.stack);
-  return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 });
+  } catch (err: any) {
+    console.error('[trade] error:', err?.message);
+    console.error('[trade] stack:', err?.stack);
+    return NextResponse.json({ error: err?.message ?? 'Internal server error' }, { status: 500 });
   }
 }
