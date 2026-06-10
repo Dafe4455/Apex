@@ -25,7 +25,7 @@ type Position = {
 type Trade = {
   id: string;
   asset: string | null;
-  action: string | null;  // ← add this
+  action: string | null;
   amount: number;
   status: string;
   createdAt: string;
@@ -38,7 +38,7 @@ type AssetsData = {
   trades: Trade[];
 };
 
-// ── Asset meta (icon colours matching dashboard aesthetic) ────────────────────
+// ── Asset meta ────────────────────────────────────────────────────────────────
 
 const ASSET_META: Record<string, { label: string; bg: string; col: string; icon: string; img?: string }> = {
   BTC:    { label: 'Bitcoin',     bg: '#f7931a22', col: '#f7931a', icon: '₿', img: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png' },
@@ -51,9 +51,9 @@ const ASSET_META: Record<string, { label: string; bg: string; col: string; icon:
   MSFT:   { label: 'Microsoft',   bg: '#00a4ef22', col: '#00a4ef', icon: 'M', img: 'https://img.logo.dev/microsoft.com?token=pk_NdDz5eDOQFSlkWRQEkcXfQ' },
   AMZN:   { label: 'Amazon',      bg: '#ff990022', col: '#ff9900', icon: 'A', img: 'https://img.logo.dev/amazon.com?token=pk_NdDz5eDOQFSlkWRQEkcXfQ' },
   GOOGL:  { label: 'Alphabet',    bg: '#4285f422', col: '#4285f4', icon: 'G', img: 'https://img.logo.dev/google.com?token=pk_NdDz5eDOQFSlkWRQEkcXfQ' },
-  USOIL:  { label: 'WTI Crude',   bg: '#64748b22', col: '#94a3b8', icon: '⬡' },
-  UKOIL:  { label: 'Brent Crude', bg: '#64748b22', col: '#94a3b8', icon: '⬡' },
-  XAUUSD: { label: 'Gold',        bg: '#eab30822', col: '#eab308', icon: '◈' },
+  USOIL:  { label: 'WTI Crude',   bg: '#64748b22', col: '#94a3b8', icon: '🛢' },
+  UKOIL:  { label: 'Brent Crude', bg: '#64748b22', col: '#94a3b8', icon: '🛢' },
+  XAUUSD: { label: 'Gold',        bg: '#eab30822', col: '#eab308', icon: '🥇' },
   EURUSD: { label: 'EUR/USD',     bg: '#00c9b122', col: '#00c9b1', icon: '€' },
   GBPUSD: { label: 'GBP/USD',     bg: '#00c9b122', col: '#00c9b1', icon: '£' },
   USDJPY: { label: 'USD/JPY',     bg: '#00c9b122', col: '#00c9b1', icon: '¥' },
@@ -88,6 +88,12 @@ function fmtTime(iso: string) {
   });
 }
 
+function fmtQty(n: number) {
+  if (n >= 1000) return n.toFixed(2);
+  if (n >= 1) return n.toFixed(4);
+  return n.toFixed(6);
+}
+
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function AssetsPage() {
@@ -96,8 +102,6 @@ export default function AssetsPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
   const [tab, setTab] = useState<'open' | 'closed' | 'history'>('open');
-
-  // ── fetch portfolio data ──────────────────────────────────────────────────
 
   const loadData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -108,7 +112,7 @@ export default function AssetsPage() {
       setData(json);
       fetchLivePrices(json.positions);
     } catch {
-      // silent — keep stale data
+      // silent
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -117,15 +121,10 @@ export default function AssetsPage() {
 
   useEffect(() => { loadData(); }, []);
 
-  // ── live prices for open positions ────────────────────────────────────────
-
   const fetchLivePrices = async (positions: Position[]) => {
     const openSymbols = Array.from(new Set(
-      positions
-        .filter(p => p.status === 'OPEN')
-        .map(p => p.symbol)
+      positions.filter(p => p.status === 'OPEN').map(p => p.symbol)
     ));
-
     for (const sym of openSymbols) {
       const apiSym = PRICE_SYMBOL_MAP[sym] ?? sym.replace('USD', '');
       try {
@@ -136,55 +135,40 @@ export default function AssetsPage() {
     }
   };
 
-  // ── derived data ──────────────────────────────────────────────────────────
-
-  const openPositions  = useMemo(() => data?.positions.filter(p => p.status === 'OPEN')  ?? [], [data]);
+  const openPositions   = useMemo(() => data?.positions.filter(p => p.status === 'OPEN')   ?? [], [data]);
   const closedPositions = useMemo(() => data?.positions.filter(p => p.status === 'CLOSED') ?? [], [data]);
 
-  // live unrealised P&L: (currentPrice - entryPrice) * qty  (LONG)
   const unrealisedPnl = useMemo(() =>
     openPositions.reduce((sum, p) => {
       const current = livePrices[p.symbol] ?? 0;
-      if (!current) return sum + p.currentPnl; // fall back to stored
+      if (!current) return sum + p.currentPnl;
       const dir = p.side === 'SHORT' ? -1 : 1;
       return sum + dir * (current - p.entryPrice) * p.quantity;
     }, 0),
   [openPositions, livePrices]);
 
-  // group closed positions by asset for summary
-  const closedByAsset = useMemo(() => {
-    const map: Record<string, { pnl: number; count: number }> = {};
-    closedPositions.forEach(p => {
-      if (!map[p.symbol]) map[p.symbol] = { pnl: 0, count: 0 };
-      map[p.symbol].pnl   += p.currentPnl;
-      map[p.symbol].count += 1;
-    });
-    return map;
-  }, [closedPositions]);
-
-  // ── render helpers ────────────────────────────────────────────────────────
+  // ── PnL chip — capped width ───────────────────────────────────────────────
 
   const PnlChip = ({ value }: { value: number }) => (
-  <span style={{
-    color: value >= 0 ? 'var(--green)' : 'var(--red)',
-    background: value >= 0 ? 'rgba(34,212,122,0.08)' : 'rgba(248,113,113,0.08)',
-    border: `1px solid ${value >= 0 ? 'rgba(34,212,122,0.2)' : 'rgba(248,113,113,0.2)'}`,
-    borderRadius: 6,
-    padding: '2px 8px',
-    fontFamily: 'var(--mono)',
-    fontSize: '0.68rem',
-    fontWeight: 700,
-    maxWidth: 140,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
-    display: 'inline-block',
-  }}>
-    {value >= 0 ? '+' : ''}{fmtUsd(value)}
-  </span>
-);
-
-  // ── empty state ───────────────────────────────────────────────────────────
+    <span style={{
+      color: value >= 0 ? 'var(--green)' : 'var(--red)',
+      background: value >= 0 ? 'rgba(34,212,122,0.08)' : 'rgba(248,113,113,0.08)',
+      border: `1px solid ${value >= 0 ? 'rgba(34,212,122,0.2)' : 'rgba(248,113,113,0.2)'}`,
+      borderRadius: 6,
+      padding: '2px 8px',
+      fontFamily: 'var(--mono)',
+      fontSize: '0.68rem',
+      fontWeight: 700,
+      maxWidth: 130,
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      display: 'inline-block',
+      flexShrink: 0,
+    }}>
+      {value >= 0 ? '+' : ''}{fmtUsd(value)}
+    </span>
+  );
 
   const EmptyState = ({ message, cta }: { message: string; cta?: boolean }) => (
     <div style={{
@@ -210,8 +194,6 @@ export default function AssetsPage() {
     </div>
   );
 
-  // ── skeleton ──────────────────────────────────────────────────────────────
-
   if (loading) return (
     <div style={styles.page}>
       <div style={styles.header}>
@@ -226,9 +208,28 @@ export default function AssetsPage() {
     </div>
   );
 
-  // ── page ──────────────────────────────────────────────────────────────────
-
   const totalPnl = (data?.realisedPnl ?? 0) + unrealisedPnl;
+
+  // ── Asset icon helper ─────────────────────────────────────────────────────
+
+  function AssetIcon({ symbol, size = 38 }: { symbol: string; size?: number }) {
+    const meta = getMeta(symbol);
+    return (
+      <div style={{
+        width: size, height: size, borderRadius: 10, flexShrink: 0,
+        background: meta.bg, display: 'flex', alignItems: 'center',
+        justifyContent: 'center', fontSize: size * 0.45, color: meta.col,
+        fontWeight: 700, overflow: 'hidden',
+      }}>
+        {meta.img
+          ? <img src={meta.img} alt={symbol}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+          : <span style={{ fontSize: size > 30 ? '1.1rem' : '0.75rem' }}>{meta.icon}</span>
+        }
+      </div>
+    );
+  }
 
   return (
     <>
@@ -267,11 +268,11 @@ export default function AssetsPage() {
         }
 
         .pos-row {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px; border-bottom: 1px solid var(--border);
-  transition: background 0.15s; cursor: default;
-  overflow: hidden;  /* ← add this */
-          }
+          display: flex; align-items: center; gap: 10px;
+          padding: 12px 14px; border-bottom: 1px solid var(--border);
+          transition: background 0.15s; cursor: default;
+          overflow: hidden; min-width: 0;
+        }
         .pos-row:last-child { border-bottom: none; }
         .pos-row:hover { background: rgba(255,255,255,0.02); }
 
@@ -283,17 +284,8 @@ export default function AssetsPage() {
         .trade-row:last-child { border-bottom: none; }
         .trade-row:hover { background: rgba(255,255,255,0.02); }
 
-        .skeleton-pulse {
-          background: linear-gradient(90deg, #0f1e2e 25%, #162030 50%, #0f1e2e 75%);
-          background-size: 200% 100%;
-          animation: shimmer 1.4s infinite;
-          border-radius: 6px;
-        }
         @keyframes shimmer { to { background-position: -200% 0; } }
-
-        @media (max-width: 480px) {
-          .hide-mobile { display: none !important; }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
       <div style={styles.page}>
@@ -328,19 +320,13 @@ export default function AssetsPage() {
           </div>
           <div style={styles.summaryCard}>
             <span style={styles.summaryLabel}>Unrealised P&L</span>
-            <span style={{
-              ...styles.summaryValue,
-              color: unrealisedPnl >= 0 ? 'var(--green)' : 'var(--red)',
-            }}>
+            <span style={{ ...styles.summaryValue, color: unrealisedPnl >= 0 ? 'var(--green)' : 'var(--red)' }}>
               {unrealisedPnl >= 0 ? '+' : ''}{fmtUsd(unrealisedPnl)}
             </span>
           </div>
           <div style={styles.summaryCard}>
             <span style={styles.summaryLabel}>Realised P&L</span>
-            <span style={{
-              ...styles.summaryValue,
-              color: (data?.realisedPnl ?? 0) >= 0 ? 'var(--green)' : 'var(--red)',
-            }}>
+            <span style={{ ...styles.summaryValue, color: (data?.realisedPnl ?? 0) >= 0 ? 'var(--green)' : 'var(--red)' }}>
               {(data?.realisedPnl ?? 0) >= 0 ? '+' : ''}{fmtUsd(data?.realisedPnl ?? 0)}
             </span>
           </div>
@@ -350,21 +336,22 @@ export default function AssetsPage() {
         <div style={{
           ...styles.card,
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 18px',
+          padding: '14px 18px', overflow: 'hidden',
           borderLeft: `3px solid ${totalPnl >= 0 ? 'var(--green)' : 'var(--red)'}`,
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
             {totalPnl >= 0
               ? <TrendingUp size={18} color="var(--green)" />
               : <TrendingDown size={18} color="var(--red)" />
             }
             <span style={{ fontFamily: 'var(--mono)', fontSize: '0.68rem', color: 'var(--text-mid)', letterSpacing: '0.1em' }}>
-              TOTAL P&L (REALISED + UNREALISED)
+              TOTAL P&L
             </span>
           </div>
           <span style={{
             fontFamily: 'var(--mono)', fontSize: '1rem', fontWeight: 700,
             color: totalPnl >= 0 ? 'var(--green)' : 'var(--red)',
+            flexShrink: 0, marginLeft: 8,
           }}>
             {totalPnl >= 0 ? '+' : ''}{fmtUsd(totalPnl)}
           </span>
@@ -402,32 +389,20 @@ export default function AssetsPage() {
             {openPositions.length === 0
               ? <EmptyState message="No open positions. Place a trade to get started." cta />
               : openPositions.map(pos => {
-                  const meta      = getMeta(pos.symbol);
-                  const current   = livePrices[pos.symbol] ?? 0;
-                  const dir       = pos.side === 'SHORT' ? -1 : 1;
-                  const livePnl   = current
+                  const current = livePrices[pos.symbol] ?? 0;
+                  const dir     = pos.side === 'SHORT' ? -1 : 1;
+                  const livePnl = current
                     ? dir * (current - pos.entryPrice) * pos.quantity
                     : pos.currentPnl;
-                  const pnlPct    = pos.entryPrice > 0
+                  const pnlPct  = pos.entryPrice > 0
                     ? (livePnl / (pos.entryPrice * pos.quantity)) * 100
                     : 0;
 
                   return (
                     <div className="pos-row" key={pos.id}>
-                      {/* Icon */}
-                     <div style={{
-  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-  background: meta.bg, display: 'flex', alignItems: 'center',
-  justifyContent: 'center', fontSize: '1rem', color: meta.col,
-  fontWeight: 700, overflow: 'hidden',
-}}>
-  {meta.img
-    ? <img src={meta.img} alt={pos.symbol} style={{ width: 26, height: 26, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-    : meta.icon
-  }
-</div>
+                      <AssetIcon symbol={pos.symbol} size={38} />
 
-                      {/* Name + side */}
+                      {/* Name + details — flex:1 + minWidth:0 prevents overflow */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>{pos.symbol}</span>
@@ -441,9 +416,9 @@ export default function AssetsPage() {
                             {pos.side}
                           </span>
                         </div>
-                        <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: 8, marginTop: 3, flexWrap: 'wrap' }}>
                           <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-dim)' }}>
-                            Qty: {pos.quantity}
+                            Qty: {fmtQty(pos.quantity)}
                           </span>
                           <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-dim)' }}>
                             Entry: {fmtUsd(pos.entryPrice)}
@@ -456,8 +431,8 @@ export default function AssetsPage() {
                         </div>
                       </div>
 
-                      {/* P&L */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3 }}>
+                      {/* P&L — fixed width, no grow */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
                         <PnlChip value={livePnl} />
                         <span style={{
                           fontFamily: 'var(--mono)', fontSize: '0.6rem',
@@ -467,7 +442,7 @@ export default function AssetsPage() {
                         </span>
                       </div>
 
-                      <Link href={`/dashboard/trade?asset=${pos.symbol}`} style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                      <Link href={`dashboard/trade?asset=${pos.symbol}`} style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
                         <ChevronRight size={16} />
                       </Link>
                     </div>
@@ -482,48 +457,37 @@ export default function AssetsPage() {
           <div style={styles.card}>
             {closedPositions.length === 0
               ? <EmptyState message="No closed positions yet." />
-              : closedPositions.map(pos => {
-                  const meta = getMeta(pos.symbol);
-                  return (
-                    <div className="pos-row" key={pos.id}>
-                      <div style={{
-  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-  background: meta.bg, display: 'flex', alignItems: 'center',
-  justifyContent: 'center', fontSize: '1rem', color: meta.col,
-  fontWeight: 700, overflow: 'hidden',
-}}>
-  {meta.img
-    ? <img src={meta.img} alt={pos.symbol} style={{ width: 26, height: 26, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
- : meta.icon
-  }
-</div>
+              : closedPositions.map(pos => (
+                  <div className="pos-row" key={pos.id}>
+                    <AssetIcon symbol={pos.symbol} size={38} />
 
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>{pos.symbol}</span>
-                          <span style={{
-                            fontFamily: 'var(--mono)', fontSize: '0.58rem', fontWeight: 700,
-                            padding: '1px 6px', borderRadius: 4,
-                            background: 'rgba(255,255,255,0.05)', color: 'var(--text-dim)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                          }}>
-                            {pos.side}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', gap: 10, marginTop: 3, flexWrap: 'wrap' }}>
-                          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-dim)' }}>
-                            Entry: {fmtUsd(pos.entryPrice)}
-                          </span>
-                          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-dim)' }}>
-                            Closed: {fmtDate(pos.closedAt ?? pos.openedAt)}
-                          </span>
-                        </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>{pos.symbol}</span>
+                        <span style={{
+                          fontFamily: 'var(--mono)', fontSize: '0.58rem', fontWeight: 700,
+                          padding: '1px 6px', borderRadius: 4,
+                          background: 'rgba(255,255,255,0.05)', color: 'var(--text-dim)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                        }}>
+                          {pos.side}
+                        </span>
                       </div>
+                      <div style={{ display: 'flex', gap: 8, marginTop: 3, flexWrap: 'wrap' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-dim)' }}>
+                          Entry: {fmtUsd(pos.entryPrice)}
+                        </span>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-dim)' }}>
+                          Closed: {fmtDate(pos.closedAt ?? pos.openedAt)}
+                        </span>
+                      </div>
+                    </div>
 
+                    <div style={{ flexShrink: 0 }}>
                       <PnlChip value={pos.currentPnl} />
                     </div>
-                  );
-                })
+                  </div>
+                ))
             }
           </div>
         )}
@@ -531,7 +495,6 @@ export default function AssetsPage() {
         {/* ── TRADE HISTORY ── */}
         {tab === 'history' && (
           <div style={styles.card}>
-            {/* header row */}
             <div style={{
               display: 'flex', justifyContent: 'space-between',
               padding: '10px 16px', borderBottom: '1px solid var(--border)',
@@ -550,37 +513,26 @@ export default function AssetsPage() {
             {data?.trades.length === 0
               ? <EmptyState message="No trade history yet." cta />
               : data?.trades.map(t => {
-                  const sym = t.asset ?? t.action?.split(':')[1] ?? '—';
-                  const meta = getMeta(sym);
+                  const sym  = t.asset?.split(':')[1]?.trim() ?? '—';
                   const ok   = t.status === 'COMPLETED';
                   return (
                     <div className="trade-row" key={t.id}>
-                      {/* asset */}
-                      <div style={{ flex: 1.5, display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{
-                          width: 28, height: 28, borderRadius: 7, flexShrink: 0,
-                          background: meta.bg, display: 'flex', alignItems: 'center',
-                          justifyContent: 'center', fontSize: '0.75rem', color: meta.col,
-                          fontWeight: 700,
-                        }}>
-                          {meta.icon}
-                        </div>
-                        <div>
-                          <p style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', fontWeight: 700 }}>{sym}</p>
+                      <div style={{ flex: 1.5, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                        <AssetIcon symbol={sym} size={28} />
+                        <div style={{ minWidth: 0 }}>
+                          <p style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sym}</p>
                           <p style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', color: 'var(--text-dim)' }}>
                             {fmtTime(t.createdAt)}
                           </p>
                         </div>
                       </div>
 
-                      {/* amount */}
-                      <div style={{ flex: 1 }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                           {fmtUsd(t.amount)}
                         </span>
                       </div>
 
-                      {/* status */}
                       <div style={{ flex: 1 }}>
                         <span style={{
                           fontFamily: 'var(--mono)', fontSize: '0.58rem', fontWeight: 700,
@@ -593,7 +545,6 @@ export default function AssetsPage() {
                         </span>
                       </div>
 
-                      {/* date */}
                       <div style={{ flex: 1 }}>
                         <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-mid)' }}>
                           {fmtDate(t.createdAt)}
@@ -606,7 +557,6 @@ export default function AssetsPage() {
           </div>
         )}
 
-        {/* bottom padding for nav */}
         <div style={{ height: 80 }} />
       </div>
 
@@ -662,6 +612,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column',
     gap: 4,
+    overflow: 'hidden',
   },
   summaryLabel: {
     fontFamily: "'Space Mono', monospace",
@@ -675,6 +626,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.82rem',
     fontWeight: 700,
     color: 'var(--text)',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap' as const,
   },
   card: {
     background: 'var(--bg-card)',
