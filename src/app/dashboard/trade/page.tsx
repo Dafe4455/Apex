@@ -11,7 +11,7 @@ import { Toaster, toast } from 'react-hot-toast';
 
 type PriceData = { price: number; change24h: number };
 
-// ── Static asset list (no API dependency) ─────────────────────────────────────
+// ── Static asset list ─────────────────────────────────────────────────────────
 
 const ALL_ASSETS = [
   { symbol: 'BTCUSD', name: 'Bitcoin',             type: 'CRYPTO' },
@@ -31,6 +31,23 @@ const ALL_ASSETS = [
   { symbol: 'GBPUSD', name: 'British Pound / USD', type: 'FOREX' },
   { symbol: 'USDJPY', name: 'US Dollar / Yen',     type: 'FOREX' },
 ];
+
+// ── Asset logos (same sources as /api/market) ─────────────────────────────────
+
+const ASSET_LOGOS: Record<string, string> = {
+  BTCUSD: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
+  ETHUSD: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+  SOLUSD: 'https://assets.coingecko.com/coins/images/4128/small/solana.png',
+  BNBUSD: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+  AAPL:   'https://img.logo.dev/apple.com?token=pk_NdDz5eDOQFSlkWRQEkcXfQ',
+  TSLA:   'https://img.logo.dev/tesla.com?token=pk_NdDz5eDOQFSlkWRQEkcXfQ',
+  NVDA:   'https://img.logo.dev/nvidia.com?token=pk_NdDz5eDOQFSlkWRQEkcXfQ',
+  MSFT:   'https://img.logo.dev/microsoft.com?token=pk_NdDz5eDOQFSlkWRQEkcXfQ',
+  AMZN:   'https://img.logo.dev/amazon.com?token=pk_NdDz5eDOQFSlkWRQEkcXfQ',
+  GOOGL:  'https://img.logo.dev/google.com?token=pk_NdDz5eDOQFSlkWRQEkcXfQ',
+};
+
+// ── Type badge ────────────────────────────────────────────────────────────────
 
 const TYPE_BADGE: Record<string, { bg: string; color: string }> = {
   CRYPTO:      { bg: 'rgba(251,191,36,0.12)',  color: '#fbbf24' },
@@ -58,6 +75,8 @@ function TypeBadge({ type }: { type: string }) {
 const PRICE_SYMBOL_MAP: Record<string, string> = {
   USOIL: 'USOIL', UKOIL: 'UKOIL', XAUUSD: 'XAUUSD',
   EURUSD: 'EURUSD', GBPUSD: 'GBPUSD', USDJPY: 'USDJPY',
+  AAPL: 'AAPL', TSLA: 'TSLA', NVDA: 'NVDA',
+  MSFT: 'MSFT', AMZN: 'AMZN', GOOGL: 'GOOGL',
 };
 
 function getPriceSymbol(symbol: string) {
@@ -82,8 +101,6 @@ export default function TradePage() {
   const [marginType, setMarginType]     = useState<'ISOLATED' | 'CROSS'>('ISOLATED');
   const [bids, setBids]                 = useState<{ price: string; amount: string }[]>([]);
   const [asks, setAsks]                 = useState<{ price: string; amount: string }[]>([]);
-
-  // Lazy prices — only fetched when dropdown opens
   const [dropdownPrices, setDropdownPrices] = useState<Record<string, PriceData>>({});
 
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -305,52 +322,61 @@ export default function TradePage() {
         }
         .chevron-wrap.open { transform: rotate(180deg); }
 
+        /* ── BIGGER DROPDOWN ── */
         .asset-dropdown {
           position: absolute; top: calc(100% + 6px); left: 0;
-          width: 300px; background: var(--card);
-          border: 1px solid var(--bg-2); border-radius: 12px;
-          box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+          width: 380px;
+          background: var(--card);
+          border: 1px solid var(--bg-2); border-radius: 14px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.6);
           overflow: hidden; z-index: 50;
           animation: dropIn 0.15s ease;
+        }
+        @media (max-width: 420px) {
+          .asset-dropdown { width: calc(100vw - 24px); }
         }
         @keyframes dropIn {
           from { opacity: 0; transform: translateY(-6px); }
           to   { opacity: 1; transform: translateY(0); }
         }
         .dropdown-search {
-          display: flex; align-items: center; gap: 8px;
-          padding: 10px 14px; border-bottom: 1px solid var(--bg-2);
+          display: flex; align-items: center; gap: 10px;
+          padding: 12px 16px; border-bottom: 1px solid var(--bg-2);
           background: var(--bg-1);
         }
         .dropdown-search input {
           background: none; border: none; outline: none;
-          font-family: var(--mono); font-size: 0.75rem;
+          font-family: var(--mono); font-size: 0.8rem;
           color: var(--ink-2); width: 100%;
         }
         .dropdown-search input::placeholder { color: var(--faint); }
-        .dropdown-list { max-height: 320px; overflow-y: auto; }
+        .dropdown-list { max-height: 480px; overflow-y: auto; }
         .dropdown-item {
           display: flex; justify-content: space-between; align-items: center;
-          padding: 10px 14px; border: none; background: none; width: 100%;
+          padding: 14px 16px; border: none; background: none; width: 100%;
           cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.03);
-          transition: background 0.1s; text-align: left; gap: 10px;
+          transition: background 0.1s; text-align: left; gap: 12px;
         }
         .dropdown-item:hover { background: rgba(56,189,248,0.05); }
-        .dropdown-item-left { display: flex; align-items: center; gap: 10px; }
+        .dropdown-item-left { display: flex; align-items: center; gap: 12px; }
         .dropdown-icon {
-          width: 28px; height: 28px; border-radius: 50%;
+          width: 42px; height: 42px; border-radius: 50%;
           background: var(--bg-2); display: flex; align-items: center;
-          justify-content: center; font-family: var(--mono); font-size: 0.6rem;
+          justify-content: center; font-family: var(--mono); font-size: 0.75rem;
           color: var(--faint); flex-shrink: 0; font-weight: 700;
+          overflow: hidden;
+        }
+        .dropdown-icon img {
+          width: 100%; height: 100%; object-fit: cover;
         }
         .dropdown-item-sym {
-          font-family: var(--mono); font-size: 0.75rem; font-weight: 600;
-          color: var(--ink); margin-bottom: 2px;
+          font-family: var(--mono); font-size: 0.85rem; font-weight: 600;
+          color: var(--ink); margin-bottom: 3px;
         }
-        .dropdown-item-name { font-size: 0.6rem; color: var(--faint); }
-        .dropdown-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-        .dropdown-item-price { font-family: var(--mono); font-size: 0.68rem; color: var(--ink-2); }
-        .dropdown-item-chg   { font-family: var(--mono); font-size: 0.6rem; font-weight: 700; }
+        .dropdown-item-name { font-size: 0.68rem; color: var(--faint); }
+        .dropdown-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+        .dropdown-item-price { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-2); }
+        .dropdown-item-chg   { font-family: var(--mono); font-size: 0.65rem; font-weight: 700; }
 
         .price-display {
           font-family: var(--mono); font-size: 1.8rem; font-weight: 600;
@@ -531,7 +557,7 @@ export default function TradePage() {
               {dropdownOpen && (
                 <div className="asset-dropdown">
                   <div className="dropdown-search">
-                    <Search size={13} style={{ color: 'var(--faint)', flexShrink: 0 }} />
+                    <Search size={14} style={{ color: 'var(--faint)', flexShrink: 0 }} />
                     <input
                       placeholder="Search assets…"
                       value={searchQuery}
@@ -543,6 +569,7 @@ export default function TradePage() {
                     {filteredAssets.map(a => {
                       const dp = dropdownPrices[a.symbol];
                       const chgColor = dp && dp.change24h >= 0 ? 'var(--green)' : 'var(--red)';
+                      const logo = ASSET_LOGOS[a.symbol];
                       return (
                         <button
                           key={a.symbol}
@@ -554,7 +581,13 @@ export default function TradePage() {
                           }}
                         >
                           <div className="dropdown-item-left">
-                            <div className="dropdown-icon">{a.symbol[0]}</div>
+                            <div className="dropdown-icon">
+                              {logo
+                                ? <img src={logo} alt={a.symbol}
+                                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                : a.symbol[0]
+                              }
+                            </div>
                             <div>
                               <div className="dropdown-item-sym">{a.symbol}</div>
                               <div className="dropdown-item-name">{a.name}</div>
