@@ -166,7 +166,7 @@ export default function TradePage() {
         }));
       } catch {}
     });
-  }, [dropdownOpen]
+  }, []);
 
   // ── Fetch balance ─────────────────────────────────────────────────────────
 
