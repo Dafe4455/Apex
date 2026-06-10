@@ -35,8 +35,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // ── BUY: check balance ────────────────────────────────────────────────────
     if (action === 'BUY' && user.portfolioBalance < numAmount) {
       return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
+    }
+
+    // ── SELL: check open position exists and amount is valid ──────────────────
+    if (action === 'SELL') {
+      const openPos = await prisma.position.findFirst({
+        where: { userId: user.id, symbol: asset, status: 'OPEN', side: 'LONG' },
+        orderBy: { openedAt: 'asc' },
+      });
+
+      if (!openPos) {
+        return NextResponse.json({ error: `No open ${asset} position to sell` }, { status: 400 });
+      }
+
+      const positionValue = openPos.entryPrice * openPos.quantity;
+      if (numAmount > positionValue) {
+        return NextResponse.json({
+          error: `Sell amount exceeds position value of ${positionValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`,
+        }, { status: 400 });
+      }
     }
 
     const result = await prisma.$transaction(async (tx) => {
@@ -55,11 +75,9 @@ export async function POST(req: NextRequest) {
       });
 
       // 2. Position logic
-      const side     = action === 'BUY' ? 'LONG' : 'SHORT';
       const quantity = (numAmount * numLev) / numPrice;
 
       if (action === 'BUY') {
-        // Open a new OPEN position
         await tx.position.create({
           data: {
             userId:     user.id,
@@ -68,16 +86,16 @@ export async function POST(req: NextRequest) {
             quantity,
             entryPrice: numPrice,
             currentPnl: 0,
-            side,
+            side:       'LONG',
             status:     'OPEN',
             leverage:   numLev,
             marketType,
           },
         });
       } else {
-        // SELL: close the oldest open LONG position for this asset
+        // Close oldest open LONG position
         const openPos = await tx.position.findFirst({
-          where: { userId: user.id, symbol: asset, status: 'OPEN', side: 'LONG' },
+          where:   { userId: user.id, symbol: asset, status: 'OPEN', side: 'LONG' },
           orderBy: { openedAt: 'asc' },
         });
 
@@ -85,13 +103,8 @@ export async function POST(req: NextRequest) {
           const pnl = (numPrice - openPos.entryPrice) * openPos.quantity;
           await tx.position.update({
             where: { id: openPos.id },
-            data: {
-              status:     'CLOSED',
-              currentPnl: pnl,
-              closedAt:   new Date(),
-            },
+            data:  { status: 'CLOSED', currentPnl: pnl, closedAt: new Date() },
           });
-          // Credit realised P&L to user
           await tx.user.update({
             where: { id: user.id },
             data:  { realisedPnl: { increment: pnl } },
