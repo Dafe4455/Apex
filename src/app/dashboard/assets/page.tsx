@@ -537,7 +537,7 @@ export default function AssetsPage() {
             {data?.trades.length === 0
               ? <EmptyState message="No trade history yet." cta />
               : data?.trades.map(t => {
-                  const sym  = t.asset ?? '—';
+                  const sym = t.asset ?? t.action?.split(':')[1] ?? '—';
                   const meta = getMeta(sym);
                   const ok   = t.status === 'COMPLETED';
                   return (
