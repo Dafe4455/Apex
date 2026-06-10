@@ -164,7 +164,7 @@ model Withdrawal {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model Position {
+
 
 
 model Notification {
