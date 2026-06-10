@@ -130,10 +130,13 @@ export default function MarketsPage() {
           --sans:'DM Sans',system-ui,sans-serif;
           --mono:'DM Mono','SF Mono',monospace;
         }
-        *{box-sizing:border-box;margin:0;padding:8;}
-        body{background:var(--bg);font-family:var(--sans);}
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); font-family: var(--sans); }
 
-        .mkt-wrap { max-width: 900px; padding-bottom: 40px; }
+        .mkt-wrap {
+          max-width: 900px;
+          padding: 16px 16px 80px;
+        }
 
         /* Header */
         .mkt-header { margin-bottom: 20px; }
@@ -323,6 +326,7 @@ export default function MarketsPage() {
 
         /* Mobile */
         @media (max-width: 640px) {
+          .mkt-wrap { padding: 16px 14px 80px; }
           .mkt-thead { grid-template-columns: 2fr 1.3fr 1.6fr 1.6fr; }
           .mkt-row   { grid-template-columns: 2fr 1.3fr 1.6fr 1.6fr; }
           .spark-col { display: none; }
