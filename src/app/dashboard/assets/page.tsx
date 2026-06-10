@@ -409,14 +409,17 @@ export default function AssetsPage() {
                   return (
                     <div className="pos-row" key={pos.id}>
                       {/* Icon */}
-                      <div style={{
-                        width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-                        background: meta.bg, display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', fontSize: '1rem', color: meta.col,
-                        fontWeight: 700,
-                      }}>
-                        {meta.icon}
-                      </div>
+                     <div style={{
+  width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+  background: meta.bg, display: 'flex', alignItems: 'center',
+  justifyContent: 'center', fontSize: '1rem', color: meta.col,
+  fontWeight: 700, overflow: 'hidden',
+}}>
+  {meta.img
+    ? <img src={meta.img} alt={sym} style={{ width: 26, height: 26, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+    : meta.icon
+  }
+</div>
 
                       {/* Name + side */}
                       <div style={{ flex: 1, minWidth: 0 }}>
