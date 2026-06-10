@@ -165,21 +165,7 @@ model Withdrawal {
 }
 
 model Position {
-  id         String   @id @default(cuid())
-  userId     String
-  asset      String
-  symbol     String
-  quantity   Float    @default(0)
-  entryPrice Float    @default(0)
-  currentPnl Float    @default(0)
-  side       String   @default("LONG")
-  status     String   @default("OPEN")
-  openedAt   DateTime @default(now())
-  closedAt   DateTime?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-}
 
 model Notification {
   id        String   @id @default(cuid())
