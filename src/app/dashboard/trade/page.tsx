@@ -276,11 +276,11 @@ export default function TradePage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
         :root {
-          --bg:     #112838;
-          --bg-1:   #0e2132;
+          --bg:     #000000;
+          --bg-1:   #000000;
           --bg-2:   #1a3a50;
           --bg-3:   #245068;
-          --card:   #172f42;
+          --card:   #000000;
           --ink:    #e8f4fd;
           --ink-2:  #c8dfed;
           --dim:    #7aaec8;
