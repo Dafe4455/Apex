@@ -22,26 +22,30 @@ function fmtDate(d: string) {
 }
 
 function StatusBadge({ status }: { status: Withdrawal['status'] }) {
-  const map: Record<Withdrawal['status'], { bg: string; col: string; label: string }> = {
-    PENDING:              { bg: '#fdf3d0', col: '#8a6800', label: 'Pending' },
-    PENDING_VERIFICATION: { bg: '#faeaea', col: '#b83232', label: 'Verifying' },
-    APPROVED:             { bg: '#e4f2ea', col: '#2e7d4f', label: 'Approved' },
-    REJECTED:             { bg: '#faeaea', col: '#b83232', label: 'Rejected' },
+  const map: Record<Withdrawal['status'], { bg: string; col: string; border: string; label: string }> = {
+    PENDING:              { bg: 'rgba(251,191,36,0.1)',  col: '#fbbf24', border: 'rgba(251,191,36,0.25)',  label: 'Pending' },
+    PENDING_VERIFICATION: { bg: 'rgba(251,191,36,0.1)',  col: '#fbbf24', border: 'rgba(251,191,36,0.25)',  label: 'Verifying' },
+    APPROVED:             { bg: 'rgba(74,222,128,0.1)',  col: '#4ade80', border: 'rgba(74,222,128,0.25)',  label: 'Approved' },
+    REJECTED:             { bg: 'rgba(248,113,113,0.1)', col: '#f87171', border: 'rgba(248,113,113,0.25)', label: 'Rejected' },
   };
   const s = map[status];
   return (
-    <span style={{ background: s.bg, color: s.col, padding: '3px 10px', borderRadius: 20,
-      fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase',
-      fontFamily: 'var(--mono)' }}>
+    <span style={{
+      background: s.bg, color: s.col, border: `1px solid ${s.border}`,
+      padding: '3px 10px', borderRadius: 20,
+      fontSize: '0.55rem', fontWeight: 700, letterSpacing: '0.08em',
+      textTransform: 'uppercase', fontFamily: 'var(--mono)',
+      whiteSpace: 'nowrap',
+    }}>
       {s.label}
     </span>
   );
 }
 
 const METHODS = [
-  { id: 'bank',   label: 'Bank Transfer',  icon: Building2,   fields: ['Account Name', 'Bank Name', 'Account Number', 'Routing / Sort Code'] },
-  { id: 'card',   label: 'Debit Card',     icon: CreditCard,  fields: ['Cardholder Name', 'Card Number (last 4)', 'Expiry'] },
-  { id: 'crypto', label: 'Crypto Wallet',  icon: Bitcoin,     fields: ['Wallet Address', 'Network'] },
+  { id: 'bank',   label: 'Bank',   icon: Building2,  fields: ['Account Name', 'Bank Name', 'Account Number', 'Routing / Sort Code'] },
+  { id: 'card',   label: 'Card',   icon: CreditCard, fields: ['Cardholder Name', 'Card Number (last 4)', 'Expiry'] },
+  { id: 'crypto', label: 'Crypto', icon: Bitcoin,    fields: ['Wallet Address', 'Network'] },
 ];
 
 export default function WithdrawPage() {
@@ -124,68 +128,249 @@ export default function WithdrawPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
         :root {
-          --bg:#f0ece6;--bg-1:#e8e3db;--bg-2:#ddd7cd;--bg-3:#cbc4b8;
-          --card:#eeeae4;--ink:#1c1a17;--ink-2:#2e2b26;--ink-dim:#6b6457;
-          --ink-faint:#9e9485;--orange:#e85c0d;--orange-l:#fde8dc;--orange-m:#f5c4a8;
-          --green:#2e7d4f;--green-l:#e4f2ea;--red:#b83232;--red-l:#faeaea;
-          --gold-l:#fdf3d0;--gold:#8a6800;
-          --sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono','SF Mono',monospace;
-          --r:14px;
+          --bg: #0f2535;
+          --bg-1: #0b1e2c;
+          --bg-2: #1a3a50;
+          --bg-3: #234d67;
+          --card: #132f45;
+          --ink: #f0f8ff;
+          --ink-2: #d6ecf8;
+          --ink-dim: #8dbdd8;
+          --ink-faint: #4d7a96;
+          --accent: #38bdf8;
+          --accent-dim: rgba(56,189,248,0.12);
+          --accent-border: rgba(56,189,248,0.25);
+          --green: #4ade80;
+          --green-bg: rgba(74,222,128,0.1);
+          --green-border: rgba(74,222,128,0.2);
+          --red: #f87171;
+          --red-bg: rgba(248,113,113,0.1);
+          --red-border: rgba(248,113,113,0.2);
+          --yellow: #fbbf24;
+          --yellow-bg: rgba(251,191,36,0.1);
+          --yellow-border: rgba(251,191,36,0.2);
+          --sans: 'DM Sans', system-ui, sans-serif;
+          --mono: 'DM Mono', 'SF Mono', monospace;
+          --r: 14px;
         }
-        *{box-sizing:border-box;margin:0;padding:0;}
-        body{background:var(--bg);font-family:var(--sans);}
-        .wd-wrap{max-width:480px;margin:0 auto;padding:20px 16px 60px;min-height:100vh;}
-        .wd-back{display:inline-flex;align-items:center;gap:6px;font-size:0.7rem;font-weight:600;color:var(--ink-dim);text-decoration:none;margin-bottom:20px;padding:6px 12px;background:var(--card);border:1px solid var(--bg-2);border-radius:8px;transition:background 0.12s;}
-        .wd-back:hover{background:var(--bg-2);}
-        .wd-brand{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.18em;color:var(--orange);text-transform:uppercase;margin-bottom:4px;}
-        .wd-title{font-size:1.4rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;margin-bottom:4px;}
-        .wd-sub{font-size:0.72rem;font-weight:300;color:var(--ink-faint);margin-bottom:24px;}
-        .wd-balance-card{background:var(--ink);border-radius:var(--r);padding:18px 20px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
-        .wd-balance-lbl{font-size:0.6rem;font-weight:600;color:rgba(240,236,230,0.5);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;}
-        .wd-balance-val{font-size:1.6rem;font-weight:700;color:#f0ece6;letter-spacing:-0.02em;font-family:var(--mono);}
-        .wd-card{background:var(--card);border:1px solid var(--bg-2);border-radius:var(--r);padding:20px;margin-bottom:12px;position:relative;overflow:hidden;}
-        .wd-card-stripe{position:absolute;top:0;left:0;bottom:0;width:3px;background:var(--ink);border-radius:3px 0 0 3px;}
-        .wd-section-lbl{font-size:0.6rem;font-weight:700;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px;}
-        .wd-method-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
-        .wd-method{background:var(--bg-1);border:1.5px solid var(--bg-2);border-radius:10px;padding:14px 10px;text-align:center;cursor:pointer;transition:all 0.15s;}
-        .wd-method:hover{border-color:var(--bg-3);}
-        .wd-method.active{border-color:var(--ink);background:#fff;}
-        .wd-method-icon{margin-bottom:6px;display:flex;justify-content:center;color:var(--ink-faint);}
-        .wd-method.active .wd-method-icon{color:var(--ink);}
-        .wd-method-lbl{font-size:0.6rem;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.06em;}
-        .wd-method.active .wd-method-lbl{color:var(--ink);}
-        .wd-amount-row{display:flex;align-items:center;background:var(--bg-1);border:1.5px solid var(--bg-2);border-radius:10px;padding:14px 16px;transition:border-color 0.15s;margin-bottom:12px;}
-        .wd-amount-row:focus-within{border-color:var(--ink);}
-        .wd-currency{font-size:1.2rem;font-weight:600;color:var(--ink-dim);margin-right:8px;}
-        .wd-input{flex:1;border:none;background:transparent;outline:none;font-family:var(--sans);font-size:1.4rem;font-weight:700;color:var(--ink);letter-spacing:-0.02em;}
-        .wd-input::placeholder{color:var(--bg-3);}
-        .wd-quick{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
-        .wd-quick-btn{background:var(--card);border:1px solid var(--bg-2);border-radius:8px;padding:6px 14px;font-family:var(--sans);font-size:0.7rem;font-weight:500;color:var(--ink-dim);cursor:pointer;transition:all 0.12s;}
-        .wd-quick-btn:hover,.wd-quick-btn.active{background:var(--ink);border-color:var(--ink);color:#fff;}
-        .wd-field{margin-bottom:12px;}
-        .wd-field-label{display:block;font-size:0.58rem;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px;}
-        .wd-field-input{width:100%;background:var(--bg-1);border:1.5px solid var(--bg-2);border-radius:10px;padding:10px 13px;font-family:var(--sans);font-size:0.8rem;color:var(--ink);outline:none;transition:border-color 0.15s;}
-        .wd-field-input:focus{border-color:var(--ink);background:#fff;}
-        .wd-field-input::placeholder{color:var(--bg-3);}
-        .wd-submit{width:100%;background:var(--ink);color:#f0ece6;border:none;border-radius:12px;padding:15px;font-family:var(--sans);font-size:0.85rem;font-weight:700;cursor:pointer;transition:opacity 0.15s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px;}
-        .wd-submit:hover{opacity:0.85;}
-        .wd-submit:disabled{opacity:0.4;cursor:not-allowed;}
-        .wd-err{font-size:0.65rem;color:var(--red);margin-top:8px;text-align:center;}
-        .wd-success{display:flex;flex-direction:column;align-items:center;padding:10px 0 6px;text-align:center;}
-        .wd-success-ico{width:64px;height:64px;border-radius:50%;background:var(--green-l);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:16px;}
-        .wd-success-title{font-size:1.1rem;font-weight:700;color:var(--ink);margin-bottom:6px;}
-        .wd-success-sub{font-size:0.72rem;font-weight:300;color:var(--ink-faint);margin-bottom:20px;line-height:1.6;}
-        .wd-success-btn{background:var(--ink);color:#f0ece6;border:none;border-radius:10px;padding:12px 24px;font-family:var(--sans);font-size:0.78rem;font-weight:600;cursor:pointer;transition:opacity 0.15s;}
-        .wd-success-btn:hover{opacity:0.85;}
-        .wd-history-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--bg-2);}
-        .wd-history-row:last-child{border-bottom:none;}
-        .wd-history-ico{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-        .wd-spin{animation:spin 0.7s linear infinite;}
-        @keyframes spin{to{transform:rotate(360deg)}}
-        .wd-empty{display:flex;flex-direction:column;align-items:center;padding:24px;gap:8px;color:var(--ink-faint);}
-        .wd-empty p{font-size:0.7rem;font-weight:300;}
-        .wd-warning{display:flex;gap:8px;background:var(--gold-l);border:1px solid #e8d48a;border-radius:10px;padding:10px 14px;margin-bottom:14px;}
-        .wd-warning p{font-size:0.65rem;color:var(--gold);line-height:1.5;}
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background: var(--bg); font-family: var(--sans); }
+
+        .wd-wrap {
+          max-width: 480px;
+          margin: 0 auto;
+          padding: 16px 16px 80px;
+          min-height: 100vh;
+        }
+
+        /* Back link */
+        .wd-back {
+          display: inline-flex; align-items: center; gap: 6px;
+          font-size: 0.7rem; font-weight: 600; color: var(--ink-dim);
+          text-decoration: none; margin-bottom: 20px;
+          padding: 6px 12px;
+          background: var(--card); border: 1px solid var(--bg-2);
+          border-radius: 8px; transition: background 0.12s, border-color 0.12s;
+        }
+        .wd-back:hover { background: var(--bg-2); border-color: var(--bg-3); }
+
+        /* Header */
+        .wd-brand {
+          font-family: var(--mono); font-size: 0.58rem;
+          letter-spacing: 0.18em; color: var(--accent);
+          text-transform: uppercase; margin-bottom: 4px;
+        }
+        .wd-title {
+          font-size: 1.4rem; font-weight: 700; color: var(--ink);
+          letter-spacing: -0.02em; margin-bottom: 4px;
+        }
+        .wd-sub {
+          font-size: 0.72rem; font-weight: 300;
+          color: var(--ink-faint); margin-bottom: 24px;
+        }
+
+        /* Balance card */
+        .wd-balance-card {
+          background: linear-gradient(135deg, #0d2d45 0%, #0b2038 100%);
+          border: 1px solid var(--bg-2);
+          border-radius: var(--r); padding: 20px;
+          margin-bottom: 12px;
+          display: flex; align-items: center; justify-content: space-between;
+          position: relative; overflow: hidden;
+        }
+        .wd-balance-card::before {
+          content: '';
+          position: absolute; top: -30px; right: -30px;
+          width: 120px; height: 120px; border-radius: 50%;
+          background: rgba(56,189,248,0.05);
+          pointer-events: none;
+        }
+        .wd-balance-lbl {
+          font-size: 0.58rem; font-weight: 600;
+          color: var(--ink-faint); letter-spacing: 0.1em;
+          text-transform: uppercase; margin-bottom: 6px;
+          font-family: var(--mono);
+        }
+        .wd-balance-val {
+          font-size: 1.8rem; font-weight: 700; color: var(--ink);
+          letter-spacing: -0.03em; font-family: var(--mono);
+        }
+        .wd-balance-arrow {
+          width: 44px; height: 44px; border-radius: 50%;
+          background: var(--accent-dim); border: 1px solid var(--accent-border);
+          display: flex; align-items: center; justify-content: center;
+          color: var(--accent); flex-shrink: 0;
+        }
+
+        /* Cards */
+        .wd-card {
+          background: var(--card); border: 1px solid var(--bg-2);
+          border-radius: var(--r); padding: 20px; margin-bottom: 12px;
+        }
+        .wd-section-lbl {
+          font-size: 0.58rem; font-weight: 700; color: var(--ink-faint);
+          text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 14px;
+          font-family: var(--mono);
+        }
+
+        /* Method selector */
+        .wd-method-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+        .wd-method {
+          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          border-radius: 10px; padding: 14px 10px;
+          text-align: center; cursor: pointer; transition: all 0.15s;
+        }
+        .wd-method:hover { border-color: var(--bg-3); }
+        .wd-method.active {
+          border-color: var(--accent); background: var(--accent-dim);
+        }
+        .wd-method-icon {
+          margin-bottom: 6px; display: flex;
+          justify-content: center; color: var(--ink-faint);
+        }
+        .wd-method.active .wd-method-icon { color: var(--accent); }
+        .wd-method-lbl {
+          font-size: 0.6rem; font-weight: 600;
+          color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em;
+        }
+        .wd-method.active .wd-method-lbl { color: var(--accent); }
+
+        /* Warning */
+        .wd-warning {
+          display: flex; gap: 8px;
+          background: var(--yellow-bg); border: 1px solid var(--yellow-border);
+          border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+        }
+        .wd-warning p { font-size: 0.65rem; color: var(--yellow); line-height: 1.6; }
+
+        /* Amount input */
+        .wd-amount-row {
+          display: flex; align-items: center;
+          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          border-radius: 10px; padding: 14px 16px;
+          transition: border-color 0.15s; margin-bottom: 12px;
+        }
+        .wd-amount-row:focus-within { border-color: var(--accent); }
+        .wd-currency {
+          font-size: 1.2rem; font-weight: 600;
+          color: var(--ink-faint); margin-right: 8px;
+        }
+        .wd-input {
+          flex: 1; border: none; background: transparent; outline: none;
+          font-family: var(--mono); font-size: 1.4rem;
+          font-weight: 700; color: var(--ink); letter-spacing: -0.02em;
+        }
+        .wd-input::placeholder { color: var(--bg-3); }
+
+        /* Quick amounts */
+        .wd-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+        .wd-quick-btn {
+          background: var(--bg-1); border: 1px solid var(--bg-2);
+          border-radius: 8px; padding: 5px 14px;
+          font-family: var(--mono); font-size: 0.65rem; font-weight: 500;
+          color: var(--ink-dim); cursor: pointer; transition: all 0.12s;
+        }
+        .wd-quick-btn:hover, .wd-quick-btn.active {
+          background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
+        }
+
+        /* Fields */
+        .wd-field { margin-bottom: 12px; }
+        .wd-field-label {
+          display: block; font-size: 0.58rem; font-weight: 600;
+          color: var(--ink-faint); text-transform: uppercase;
+          letter-spacing: 0.08em; margin-bottom: 6px; font-family: var(--mono);
+        }
+        .wd-field-input {
+          width: 100%; background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          border-radius: 10px; padding: 10px 13px;
+          font-family: var(--sans); font-size: 0.8rem;
+          color: var(--ink); outline: none; transition: border-color 0.15s;
+        }
+        .wd-field-input:focus { border-color: var(--accent); background: var(--bg-2); }
+        .wd-field-input::placeholder { color: var(--ink-faint); }
+
+        /* Submit */
+        .wd-submit {
+          width: 100%; background: var(--accent); color: #0a1f2e;
+          border: none; border-radius: 12px; padding: 15px;
+          font-family: var(--sans); font-size: 0.85rem; font-weight: 700;
+          cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+          margin-top: 4px; display: flex; align-items: center;
+          justify-content: center; gap: 8px;
+        }
+        .wd-submit:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
+        .wd-submit:active:not(:disabled) { transform: scale(0.98); }
+        .wd-submit:disabled { opacity: 0.35; cursor: not-allowed; }
+        .wd-err {
+          font-size: 0.65rem; color: var(--red);
+          margin-top: 8px; text-align: center;
+        }
+
+        /* Success */
+        .wd-success {
+          display: flex; flex-direction: column;
+          align-items: center; padding: 10px 0 6px; text-align: center;
+        }
+        .wd-success-ico {
+          width: 64px; height: 64px; border-radius: 50%;
+          background: var(--green-bg); border: 1px solid var(--green-border);
+          display: flex; align-items: center; justify-content: center;
+          color: var(--green); margin-bottom: 16px;
+        }
+        .wd-success-title {
+          font-size: 1.1rem; font-weight: 700; color: var(--ink); margin-bottom: 6px;
+        }
+        .wd-success-sub {
+          font-size: 0.72rem; font-weight: 300; color: var(--ink-faint);
+          margin-bottom: 20px; line-height: 1.7;
+        }
+        .wd-success-sub strong { color: var(--ink); font-weight: 600; }
+        .wd-success-btn {
+          background: var(--accent); color: #0a1f2e;
+          border: none; border-radius: 10px; padding: 12px 28px;
+          font-family: var(--sans); font-size: 0.78rem; font-weight: 700;
+          cursor: pointer; transition: opacity 0.15s;
+        }
+        .wd-success-btn:hover { opacity: 0.88; }
+
+        /* History */
+        .wd-history-row {
+          display: flex; align-items: center; gap: 12px;
+          padding: 13px 0; border-bottom: 1px solid var(--bg-2);
+        }
+        .wd-history-row:last-child { border-bottom: none; padding-bottom: 0; }
+        .wd-history-ico {
+          width: 34px; height: 34px; border-radius: 50%;
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .wd-spin { animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .wd-empty {
+          display: flex; flex-direction: column;
+          align-items: center; padding: 24px; gap: 8px; color: var(--ink-faint);
+        }
+        .wd-empty p { font-size: 0.7rem; font-weight: 300; }
       `}</style>
 
       <div className="wd-wrap">
@@ -203,13 +388,16 @@ export default function WithdrawPage() {
             <p className="wd-balance-lbl">Available Balance</p>
             <p className="wd-balance-val">${fmt(balance)}</p>
           </div>
-          <div style={{ fontSize: '2rem', opacity: 0.2 }}>↑</div>
+          <div className="wd-balance-arrow">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+              <path d="M9 14V4M9 4L4.5 8.5M9 4L13.5 8.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
         </div>
 
         {/* METHOD */}
         {!submitted && (
           <div className="wd-card">
-            <div className="wd-card-stripe" />
             <p className="wd-section-lbl">Withdrawal Method</p>
             <div className="wd-method-grid">
               {METHODS.map(m => {
@@ -229,7 +417,6 @@ export default function WithdrawPage() {
         {/* AMOUNT + DETAILS */}
         {!submitted && (
           <div className="wd-card">
-            <div className="wd-card-stripe" />
             <p className="wd-section-lbl">Amount & Details</p>
 
             <div className="wd-warning">
@@ -250,7 +437,6 @@ export default function WithdrawPage() {
               ))}
             </div>
 
-            {/* Dynamic fields per method */}
             {activeMethod.fields.map(field => (
               <div key={field} className="wd-field">
                 <label className="wd-field-label">{field}</label>
@@ -284,7 +470,9 @@ export default function WithdrawPage() {
         {submitted && (
           <div className="wd-card">
             <div className="wd-success">
-              <div className="wd-success-ico">✓</div>
+              <div className="wd-success-ico">
+                <CheckCircle2 size={28} />
+              </div>
               <p className="wd-success-title">Withdrawal Requested</p>
               <p className="wd-success-sub">
                 Your withdrawal of <strong>${fmt(Number(amount))}</strong> via {activeMethod.label} has been submitted.<br />
@@ -310,8 +498,9 @@ export default function WithdrawPage() {
           ) : history.map(w => (
             <div key={w.id} className="wd-history-row">
               <div className="wd-history-ico" style={{
-                background: w.status === 'APPROVED' ? 'var(--green-l)' : w.status === 'REJECTED' ? 'var(--red-l)' : 'var(--gold-l)',
-                color: w.status === 'APPROVED' ? 'var(--green)' : w.status === 'REJECTED' ? 'var(--red)' : 'var(--gold)',
+                background: w.status === 'APPROVED' ? 'var(--green-bg)' : w.status === 'REJECTED' ? 'var(--red-bg)' : 'var(--yellow-bg)',
+                color: w.status === 'APPROVED' ? 'var(--green)' : w.status === 'REJECTED' ? 'var(--red)' : 'var(--yellow)',
+                border: `1px solid ${w.status === 'APPROVED' ? 'var(--green-border)' : w.status === 'REJECTED' ? 'var(--red-border)' : 'var(--yellow-border)'}`,
               }}>
                 {w.status === 'APPROVED' ? <CheckCircle2 size={16} /> : w.status === 'REJECTED' ? <XCircle size={16} /> : <Clock size={16} />}
               </div>
@@ -319,7 +508,7 @@ export default function WithdrawPage() {
                 <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>
                   ${fmt(w.amount)} {w.currency}
                 </p>
-                <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)' }}>
+                <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', fontFamily: 'var(--mono)' }}>
                   {fmtDate(w.createdAt)}{w.note ? ` · "${w.note}"` : ''}
                 </p>
               </div>
