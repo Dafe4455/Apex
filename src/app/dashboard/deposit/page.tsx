@@ -130,8 +130,8 @@ export default function DepositPage() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
           --bg:      #0b1623;
-          --card:    #0f1e8e;
-          --card-2:  #0d1a48;
+          --card:    #0f1e2e;
+          --card-2:  #0d1a28;
           --border:  rgba(255,255,255,0.07);
           --border-2:rgba(255,255,255,0.12);
           --orange:  #f97316;
