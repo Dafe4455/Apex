@@ -122,7 +122,7 @@ export default function MarketsPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
         :root {
-          --bg:#000000;--bg-1:#0A0A0A;--bg-2:#0A0A0A;--bg-3:#234d67;
+          --bg:#000000;--bg-1:#000000;--bg-2:#000000;--bg-3:#234d67;
           --card:#000000;--ink:#f0f8ff;--ink-2:#d6ecf8;--ink-dim:#8dbdd8;
           --ink-faint:#4d7a96;--accent:#38bdf8;
           --green:#4ade80;--green-bg:rgba(74,222,128,0.1);--green-border:rgba(74,222,128,0.2);
