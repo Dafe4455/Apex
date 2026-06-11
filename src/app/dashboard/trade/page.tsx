@@ -278,7 +278,7 @@ export default function TradePage() {
         :root {
           --bg:     #000000;
           --bg-1:   #000000;
-          --bg-2:   #1a3a50;
+          --bg-2:   #0F1115;
           --bg-3:   #12151B;
           --card:   #000000;
           --ink:    #e8f4fd;
