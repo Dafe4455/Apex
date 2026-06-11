@@ -6,7 +6,6 @@ import {
   CreditCard, KeyRound, HelpCircle, RefreshCw,
   ArrowDownToLine, CheckCircle2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 type SupportMessage = {
   id: string;
