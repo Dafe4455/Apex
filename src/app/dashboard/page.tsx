@@ -331,7 +331,7 @@ export default function DashboardPage() {
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
         :root {
           --bg:#000000;
-          --bg-1:#000080;
+          
           --bg-2:#000200;
           --bg-3:#0f2535;
           --card:#000000;
