@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Send, Loader2, MessageCircle, ShieldCheck,
   CreditCard, KeyRound, HelpCircle, RefreshCw,
-  ArrowDownToLine, CheckCircle2,
+  ArrowDownToLine, CheckCircle2, ArrowLeft,
 } from "lucide-react";
 
 type SupportMessage = {
@@ -80,12 +81,10 @@ export default function SupportPage() {
     }
   };
 
-  // Initial load
   useEffect(() => {
     fetchThread().then(() => setLoading(false));
   }, []);
 
-  // Poll every 10s; restart interval if ticketId changes
   useEffect(() => {
     const interval = setInterval(() => fetchThread(true), 10_000);
     return () => clearInterval(interval);
@@ -132,189 +131,453 @@ export default function SupportPage() {
   const isClosed = status === "CLOSED";
 
   return (
-    <div className="min-h-screen bg-[#f0f7f4] p-5 sm:p-8 flex flex-col gap-6">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+        :root {
+          --bg:           #0f2535;
+          --bg-1:         #0b1e2c;
+          --bg-2:         #1a3a50;
+          --bg-3:         #234d67;
+          --card:         #132f45;
+          --ink:          #f0f8ff;
+          --ink-2:        #d6ecf8;
+          --ink-dim:      #8dbdd8;
+          --ink-faint:    #4d7a96;
+          --accent:       #38bdf8;
+          --accent-dim:   rgba(56,189,248,0.12);
+          --accent-border:rgba(56,189,248,0.25);
+          --green:        #4ade80;
+          --green-bg:     rgba(74,222,128,0.08);
+          --green-border: rgba(74,222,128,0.2);
+          --red:          #f87171;
+          --red-bg:       rgba(248,113,113,0.08);
+          --red-border:   rgba(248,113,113,0.2);
+          --yellow:       #fbbf24;
+          --yellow-bg:    rgba(251,191,36,0.08);
+          --yellow-border:rgba(251,191,36,0.2);
+          --sans:         'DM Sans', system-ui, sans-serif;
+          --mono:         'DM Mono', 'SF Mono', monospace;
+          --r:            14px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-      {/* ── Header ── */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-semibold text-[#0f2419]"
-              style={{ fontFamily: "'Playfair Display', serif" }}>
-            Support
-          </h1>
-          <p className="text-[13px] text-[#6a8c7a] mt-0.5">We usually reply within a few hours.</p>
+        .sp-wrap {
+          max-width: 960px;
+          margin: 0 auto;
+          padding: 16px 16px 60px;
+          min-height: 100vh;
+          font-family: var(--sans);
+        }
+
+        /* Back */
+        .sp-back {
+          display: inline-flex; align-items: center; gap: 6px;
+          font-size: 0.7rem; font-weight: 600; color: var(--ink-dim);
+          text-decoration: none; margin-bottom: 20px;
+          padding: 6px 12px;
+          background: var(--card); border: 1px solid var(--bg-2);
+          border-radius: 8px; transition: background 0.12s, border-color 0.12s;
+        }
+        .sp-back:hover { background: var(--bg-2); border-color: var(--bg-3); }
+
+        /* Header */
+        .sp-header {
+          display: flex; align-items: flex-start; justify-content: space-between;
+          margin-bottom: 20px; gap: 12px;
+        }
+        .sp-brand {
+          font-family: var(--mono); font-size: 0.58rem;
+          letter-spacing: 0.18em; color: var(--accent);
+          text-transform: uppercase; margin-bottom: 4px;
+        }
+        .sp-title {
+          font-size: 1.4rem; font-weight: 700; color: var(--ink);
+          letter-spacing: -0.02em; margin-bottom: 3px;
+        }
+        .sp-sub {
+          font-size: 0.7rem; font-weight: 300; color: var(--ink-faint);
+        }
+        .sp-status-badge {
+          font-family: var(--mono); font-size: 0.55rem; font-weight: 700;
+          letter-spacing: 0.1em; text-transform: uppercase;
+          padding: 4px 12px; border-radius: 20px; white-space: nowrap;
+          flex-shrink: 0; margin-top: 4px;
+        }
+        .sp-status-open   { background: rgba(74,222,128,0.1);  color: var(--green); border: 1px solid var(--green-border); }
+        .sp-status-closed { background: rgba(77,122,150,0.12); color: var(--ink-faint); border: 1px solid rgba(77,122,150,0.25); }
+
+        /* Layout */
+        .sp-grid {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 12px;
+        }
+        @media (min-width: 768px) {
+          .sp-grid { grid-template-columns: 260px 1fr; }
+        }
+
+        /* Sidebar */
+        .sp-sidebar { display: flex; flex-direction: column; gap: 12px; }
+        .sp-card {
+          background: var(--card); border: 1px solid var(--bg-2);
+          border-radius: var(--r); padding: 18px;
+        }
+        .sp-card-title {
+          font-size: 0.58rem; font-weight: 700; color: var(--ink-faint);
+          text-transform: uppercase; letter-spacing: 0.1em;
+          font-family: var(--mono); margin-bottom: 4px;
+        }
+        .sp-card-sub {
+          font-size: 0.65rem; color: var(--ink-faint); margin-bottom: 14px;
+        }
+
+        /* Shortcut buttons */
+        .sp-shortcuts { display: flex; flex-direction: column; gap: 6px; }
+        .sp-shortcut {
+          display: flex; align-items: center; gap: 10px;
+          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          border-radius: 10px; padding: 10px 12px;
+          cursor: pointer; transition: all 0.14s; text-align: left;
+          font-family: var(--sans);
+        }
+        .sp-shortcut:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-dim); }
+        .sp-shortcut:disabled { opacity: 0.35; cursor: not-allowed; }
+        .sp-shortcut-ico {
+          width: 30px; height: 30px; border-radius: 8px;
+          background: var(--bg-2); border: 1px solid var(--bg-3);
+          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+          color: var(--accent); transition: background 0.14s;
+        }
+        .sp-shortcut:hover:not(:disabled) .sp-shortcut-ico { background: var(--accent-border); }
+        .sp-shortcut-lbl {
+          font-size: 0.72rem; font-weight: 500; color: var(--ink-dim);
+        }
+        .sp-shortcut:hover:not(:disabled) .sp-shortcut-lbl { color: var(--accent); }
+
+        /* Online indicator */
+        .sp-online {
+          display: flex; align-items: center; gap: 8px; margin-bottom: 10px;
+        }
+        .sp-online-dot {
+          width: 8px; height: 8px; border-radius: 50%;
+          background: var(--green);
+          box-shadow: 0 0 0 0 rgba(74,222,128,0.4);
+          animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+          0%   { box-shadow: 0 0 0 0 rgba(74,222,128,0.4); }
+          70%  { box-shadow: 0 0 0 6px rgba(74,222,128,0); }
+          100% { box-shadow: 0 0 0 0 rgba(74,222,128,0); }
+        }
+        .sp-online-lbl { font-size: 0.72rem; font-weight: 600; color: var(--ink-dim); }
+        .sp-online-desc { font-size: 0.65rem; color: var(--ink-faint); line-height: 1.6; }
+
+        /* Chat panel */
+        .sp-chat {
+          background: var(--card); border: 1px solid var(--bg-2);
+          border-radius: var(--r); display: flex; flex-direction: column;
+          overflow: hidden; min-height: 560px;
+        }
+
+        /* Chat header */
+        .sp-chat-header {
+          display: flex; align-items: center; gap: 12px;
+          padding: 14px 18px; border-bottom: 1px solid var(--bg-2);
+          background: var(--bg-1);
+        }
+        .sp-chat-avatar {
+          width: 36px; height: 36px; border-radius: 10px;
+          background: linear-gradient(135deg, var(--bg-2), var(--bg-3));
+          border: 1px solid var(--accent-border);
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; color: var(--accent);
+        }
+        .sp-chat-name { font-size: 0.8rem; font-weight: 600; color: var(--ink); }
+        .sp-chat-tagline { font-size: 0.62rem; color: var(--ink-faint); margin-top: 1px; }
+
+        /* Messages */
+        .sp-messages {
+          flex: 1; overflow-y: auto; padding: 18px;
+          display: flex; flex-direction: column; gap: 4px;
+          scrollbar-width: thin; scrollbar-color: var(--bg-2) transparent;
+        }
+        .sp-messages::-webkit-scrollbar { width: 4px; }
+        .sp-messages::-webkit-scrollbar-thumb { background: var(--bg-2); border-radius: 4px; }
+
+        /* Date divider */
+        .sp-divider {
+          display: flex; align-items: center; gap: 10px;
+          margin: 14px 0 10px;
+        }
+        .sp-divider-line { flex: 1; height: 1px; background: var(--bg-2); }
+        .sp-divider-label {
+          font-family: var(--mono); font-size: 0.55rem;
+          color: var(--ink-faint); white-space: nowrap;
+        }
+
+        /* Message bubbles */
+        .sp-msg-row { display: flex; margin-bottom: 6px; }
+        .sp-msg-row.user  { justify-content: flex-end; }
+        .sp-msg-row.admin { justify-content: flex-start; }
+        .sp-msg-admin-ico {
+          width: 26px; height: 26px; border-radius: 8px;
+          background: var(--bg-2); border: 1px solid var(--accent-border);
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; margin-right: 8px; align-self: flex-end;
+          color: var(--accent);
+        }
+        .sp-bubble-wrap { max-width: 72%; display: flex; flex-direction: column; }
+        .sp-bubble-wrap.user  { align-items: flex-end; }
+        .sp-bubble-wrap.admin { align-items: flex-start; }
+        .sp-bubble {
+          padding: 10px 14px; border-radius: 16px;
+          font-size: 0.82rem; line-height: 1.6;
+          white-space: pre-wrap; word-break: break-words;
+        }
+        .sp-bubble.user {
+          background: var(--accent); color: #0a1f2e;
+          border-bottom-right-radius: 4px;
+        }
+        .sp-bubble.admin {
+          background: var(--bg-2); color: var(--ink);
+          border: 1px solid var(--bg-3);
+          border-bottom-left-radius: 4px;
+        }
+        .sp-bubble-time {
+          font-family: var(--mono); font-size: 0.55rem;
+          color: var(--ink-faint); margin-top: 4px; padding: 0 2px;
+        }
+
+        /* Empty state */
+        .sp-empty {
+          display: flex; flex-direction: column;
+          align-items: center; justify-content: center;
+          flex: 1; padding: 48px 24px; text-align: center; gap: 10px;
+        }
+        .sp-empty-ico {
+          width: 52px; height: 52px; border-radius: 14px;
+          background: var(--bg-2); border: 1px solid var(--bg-3);
+          display: flex; align-items: center; justify-content: center;
+          color: var(--ink-faint);
+        }
+        .sp-empty-title { font-size: 0.85rem; font-weight: 600; color: var(--ink-dim); }
+        .sp-empty-sub   { font-size: 0.7rem; color: var(--ink-faint); }
+
+        /* Closed notice */
+        .sp-closed-notice {
+          display: flex; align-items: center; gap: 8px;
+          justify-content: center; margin: 8px 0;
+          padding: 10px 14px;
+          background: var(--bg-2); border: 1px solid var(--bg-3);
+          border-radius: 10px;
+          font-size: 0.68rem; color: var(--ink-faint);
+          font-family: var(--mono);
+        }
+
+        /* Error */
+        .sp-error { font-size: 0.65rem; color: var(--red); text-align: center; margin: 4px 0; }
+
+        /* Input area */
+        .sp-input-area {
+          border-top: 1px solid var(--bg-2);
+          padding: 12px 16px; background: var(--bg-1);
+        }
+        .sp-input-row { display: flex; align-items: flex-end; gap: 10px; }
+        .sp-textarea {
+          flex: 1; resize: none; outline: none;
+          background: var(--bg-2); border: 1.5px solid var(--bg-3);
+          border-radius: 12px; padding: 10px 14px;
+          font-family: var(--sans); font-size: 0.8rem;
+          color: var(--ink); line-height: 1.5;
+          transition: border-color 0.15s, background 0.15s;
+          min-height: 42px; max-height: 120px;
+        }
+        .sp-textarea::placeholder { color: var(--ink-faint); }
+        .sp-textarea:focus { border-color: var(--accent); background: var(--bg-2); }
+        .sp-textarea:disabled { opacity: 0.4; cursor: not-allowed; }
+        .sp-send {
+          width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+          background: var(--accent); color: #0a1f2e; border: none;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+          margin-bottom: 1px;
+        }
+        .sp-send:hover:not(:disabled) { opacity: 0.85; }
+        .sp-send:active:not(:disabled) { transform: scale(0.95); }
+        .sp-send:disabled { opacity: 0.3; cursor: not-allowed; }
+        .sp-input-hint {
+          font-size: 0.58rem; color: var(--ink-faint);
+          margin-top: 6px; padding: 0 2px;
+          font-family: var(--mono);
+        }
+      `}</style>
+
+      <div className="sp-wrap">
+
+        <Link href="/dashboard" className="sp-back">
+          <ArrowLeft size={13} /> Back to Dashboard
+        </Link>
+
+        {/* Header */}
+        <div className="sp-header">
+          <div>
+            <p className="sp-brand">Apex · Markets</p>
+            <h1 className="sp-title">Support</h1>
+            <p className="sp-sub">We usually reply within a few hours.</p>
+          </div>
+          {status && (
+            <span className={`sp-status-badge ${status === "OPEN" ? "sp-status-open" : "sp-status-closed"}`}>
+              {status === "OPEN" ? "● Open" : "Closed"}
+            </span>
+          )}
         </div>
-        {status && (
-          <span className={cn(
-            "text-[11px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border",
-            status === "OPEN"
-              ? "bg-[#edf7f5] text-[#0f7a6e] border-[#a8dbd4]"
-              : "bg-[#e4f2ec] text-[#6a8c7a] border-[#c8dfd5]"
-          )}>
-            {status === "OPEN" ? "● Open" : "Closed"}
-          </span>
-        )}
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 flex-1">
+        <div className="sp-grid">
 
-        {/* ── LEFT: FAQ shortcuts ── */}
-        <div className="lg:col-span-1 flex flex-col gap-3">
-          <div className="bg-[#f2f9f6] rounded-2xl border border-[#c8dfd5] shadow-sm p-5">
-            <p className="text-[13px] font-semibold text-[#0f2419] mb-1">Quick topics</p>
-            <p className="text-[12px] text-[#6a8c7a] mb-4">Tap a topic to get started fast.</p>
-            <div className="flex flex-col gap-2">
-              {FAQ_SHORTCUTS.map(({ icon: Icon, label, text }) => (
-                <button
-                  key={label}
-                  type="button"
-                  disabled={isClosed}
-                  onClick={() => handleSend(text)}
-                  className="flex items-center gap-3 w-full px-4 py-3 rounded-[13px] border border-[#c8dfd5] bg-[#e4f2ec] hover:border-[#4daa80] hover:bg-[#d8ede6] text-left transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-[#f2f9f6] border border-[#c8dfd5] flex items-center justify-center flex-shrink-0 group-hover:border-[#4daa80] transition-colors">
-                    <Icon className="w-3.5 h-3.5 text-[#1e7a52]" strokeWidth={2} />
+          {/* ── Sidebar ── */}
+          <div className="sp-sidebar">
+
+            {/* Quick topics */}
+            <div className="sp-card">
+              <p className="sp-card-title">Quick topics</p>
+              <p className="sp-card-sub">Tap a topic to get started fast.</p>
+              <div className="sp-shortcuts">
+                {FAQ_SHORTCUTS.map(({ icon: Icon, label, text }) => (
+                  <button
+                    key={label}
+                    type="button"
+                    disabled={isClosed || sending}
+                    onClick={() => handleSend(text)}
+                    className="sp-shortcut"
+                  >
+                    <div className="sp-shortcut-ico">
+                      <Icon size={13} strokeWidth={2} />
+                    </div>
+                    <span className="sp-shortcut-lbl">{label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Online status */}
+            <div className="sp-card">
+              <div className="sp-online">
+                <div className="sp-online-dot" />
+                <span className="sp-online-lbl">Support is online</span>
+              </div>
+              <p className="sp-online-desc">
+                Our team reviews all messages and typically responds within 2–4 hours during business hours.
+              </p>
+            </div>
+
+          </div>
+
+          {/* ── Chat panel ── */}
+          <div className="sp-chat">
+
+            {/* Chat header */}
+            <div className="sp-chat-header">
+              <div className="sp-chat-avatar">
+                <MessageCircle size={16} strokeWidth={1.8} />
+              </div>
+              <div>
+                <p className="sp-chat-name">Apex Markets Support</p>
+                <p className="sp-chat-tagline">Replies go to this thread</p>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <div className="sp-messages">
+
+              {loading && (
+                <div style={{ display: "flex", justifyContent: "center", padding: "48px 0" }}>
+                  <Loader2 size={18} style={{ color: "var(--ink-faint)", animation: "spin 0.8s linear infinite" }} />
+                </div>
+              )}
+
+              {!loading && messages.length === 0 && (
+                <div className="sp-empty">
+                  <div className="sp-empty-ico">
+                    <MessageCircle size={22} strokeWidth={1.5} />
                   </div>
-                  <span className="text-[13px] font-medium text-[#2d5042]">{label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Status info */}
-          <div className="bg-[#f2f9f6] rounded-2xl border border-[#c8dfd5] shadow-sm p-5">
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-2 h-2 rounded-full bg-[#1e7a52] animate-pulse" />
-              <p className="text-[13px] font-semibold text-[#0f2419]">Support is online</p>
-            </div>
-            <p className="text-[12px] text-[#6a8c7a] leading-relaxed">
-              Our team reviews all messages and typically responds within 2–4 hours during business hours.
-            </p>
-          </div>
-        </div>
-
-        {/* ── RIGHT: Chat thread ── */}
-        <div className="lg:col-span-2 bg-[#f2f9f6] rounded-2xl border border-[#c8dfd5] shadow-sm flex flex-col overflow-hidden" style={{ minHeight: "560px" }}>
-
-          {/* Chat header */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-[#d8ede6]">
-            <div className="w-9 h-9 rounded-[11px] flex items-center justify-center flex-shrink-0"
-                 style={{ background: "linear-gradient(135deg, #1a6648, #3daa7a)" }}>
-              <MessageCircle className="w-4 h-4 text-white" strokeWidth={2} />
-            </div>
-            <div>
-              <p className="text-[14px] font-semibold text-[#0f2419]">NexaBank Support</p>
-              <p className="text-[11px] text-[#6a8c7a]">Replies go to this thread</p>
-            </div>
-          </div>
-
-          {/* Messages area */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-
-            {loading && (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-5 h-5 animate-spin text-[#a8c8b8]" />
-              </div>
-            )}
-
-            {!loading && messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-[#e4f2ec] border border-[#c8dfd5] flex items-center justify-center mb-4">
-                  <MessageCircle className="w-6 h-6 text-[#a8c8b8]" />
+                  <p className="sp-empty-title">No messages yet</p>
+                  <p className="sp-empty-sub">Use a quick topic or type below to start.</p>
                 </div>
-                <p className="text-[14px] font-semibold text-[#6a8c7a]">No messages yet</p>
-                <p className="text-[12px] text-[#a8c8b8] mt-1">Use a quick topic or type below to start.</p>
-              </div>
-            )}
+              )}
 
-            {grouped.map(({ date, messages: dayMsgs }) => (
-              <div key={date}>
-                {/* Date divider */}
-                <div className="flex items-center gap-3 my-4">
-                  <div className="flex-1 h-px bg-[#d8ede6]" />
-                  <span className="text-[11px] text-[#a8c8b8] font-medium">
-                    {formatDateDivider(dayMsgs[0].createdAt)}
-                  </span>
-                  <div className="flex-1 h-px bg-[#d8ede6]" />
-                </div>
+              {grouped.map(({ date, messages: dayMsgs }) => (
+                <div key={date}>
+                  <div className="sp-divider">
+                    <div className="sp-divider-line" />
+                    <span className="sp-divider-label">{formatDateDivider(dayMsgs[0].createdAt)}</span>
+                    <div className="sp-divider-line" />
+                  </div>
 
-                <div className="space-y-3">
                   {dayMsgs.map((msg) => {
                     const isUser = msg.sender === "USER";
                     return (
-                      <div key={msg.id} className={cn("flex", isUser ? "justify-end" : "justify-start")}>
+                      <div key={msg.id} className={`sp-msg-row ${isUser ? "user" : "admin"}`}>
                         {!isUser && (
-                          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mr-2 mt-0.5 self-end"
-                               style={{ background: "linear-gradient(135deg, #1a6648, #3daa7a)" }}>
-                            <MessageCircle className="w-3 h-3 text-white" />
+                          <div className="sp-msg-admin-ico">
+                            <MessageCircle size={12} strokeWidth={2} />
                           </div>
                         )}
-                        <div className={cn("max-w-[72%] flex flex-col", isUser ? "items-end" : "items-start")}>
-                          <div className={cn(
-                            "px-4 py-2.5 rounded-2xl text-[13.5px] leading-relaxed",
-                            isUser
-                              ? "text-white rounded-br-sm"
-                              : "bg-[#e4f2ec] text-[#0f2419] border border-[#c8dfd5] rounded-bl-sm"
-                          )}
-                          style={isUser ? { background: "linear-gradient(135deg, #1a6648, #2a8a62)" } : {}}>
-                            <p className="whitespace-pre-wrap break-words">{msg.body}</p>
+                        <div className={`sp-bubble-wrap ${isUser ? "user" : "admin"}`}>
+                          <div className={`sp-bubble ${isUser ? "user" : "admin"}`}>
+                            {msg.body}
                           </div>
-                          <span className="text-[10px] text-[#a8c8b8] mt-1 px-1">
-                            {formatTime(msg.createdAt)}
-                          </span>
+                          <span className="sp-bubble-time">{formatTime(msg.createdAt)}</span>
                         </div>
                       </div>
                     );
                   })}
                 </div>
-              </div>
-            ))}
+              ))}
 
-            {/* Closed notice */}
-            {isClosed && (
-              <div className="flex items-center gap-2 justify-center py-3 px-4 bg-[#e4f2ec] border border-[#c8dfd5] rounded-xl text-[12px] text-[#6a8c7a]">
-                <CheckCircle2 className="w-3.5 h-3.5 flex-shrink-0" />
-                This conversation is closed. Start a new message to reopen it.
-              </div>
-            )}
+              {isClosed && (
+                <div className="sp-closed-notice">
+                  <CheckCircle2 size={13} />
+                  Conversation closed · Start a new message to reopen
+                </div>
+              )}
 
-            {error && (
-              <div className="text-[12px] text-[#b52b3a] text-center">{error}</div>
-            )}
+              {error && <p className="sp-error">{error}</p>}
 
-            <div ref={bottomRef} />
-          </div>
-
-          {/* Input area */}
-          <div className="border-t border-[#d8ede6] px-4 py-3 bg-[#eaf5f0]">
-            <div className="flex items-end gap-3">
-              <textarea
-                ref={textareaRef}
-                value={input}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                disabled={isClosed || sending}
-                rows={1}
-                placeholder={isClosed ? "This conversation is closed." : "Type a message… (Enter to send)"}
-                className="flex-1 resize-none bg-[#f2f9f6] border border-[#c8dfd5] rounded-[13px] px-4 py-2.5 text-[13.5px] text-[#0f2419] placeholder-[#a8c8b8] focus:outline-none focus:border-[#4daa80] focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ minHeight: "42px", maxHeight: "120px" }}
-              />
-              <button
-                type="button"
-                onClick={() => handleSend()}
-                disabled={!input.trim() || sending || isClosed}
-                className="w-10 h-10 rounded-[13px] text-white flex items-center justify-center flex-shrink-0 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed mb-0.5"
-                style={{ background: "linear-gradient(135deg, #1a6648, #3daa7a)" }}
-              >
-                {sending
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : <Send className="w-4 h-4" />
-                }
-              </button>
+              <div ref={bottomRef} />
             </div>
-            <p className="text-[10px] text-[#a8c8b8] mt-2 px-1">Shift+Enter for new line</p>
+
+            {/* Input */}
+            <div className="sp-input-area">
+              <div className="sp-input-row">
+                <textarea
+                  ref={textareaRef}
+                  value={input}
+                  onChange={handleInputChange}
+                  onKeyDown={handleKeyDown}
+                  disabled={isClosed || sending}
+                  rows={1}
+                  placeholder={isClosed ? "Conversation is closed." : "Type a message… (Enter to send)"}
+                  className="sp-textarea"
+                />
+                <button
+                  type="button"
+                  onClick={() => handleSend()}
+                  disabled={!input.trim() || sending || isClosed}
+                  className="sp-send"
+                >
+                  {sending
+                    ? <Loader2 size={15} style={{ animation: "spin 0.8s linear infinite" }} />
+                    : <Send size={15} />
+                  }
+                </button>
+              </div>
+              <p className="sp-input-hint">Shift+Enter for new line</p>
+            </div>
+
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
