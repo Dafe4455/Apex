@@ -45,7 +45,46 @@ function StatusBadge({ status }: { status: Withdrawal['status'] }) {
 const METHODS = [
   { id: 'bank',   label: 'Bank',   icon: Building2,  fields: ['Account Name', 'Bank Name', 'Account Number', 'Routing / Sort Code'] },
   { id: 'card',   label: 'Card',   icon: CreditCard, fields: ['Cardholder Name', 'Card Number (last 4)', 'Expiry'] },
-  { id: 'crypto', label: 'Crypto', icon: Bitcoin,    fields: ['Wallet Address', 'Network'] },
+  { id: 'crypto', label: 'Crypto', icon: Bitcoin,    fields: [] }, // crypto uses custom UI
+];
+
+type CryptoNetwork = { id: string; label: string; tag: string };
+type CryptoCoin = { id: string; symbol: string; name: string; color: string; networks: CryptoNetwork[] };
+
+const CRYPTO_COINS: CryptoCoin[] = [
+  {
+    id: 'BTC', symbol: 'BTC', name: 'Bitcoin', color: '#f7931a',
+    networks: [
+      { id: 'bitcoin', label: 'Bitcoin Network', tag: 'BTC' },
+    ],
+  },
+  {
+    id: 'ETH', symbol: 'ETH', name: 'Ethereum', color: '#627eea',
+    networks: [
+      { id: 'erc20',  label: 'Ethereum (ERC-20)', tag: 'ERC20' },
+      { id: 'base',   label: 'Base',              tag: 'BASE'  },
+    ],
+  },
+  {
+    id: 'USDC', symbol: 'USDC', name: 'USD Coin', color: '#2775ca',
+    networks: [
+      { id: 'trc20',   label: 'Tron (TRC-20)',    tag: 'TRC20'   },
+      { id: 'erc20',   label: 'Ethereum (ERC-20)', tag: 'ERC20'  },
+      { id: 'bsc',     label: 'BNB Smart Chain',   tag: 'BSC'    },
+      { id: 'base',    label: 'Base',               tag: 'BASE'   },
+      { id: 'polygon', label: 'Polygon',            tag: 'POL'    },
+    ],
+  },
+  {
+    id: 'USDT', symbol: 'USDT', name: 'Tether', color: '#26a17b',
+    networks: [
+      { id: 'trc20',   label: 'Tron (TRC-20)',    tag: 'TRC20'   },
+      { id: 'erc20',   label: 'Ethereum (ERC-20)', tag: 'ERC20'  },
+      { id: 'bsc',     label: 'BNB Smart Chain',   tag: 'BSC'    },
+      { id: 'base',    label: 'Base',               tag: 'BASE'   },
+      { id: 'polygon', label: 'Polygon',            tag: 'POL'    },
+    ],
+  },
 ];
 
 export default function WithdrawPage() {
@@ -54,6 +93,8 @@ export default function WithdrawPage() {
   const [note, setNote]             = useState('');
   const [details, setDetails]       = useState<Record<string, string>>({});
   const [password, setPassword]     = useState('');
+  const [cryptoCoin, setCryptoCoin] = useState<string>("");
+  const [cryptoNet,  setCryptoNet]  = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted]   = useState(false);
   const [submitErr, setSubmitErr]   = useState('');
@@ -88,9 +129,13 @@ export default function WithdrawPage() {
   }, [fetchHistory, fetchBalance]);
 
   const activeMethod = METHODS.find(m => m.id === method)!;
+  const activeCoin   = CRYPTO_COINS.find(c => c.id === cryptoCoin) ?? null;
+  const activeNet    = activeCoin?.networks.find(n => n.id === cryptoNet) ?? null;
 
-  // Check all required detail fields are filled
-  const detailsFilled = activeMethod.fields.every(f => details[f]?.trim());
+  // For crypto: coin + network + wallet address required. For others: all text fields.
+  const detailsFilled = method === 'crypto'
+    ? !!cryptoCoin && !!cryptoNet && !!details['Wallet Address']?.trim()
+    : activeMethod.fields.every(f => details[f]?.trim());
 
   const canSubmit =
     !!amount &&
@@ -110,7 +155,13 @@ export default function WithdrawPage() {
           amount: Number(amount),
           currency: 'USD',
           method,
-          details,
+          details: method === 'crypto'
+            ? {
+                Coin:            cryptoCoin,
+                Network:         activeNet?.label ?? cryptoNet,
+                'Wallet Address': details['Wallet Address'] ?? '',
+              }
+            : details,
           note: note || undefined,
           password,
         }),
@@ -133,6 +184,8 @@ export default function WithdrawPage() {
     setNote('');
     setDetails({});
     setPassword('');
+    setCryptoCoin('');
+    setCryptoNet('');
     setSubmitErr('');
   };
 
@@ -323,6 +376,54 @@ export default function WithdrawPage() {
         .wd-field-input:focus { border-color: var(--accent); background: var(--bg-2); }
         .wd-field-input::placeholder { color: var(--ink-faint); }
 
+        /* Coin selector */
+        .wd-coin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .wd-coin {
+          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          border-radius: 10px; padding: 12px 14px;
+          cursor: pointer; transition: all 0.15s;
+          display: flex; align-items: center; gap: 10px;
+        }
+        .wd-coin:hover { border-color: var(--bg-3); }
+        .wd-coin.active {
+          border-color: var(--coin-color, var(--accent));
+          background: color-mix(in srgb, var(--coin-color, var(--accent)) 12%, transparent);
+        }
+        .wd-coin-sym {
+          font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
+          color: var(--ink); min-width: 36px;
+        }
+        .wd-coin.active .wd-coin-sym { color: var(--coin-color, var(--accent)); }
+        .wd-coin-name { font-size: 0.65rem; font-weight: 400; color: var(--ink-faint); }
+        .wd-coin.active .wd-coin-name { color: var(--ink-dim); }
+
+        /* Network selector */
+        .wd-net-list { display: flex; flex-direction: column; gap: 6px; }
+        .wd-net {
+          display: flex; align-items: center; gap: 10px;
+          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          border-radius: 10px; padding: 10px 13px;
+          cursor: pointer; transition: all 0.15s;
+        }
+        .wd-net:hover { border-color: var(--bg-3); }
+        .wd-net.active { border-color: var(--accent); background: var(--accent-dim); }
+        .wd-net-tag {
+          font-family: var(--mono); font-size: 0.58rem; font-weight: 700;
+          color: var(--ink-faint); background: var(--bg-2);
+          border-radius: 5px; padding: 2px 7px; min-width: 46px;
+          text-align: center; flex-shrink: 0;
+        }
+        .wd-net.active .wd-net-tag { background: var(--accent-border); color: var(--accent); }
+        .wd-net-label { font-size: 0.72rem; color: var(--ink-dim); flex: 1; }
+        .wd-net.active .wd-net-label { color: var(--ink); }
+        .wd-net-check { color: var(--accent); flex-shrink: 0; }
+        .wd-net-warning {
+          font-size: 0.62rem; color: var(--yellow); line-height: 1.6;
+          background: var(--yellow-bg); border: 1px solid var(--yellow-border);
+          border-radius: 8px; padding: 8px 12px; margin-top: 8px;
+        }
+        .wd-net-warning strong { font-weight: 700; }
+
         /* Password field */
         .wd-password-wrap {
           margin-top: 16px;
@@ -447,7 +548,7 @@ export default function WithdrawPage() {
                 const Icon = m.icon;
                 return (
                   <div key={m.id} className={`wd-method${method === m.id ? ' active' : ''}`}
-                    onClick={() => { setMethod(m.id); setDetails({}); }}>
+                    onClick={() => { setMethod(m.id); setDetails({}); setCryptoCoin(''); setCryptoNet(''); }}>
                     <div className="wd-method-icon"><Icon size={20} strokeWidth={1.5} /></div>
                     <p className="wd-method-lbl">{m.label}</p>
                   </div>
@@ -480,7 +581,8 @@ export default function WithdrawPage() {
               ))}
             </div>
 
-            {activeMethod.fields.map(field => (
+            {/* NON-CRYPTO FIELDS */}
+            {method !== 'crypto' && activeMethod.fields.map(field => (
               <div key={field} className="wd-field">
                 <label className="wd-field-label">{field}</label>
                 <input className="wd-field-input" placeholder={`Enter ${field.toLowerCase()}`}
@@ -488,6 +590,74 @@ export default function WithdrawPage() {
                   onChange={e => setDetails(prev => ({ ...prev, [field]: e.target.value }))} />
               </div>
             ))}
+
+            {/* CRYPTO FIELDS */}
+            {method === 'crypto' && (
+              <>
+                {/* Step 1 — Coin */}
+                <div className="wd-field">
+                  <label className="wd-field-label">Coin</label>
+                  <div className="wd-coin-grid">
+                    {CRYPTO_COINS.map(coin => (
+                      <div
+                        key={coin.id}
+                        className={`wd-coin${cryptoCoin === coin.id ? ' active' : ''}`}
+                        style={{ '--coin-color': coin.color } as React.CSSProperties}
+                        onClick={() => { setCryptoCoin(coin.id); setCryptoNet(''); }}
+                      >
+                        <span className="wd-coin-sym">{coin.symbol}</span>
+                        <span className="wd-coin-name">{coin.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Step 2 — Network (only after coin selected) */}
+                {cryptoCoin && activeCoin && (
+                  <div className="wd-field">
+                    <label className="wd-field-label">Network</label>
+                    <div className="wd-net-list">
+                      {activeCoin.networks.map(net => (
+                        <div
+                          key={net.id}
+                          className={`wd-net${cryptoNet === net.id ? ' active' : ''}`}
+                          onClick={() => setCryptoNet(net.id)}
+                        >
+                          <span className="wd-net-tag">{net.tag}</span>
+                          <span className="wd-net-label">{net.label}</span>
+                          {cryptoNet === net.id && (
+                            <svg className="wd-net-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                              <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    {cryptoNet && (
+                      <p className="wd-net-warning">
+                        ⚠️ Send only <strong>{cryptoCoin}</strong> on the <strong>{activeNet?.label}</strong> network. Sending on the wrong network will result in permanent loss of funds.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Step 3 — Wallet address (only after network selected) */}
+                {cryptoCoin && cryptoNet && (
+                  <div className="wd-field">
+                    <label className="wd-field-label">Wallet Address</label>
+                    <input
+                      className="wd-field-input"
+                      style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', letterSpacing: '0.02em' }}
+                      placeholder="Enter your wallet address"
+                      value={details['Wallet Address'] ?? ''}
+                      onChange={e => setDetails(prev => ({ ...prev, 'Wallet Address': e.target.value }))}
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                  </div>
+                )}
+              </>
+            )}
 
             <div className="wd-field">
               <label className="wd-field-label">Note (optional)</label>
