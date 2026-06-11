@@ -421,7 +421,7 @@ export default function WithdrawPage() {
 
             <div className="wd-warning">
               <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>⚠️</span>
-              <p>Withdrawals are reviewed manually and typically processed within 1–3 business days. Minimum withdrawal is $50.</p>
+              <p>Withdrawals are typically processed instantly. Minimum withdrawal is $500.</p>
             </div>
 
             <div className="wd-amount-row">
