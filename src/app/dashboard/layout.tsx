@@ -100,8 +100,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --bg:    #0f2535;
-          --bg-1:  #0b1e2c;
+          --bg:    #000000;
+          --bg-1:  #000000;
           --bg-2:  #1a3a50;
           --bg-3:  #234d67;
           --card:  #132f45;
