@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, Clock, CheckCircle2, XCircle, Building2, CreditCard, Bitcoin } from 'lucide-react';
+import { ArrowLeft, Loader2, Clock, CheckCircle2, XCircle, Building2, CreditCard, Bitcoin, Lock } from 'lucide-react';
 
 type Withdrawal = {
   id: string;
@@ -53,6 +53,7 @@ export default function WithdrawPage() {
   const [amount, setAmount]         = useState('');
   const [note, setNote]             = useState('');
   const [details, setDetails]       = useState<Record<string, string>>({});
+  const [password, setPassword]     = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted]   = useState(false);
   const [submitErr, setSubmitErr]   = useState('');
@@ -88,8 +89,18 @@ export default function WithdrawPage() {
 
   const activeMethod = METHODS.find(m => m.id === method)!;
 
+  // Check all required detail fields are filled
+  const detailsFilled = activeMethod.fields.every(f => details[f]?.trim());
+
+  const canSubmit =
+    !!amount &&
+    Number(amount) > 0 &&
+    detailsFilled &&
+    !!password.trim() &&
+    !submitting;
+
   const handleSubmit = async () => {
-    if (!amount || Number(amount) <= 0) return;
+    if (!canSubmit) return;
     setSubmitting(true); setSubmitErr('');
     try {
       const res = await fetch('/api/user/withdrawals', {
@@ -101,6 +112,7 @@ export default function WithdrawPage() {
           method,
           details,
           note: note || undefined,
+          password,
         }),
       });
       if (!res.ok) {
@@ -120,6 +132,7 @@ export default function WithdrawPage() {
     setAmount('');
     setNote('');
     setDetails({});
+    setPassword('');
     setSubmitErr('');
   };
 
@@ -310,13 +323,43 @@ export default function WithdrawPage() {
         .wd-field-input:focus { border-color: var(--accent); background: var(--bg-2); }
         .wd-field-input::placeholder { color: var(--ink-faint); }
 
+        /* Password field */
+        .wd-password-wrap {
+          margin-top: 16px;
+          padding-top: 16px;
+          border-top: 1px solid var(--bg-2);
+        }
+        .wd-password-header {
+          display: flex; align-items: center; gap: 7px; margin-bottom: 6px;
+        }
+        .wd-password-header span {
+          font-size: 0.58rem; font-weight: 700; color: var(--ink-faint);
+          text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--mono);
+        }
+        .wd-password-hint {
+          font-size: 0.62rem; color: var(--ink-faint); margin-bottom: 10px; line-height: 1.5;
+        }
+        .wd-password-row {
+          display: flex; align-items: center; gap: 10px;
+          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          border-radius: 10px; padding: 10px 13px;
+          transition: border-color 0.15s;
+        }
+        .wd-password-row:focus-within { border-color: var(--accent); background: var(--bg-2); }
+        .wd-password-icon { color: var(--ink-faint); flex-shrink: 0; }
+        .wd-password-input {
+          flex: 1; border: none; background: transparent; outline: none;
+          font-family: var(--sans); font-size: 0.8rem; color: var(--ink);
+        }
+        .wd-password-input::placeholder { color: var(--ink-faint); }
+
         /* Submit */
         .wd-submit {
           width: 100%; background: var(--accent); color: #0a1f2e;
           border: none; border-radius: 12px; padding: 15px;
           font-family: var(--sans); font-size: 0.85rem; font-weight: 700;
           cursor: pointer; transition: opacity 0.15s, transform 0.1s;
-          margin-top: 4px; display: flex; align-items: center;
+          margin-top: 16px; display: flex; align-items: center;
           justify-content: center; gap: 8px;
         }
         .wd-submit:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
@@ -452,11 +495,33 @@ export default function WithdrawPage() {
                 value={note} onChange={e => setNote(e.target.value)} />
             </div>
 
+            {/* PASSWORD CONFIRMATION */}
+            <div className="wd-password-wrap">
+              <div className="wd-password-header">
+                <Lock size={12} style={{ color: 'var(--ink-faint)' }} />
+                <span>Confirm Identity</span>
+              </div>
+              <p className="wd-password-hint">
+                Enter your account password to authorise this withdrawal.
+              </p>
+              <div className="wd-password-row">
+                <Lock size={14} className="wd-password-icon" />
+                <input
+                  className="wd-password-input"
+                  type="password"
+                  placeholder="Account password"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                />
+              </div>
+            </div>
+
             {submitErr && <p className="wd-err">{submitErr}</p>}
 
             <button
               className="wd-submit"
-              disabled={!amount || Number(amount) <= 0 || submitting}
+              disabled={!canSubmit}
               onClick={handleSubmit}
             >
               {submitting
