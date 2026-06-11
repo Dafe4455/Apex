@@ -318,8 +318,8 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0f2535' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #000000', borderTopColor: '#000000', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000040' }}>
+        <div style={{ width: 32, height: 32, border: '3px solid #6a9ab8', borderTopColor: '#8dbdd8', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
         <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
