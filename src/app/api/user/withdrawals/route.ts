@@ -66,7 +66,7 @@ export async function POST(req: Request) {
   const requiredFields: Record<string, string[]> = {
     bank:   ['Account Name', 'Bank Name', 'Account Number', 'Routing / Sort Code'],
     card:   ['Cardholder Name', 'Card Number (last 4)', 'Expiry'],
-    crypto: ['Wallet Address', 'Network'],
+    crypto: ['Coin', 'Network', 'Wallet Address'],
   };
 
   const required = requiredFields[method] ?? [];
