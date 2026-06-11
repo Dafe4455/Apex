@@ -129,7 +129,7 @@ export default function DepositPage() {
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-          --bg:      #0b1623;
+          --bg:      #0b3348;
           --card:    #0f1e2e;
           --card-2:  #0d1a28;
           --border:  rgba(255,255,255,0.07);
