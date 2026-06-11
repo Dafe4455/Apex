@@ -8,6 +8,8 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  const userId = (session.user as any).id as string;
+
   const { body, ticketId } = await req.json().catch(() => ({}));
   if (!body?.trim()) return NextResponse.json({ error: "Message body is required." }, { status: 400 });
 
@@ -15,7 +17,7 @@ export async function POST(req: NextRequest) {
 
   if (ticketId) {
     ticket = await prisma.supportTicket.findUnique({ where: { id: ticketId } });
-    if (!ticket || ticket.userId !== session.user.id) {
+    if (!ticket || ticket.userId !== userId) {
       return NextResponse.json({ error: "Ticket not found." }, { status: 404 });
     }
     if (ticket.status === "CLOSED") {
@@ -27,7 +29,7 @@ export async function POST(req: NextRequest) {
   } else {
     ticket = await prisma.supportTicket.create({
       data: {
-        userId:  session.user.id,
+        userId,
         subject: body.slice(0, 80),
         status:  "OPEN",
       },
@@ -50,7 +52,7 @@ export async function POST(req: NextRequest) {
   // ── If the message is from ADMIN, notify the user ──
   // (When you build the admin reply route, call createNotification there instead.
   //  This fires if you ever call this route server-side on behalf of admin.)
-  if (session.user.role === "ADMIN") {
+  if ((session.user as any).role === "ADMIN") {
     await createNotification(
       ticket.userId,
       "SUPPORT_MESSAGE",
