@@ -237,10 +237,10 @@ export default function AssetsPage() {
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-          --bg:       #0b1623;
-          --bg-card:  #0f1e2e;
-          --bg-inner: #0d1a28;
-          --border:   rgba(255,255,255,0.07);
+          --bg:       #000000;
+          --bg-card:  #000000;
+          --bg-inner: #0F1115;
+          --border:   rgba(0,2,5,0.07);
           --cyan:     #00c9b1;
           --cyan-dim: rgba(0,201,177,0.12);
           --text:     #e2eaf4;
