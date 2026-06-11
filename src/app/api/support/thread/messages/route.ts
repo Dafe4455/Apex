@@ -50,15 +50,13 @@ export async function POST(req: NextRequest) {
   });
 
   // ── If the message is from ADMIN, notify the user ──
-  // (When you build the admin reply route, call createNotification there instead.
-  //  This fires if you ever call this route server-side on behalf of admin.)
   if ((session.user as any).role === "ADMIN") {
-    await createNotification(
-      ticket.userId,
-      "SUPPORT_MESSAGE",
-      "New message from support",
-      body.trim().slice(0, 120),
-    );
+    await prisma.notification.create({
+      data: {
+        userId:  ticket.userId,
+        message: `Support replied: ${body.trim().slice(0, 120)}`,
+      },
+    });
   }
 
   return NextResponse.json({ ticketId: ticket.id, status: ticket.status });
