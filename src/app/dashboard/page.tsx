@@ -333,7 +333,7 @@ export default function DashboardPage() {
           --bg:#000000;
           --bg-1:#000080;
           --bg-2:#000200;
-          --bg-3:#000300;
+          --bg-3:#0f2535;
           --card:#000000;
           --ink:#f0f8ff;
           --ink-2:#d6ecf8;
