@@ -238,9 +238,9 @@ export default function AssetsPage() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
           --bg:       #000000;
-          --bg-card:  #000000;
+          --bg-card:  #161A22;
           --bg-inner: #161A22;
-          --border:   rgba(0,2,5,0.07);
+          --border:   rgba(0,10,18,0.07);
           --cyan:     #00c9b1;
           --cyan-dim: rgba(0,201,177,0.12);
           --text:     #e2eaf4;
