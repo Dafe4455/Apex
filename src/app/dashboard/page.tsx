@@ -330,7 +330,7 @@ export default function DashboardPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
         :root {
-          --bg:#0f2535;
+          --bg:#000000;
           --bg-1:#0d2030;
           --bg-2:#0b1e2c;
           --bg-3:#122840;
