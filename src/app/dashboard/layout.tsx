@@ -102,7 +102,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         :root {
           --bg:    #000000;
           --bg-1:  #000000;
-          --bg-2:  #1a3a50;
+          --bg-2:  #000000;
           --bg-3:  #000000;
           --card:  #132f45;
           --ink:   #f0f8ff;
