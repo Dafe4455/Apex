@@ -51,12 +51,12 @@ export default function GoogleTranslate() {
   pointer-events: none !important;
 }
       body { 
-        top: 0 !important; 
-        position: static !important; 
-      }
-      .skiptranslate { 
-        display: none !important; 
-      }
+  top: 0 !important; 
+  position: static !important; 
+}
+.skiptranslate { 
+  display: none !important; 
+}
     `;
     document.head.appendChild(style);
     return () => {
