@@ -1,72 +1,189 @@
-/* ─────────────────────────────────────────────
-   SHARED THEME — import this once at the layout
-   level instead of redefining :root per page.
-   Toggle by setting data-theme="light" or
-   data-theme="dark" on <html>.
-───────────────────────────────────────────── */
+'use client';
 
-:root {
-  /* base palette — dark (default) */
-  --bg: #000000;
-  --bg-2: #000200;
-  --bg-3: #0f2535;
-  --card: #000000;
-  --ink: #f0f8ff;
-  --ink-2: #d6ecf8;
-  --ink-dim: #8dbdd8;
-  --ink-faint: #6a9ab8;
-  --accent: #38bdf8;
-  --accent-l: var(--card);
-  --green: #4ade80;
-  --green-l: #0d3320;
-  --red: #f87171;
-  --red-l: #2a0d0d;
-  --gold-l: #2a2200;
-  --gold: #fbbf24;
+import { useState, useEffect } from 'react';
 
-  /* surfaces / borders — dark */
-  --line: rgba(255, 255, 255, 0.05);
-  --line-strong: rgba(255, 255, 255, 0.08);
-  --surface: rgba(255, 255, 255, 0.05);
-  --surface-hover: rgba(255, 255, 255, 0.09);
+const languages = [
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'pt', label: 'Português', flag: '🇧🇷' },
+  { code: 'ja', label: '日本語', flag: '🇯🇵' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+];
 
-  /* fonts — theme independent */
-  --sans: 'DM Sans', system-ui, sans-serif;
-  --mono: 'DM Mono', 'SF Mono', monospace;
-}
-[data-theme="light"] {
-  /* 
-    CRITICAL FIX: The lighter variation of your card hue for the background.
-    This creates the subtle contrast needed to let cards stand out.
-  */
-  --bg: #f0f7f7;        /* Ultra-light, misty ice-blue background */
-  --bg-2: #e5eff0;      /* Slightly deeper mist for structural sections */
-  --bg-3: #d6e5e6;      /* Accent backgrounds */
-  
-  /* The Cards: A bright, clean ice-white variant that pops over --bg */
-  --card: #f9fdfd;      /* Crisp, glowing near-white with a hint of your mint/blue */
-  
-  /* High contrast text hierarchy optimized for this icy palette */
-  --ink: #0b1e29;       /* Deep obsidian blue-black for sharp text readability */
-  --ink-2: #1e3542;     /* Primary labels (BTC, SOL, TSLA) */
-  --ink-dim: #485f6c;   /* Darkened subtext (Qty:, Entry:) so it doesn't wash out */
-  --ink-faint: #678190; /* Secondary text, percentages, and labels */
-  
-  /* Brand accents */
-  --accent: #0ea5e9;
-  --accent-l: var(--card);
-  
-  /* Semantic UI Colors optimized to pop clearly on the light ice background */
-  --green: #116631;     /* Rich emerald green for profit values */
-  --green-l: #dffbe7;   /* Soft background for green pill badges */
-  --red: #9f1239;       /* Rich crimson red for negative metrics */
-  --red-l: #ffe4e6;     /* Soft background for red pill badges */
-  --gold: #9a3412;
-  --gold-l: #fef3c7;
+export default function GoogleTranslate() {
+  const [current, setCurrent] = useState('en');
+  const [open, setOpen] = useState(false);
 
-  /* Borders and overlays that match the cool palette tone */
-  --line: #FEFFFB;
-  --line-strong: #D1E7EF;
-  --surface: rgba(11, 30, 41, 0.04);
-  --surface-hover: #f0f7f7;
+  // 1. Parse the cookie on mount so the dropdown state persists after page reload
+  useEffect(() => {
+    const getCookie = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+    };
+
+    const googtrans = getCookie('googtrans');
+    if (googtrans) {
+      const langCode = googtrans.split('/').pop();
+      if (langCode && languages.some(l => l.code === langCode)) {
+        setCurrent(langCode);
+      }
+    }
+  }, []);
+
+  // 2. Inject CSS to suppress the Google Banner layout shifts completely
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .goog-te-banner-frame, 
+      .goog-te-banner, 
+      #goog-gt-tt, 
+      .goog-te-balloon-frame,
+      #goog-gt-inside,
+      .template-popup { 
+        display: none !important; 
+      }
+      body { 
+        top: 0 !important; 
+        position: static !important; 
+      }
+      .skiptranslate { 
+        display: none !important; 
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  function switchLocale(langCode: string) {
+    setCurrent(langCode);
+    setOpen(false);
+
+    if (langCode === 'en') {
+      document.cookie = 'googtrans=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = 'googtrans=; path=/; domain=' + window.location.hostname + '; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    } else {
+      document.cookie = `googtrans=/en/${langCode}; path=/`;
+      document.cookie = `googtrans=/en/${langCode}; path=/; domain=${window.location.hostname}`;
+    }
+
+    window.location.reload();
+  }
+
+  const selected = languages.find(l => l.code === current) || languages[0];
+
+  return (
+    <div style={{ position: 'relative', fontFamily: 'var(--sans)' }}>
+      {/* Trigger button */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          background: 'var(--surface)',
+          border: '1px solid var(--line-strong)',
+          borderRadius: 10,
+          padding: '8px 14px',
+          color: 'var(--ink)',
+          fontSize: 14,
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          transition: 'background 0.2s, border-color 0.2s',
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-hover)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface)')}
+      >
+        <span style={{ fontSize: 18 }}>{selected.flag}</span>
+        <span>{selected.label}</span>
+        <span style={{ color: 'var(--ink-faint)', fontSize: 10, marginLeft: 2 }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 40,
+            }}
+          />
+          <div style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            zIndex: 50,
+            background: 'var(--card)',
+            border: '1px solid var(--line-strong)',
+            borderRadius: 14,
+            overflow: 'hidden',
+            minWidth: 200,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+          }}>
+            {languages.map((lang, i) => {
+              const isActive = lang.code === current;
+              return (
+                <button
+                  key={lang.code}
+                  onClick={() => switchLocale(lang.code)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '14px 18px',
+                    background: isActive ? 'var(--surface-hover)' : 'transparent',
+                    border: 'none',
+                    borderBottom: i < languages.length - 1 ? '1px solid var(--line)' : 'none',
+                    color: isActive ? 'var(--accent)' : 'var(--ink-2)',
+                    fontSize: 15,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    gap: 12,
+                    transition: 'background 0.15s, color 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.background = 'var(--surface)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 20 }}>{lang.flag}</span>
+                    <span style={{ fontWeight: isActive ? '500' : '400' }}>{lang.label}</span>
+                  </span>
+                  {isActive && (
+                    <span style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: '50%',
+                      border: '2px solid var(--accent)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <span style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: 'var(--accent)',
+                        display: 'block',
+                      }} />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
