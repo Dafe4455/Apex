@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   TrendingUp, TrendingDown, RefreshCw, ChevronRight,
-  BarChart2, Clock, Layers
+  BarChart2, Clock, Layers, ArrowDownLeft, ArrowUpRight, History
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -147,7 +147,7 @@ export default function AssetsPage() {
     }, 0),
   [openPositions, livePrices]);
 
-  // ── PnL chip — capped width ───────────────────────────────────────────────
+  // ── PnL chip ──────────────────────────────────────────────────────────────
 
   const PnlChip = ({ value }: { value: number }) => (
     <span style={{
@@ -194,22 +194,6 @@ export default function AssetsPage() {
     </div>
   );
 
-  if (loading) return (
-    <div style={styles.page}>
-      <div style={styles.header}>
-        <div style={styles.headerLeft}>
-          <div style={{ ...styles.skeletonBox, width: 140, height: 20 }} />
-          <div style={{ ...styles.skeletonBox, width: 80, height: 13, marginTop: 6 }} />
-        </div>
-      </div>
-      {[1, 2, 3].map(i => (
-        <div key={i} style={{ ...styles.card, height: 72, ...styles.skeletonBox }} />
-      ))}
-    </div>
-  );
-
-  const totalPnl = (data?.realisedPnl ?? 0) + unrealisedPnl;
-
   // ── Asset icon helper ─────────────────────────────────────────────────────
 
   function AssetIcon({ symbol, size = 38 }: { symbol: string; size?: number }) {
@@ -231,6 +215,22 @@ export default function AssetsPage() {
     );
   }
 
+  if (loading) return (
+    <div style={styles.page}>
+      <div style={styles.header}>
+        <div style={styles.headerLeft}>
+          <div style={{ ...styles.skeletonBox, width: 140, height: 20 }} />
+          <div style={{ ...styles.skeletonBox, width: 80, height: 13, marginTop: 6 }} />
+        </div>
+      </div>
+      {[1, 2, 3].map(i => (
+        <div key={i} style={{ ...styles.card, height: 72, ...styles.skeletonBox }} />
+      ))}
+    </div>
+  );
+
+  const totalPnl = (data?.realisedPnl ?? 0) + unrealisedPnl;
+
   return (
     <>
       <style>{`
@@ -238,11 +238,12 @@ export default function AssetsPage() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
           --bg:       #000000;
-          --bg-card:  #161A22;
-          --bg-inner: #161A22;
-          --border:   rgba(0,10,18,0.07);
+          --bg-card:  #0f1318;
+          --bg-inner: #0f1318;
+          --border:   rgba(255,255,255,0.06);
+          --border-strong: rgba(255,255,255,0.1);
           --cyan:     #00c9b1;
-          --cyan-dim: rgba(0,201,177,0.12);
+          --cyan-dim: rgba(0,201,177,0.10);
           --text:     #e2eaf4;
           --text-mid: #7b9ab5;
           --text-dim: #4a6a84;
@@ -284,6 +285,57 @@ export default function AssetsPage() {
         .trade-row:last-child { border-bottom: none; }
         .trade-row:hover { background: rgba(255,255,255,0.02); }
 
+        .action-btn {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          flex: 1;
+          padding: 14px 8px;
+          border-radius: 14px;
+          text-decoration: none;
+          border: 1px solid var(--border);
+          background: var(--bg-card);
+          transition: background 0.15s, border-color 0.15s, transform 0.1s;
+          cursor: pointer;
+        }
+        .action-btn:hover {
+          background: rgba(255,255,255,0.04);
+          border-color: var(--border-strong);
+          transform: translateY(-1px);
+        }
+        .action-btn:active { transform: translateY(0); }
+
+        .action-btn .icon-wrap {
+          width: 40px; height: 40px; border-radius: 12px;
+          display: flex; align-items: center; justify-content: center;
+        }
+
+        .action-btn .btn-label {
+          font-family: var(--mono);
+          font-size: 0.6rem;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+        }
+
+        .refresh-btn {
+          background: none;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          padding: 8px 10px;
+          cursor: pointer;
+          color: var(--text-dim);
+          transition: all 0.2s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .refresh-btn:hover {
+          border-color: var(--border-strong);
+          color: var(--text-mid);
+        }
+
         @keyframes shimmer { to { background-position: -200% 0; } }
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
@@ -299,62 +351,109 @@ export default function AssetsPage() {
             </p>
           </div>
           <button
+            className="refresh-btn"
             onClick={() => loadData(true)}
             disabled={refreshing}
-            style={{
-              background: 'none', border: '1px solid var(--border)',
-              borderRadius: 8, padding: '8px 10px', cursor: 'pointer',
-              color: refreshing ? 'var(--cyan)' : 'var(--text-dim)',
-              transition: 'all 0.2s',
-            }}
+            style={{ color: refreshing ? 'var(--cyan)' : undefined }}
           >
             <RefreshCw size={15} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
           </button>
         </div>
 
-        {/* ── SUMMARY CARDS ── */}
+        {/* ── PORTFOLIO BALANCE HERO ── */}
+        <div style={{
+          ...styles.card,
+          padding: '20px 20px 18px',
+          background: 'linear-gradient(135deg, #0f1318 0%, #111820 100%)',
+          borderColor: 'var(--border-strong)',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          {/* subtle glow */}
+          <div style={{
+            position: 'absolute', top: -40, right: -40,
+            width: 160, height: 160,
+            background: 'radial-gradient(circle, rgba(0,201,177,0.06) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }} />
+
+          <span style={{
+            fontFamily: 'var(--mono)', fontSize: '0.58rem',
+            letterSpacing: '0.14em', textTransform: 'uppercase',
+            color: 'var(--text-dim)', display: 'block', marginBottom: 6,
+          }}>
+            Portfolio Balance
+          </span>
+          <span style={{
+            fontFamily: 'var(--mono)', fontSize: '1.9rem',
+            fontWeight: 700, color: 'var(--text)', display: 'block',
+            letterSpacing: '-0.01em',
+          }}>
+            {fmtUsd(data?.portfolioBalance ?? 0)}
+          </span>
+
+          {/* Total P&L inline below balance */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+            {totalPnl >= 0
+              ? <TrendingUp size={13} color="var(--green)" />
+              : <TrendingDown size={13} color="var(--red)" />
+            }
+            <span style={{
+              fontFamily: 'var(--mono)', fontSize: '0.72rem', fontWeight: 700,
+              color: totalPnl >= 0 ? 'var(--green)' : 'var(--red)',
+            }}>
+              {totalPnl >= 0 ? '+' : ''}{fmtUsd(totalPnl)}
+            </span>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', color: 'var(--text-dim)' }}>
+              total P&L
+            </span>
+          </div>
+        </div>
+
+        {/* ── ACTION BUTTONS ── */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <Link href="/dashboard/deposit" className="action-btn">
+            <div className="icon-wrap" style={{ background: 'rgba(34,212,122,0.1)' }}>
+              <ArrowDownLeft size={18} color="var(--green)" />
+            </div>
+            <span className="btn-label" style={{ color: 'var(--green)' }}>Deposit</span>
+          </Link>
+
+          <Link href="/dashboard/withdraw" className="action-btn">
+            <div className="icon-wrap" style={{ background: 'rgba(248,113,113,0.1)' }}>
+              <ArrowUpRight size={18} color="var(--red)" />
+            </div>
+            <span className="btn-label" style={{ color: 'var(--red)' }}>Withdraw</span>
+          </Link>
+
+          <Link href="/dashboard/history" className="action-btn">
+            <div className="icon-wrap" style={{ background: 'rgba(0,201,177,0.1)' }}>
+              <History size={18} color="var(--cyan)" />
+            </div>
+            <span className="btn-label" style={{ color: 'var(--cyan)' }}>History</span>
+          </Link>
+        </div>
+
+        {/* ── SUMMARY STATS ROW ── */}
         <div style={styles.summaryGrid}>
           <div style={styles.summaryCard}>
-            <span style={styles.summaryLabel}>Portfolio Balance</span>
-            <span style={styles.summaryValue}>{fmtUsd(data?.portfolioBalance ?? 0)}</span>
-          </div>
-          <div style={styles.summaryCard}>
             <span style={styles.summaryLabel}>Unrealised P&L</span>
-            <span style={{ ...styles.summaryValue, color: unrealisedPnl >= 0 ? 'var(--green)' : 'var(--red)' }}>
+            <span style={{
+              ...styles.summaryValue,
+              color: unrealisedPnl >= 0 ? 'var(--green)' : 'var(--red)',
+            }}>
               {unrealisedPnl >= 0 ? '+' : ''}{fmtUsd(unrealisedPnl)}
             </span>
           </div>
           <div style={styles.summaryCard}>
             <span style={styles.summaryLabel}>Realised P&L</span>
-            <span style={{ ...styles.summaryValue, color: (data?.realisedPnl ?? 0) >= 0 ? 'var(--green)' : 'var(--red)' }}>
+            <span style={{
+              ...styles.summaryValue,
+              color: (data?.realisedPnl ?? 0) >= 0 ? 'var(--green)' : 'var(--red)',
+            }}>
               {(data?.realisedPnl ?? 0) >= 0 ? '+' : ''}{fmtUsd(data?.realisedPnl ?? 0)}
             </span>
           </div>
-        </div>
-
-        {/* ── TOTAL P&L BANNER ── */}
-        <div style={{
-          ...styles.card,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 18px', overflow: 'hidden',
-          borderLeft: `3px solid ${totalPnl >= 0 ? 'var(--green)' : 'var(--red)'}`,
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            {totalPnl >= 0
-              ? <TrendingUp size={18} color="var(--green)" />
-              : <TrendingDown size={18} color="var(--red)" />
-            }
-            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.68rem', color: 'var(--text-mid)', letterSpacing: '0.1em' }}>
-              TOTAL P&L
-            </span>
-          </div>
-          <span style={{
-            fontFamily: 'var(--mono)', fontSize: '1rem', fontWeight: 700,
-            color: totalPnl >= 0 ? 'var(--green)' : 'var(--red)',
-            flexShrink: 0, marginLeft: 8,
-          }}>
-            {totalPnl >= 0 ? '+' : ''}{fmtUsd(totalPnl)}
-          </span>
         </div>
 
         {/* ── TABS ── */}
@@ -402,7 +501,6 @@ export default function AssetsPage() {
                     <div className="pos-row" key={pos.id}>
                       <AssetIcon symbol={pos.symbol} size={38} />
 
-                      {/* Name + details — flex:1 + minWidth:0 prevents overflow */}
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>{pos.symbol}</span>
@@ -431,7 +529,6 @@ export default function AssetsPage() {
                         </div>
                       </div>
 
-                      {/* P&L — fixed width, no grow */}
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
                         <PnlChip value={livePnl} />
                         <span style={{
@@ -559,10 +656,6 @@ export default function AssetsPage() {
 
         <div style={{ height: 80 }} />
       </div>
-
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-      `}</style>
     </>
   );
 }
@@ -601,7 +694,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   summaryGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: 8,
   },
   summaryCard: {
