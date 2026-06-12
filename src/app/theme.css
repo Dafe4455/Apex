@@ -1,34 +1,73 @@
+/* ─────────────────────────────────────────────
+   SHARED THEME — import this once at the layout
+   level instead of redefining :root per page.
+   Toggle by setting data-theme="light" or
+   data-theme="dark" on <html>.
+───────────────────────────────────────────── */
+
 :root {
-  /* ── Abyss Dark ── */
-  --bg:   #000000;
-  --bg-2: #0a0a0a;
-  --bg-3: #111111;
+  /* base palette — dark (default) */
+  --bg: #000000;
+  --bg-2: #000200;
+  --bg-3: #0f2535;
+  --card: #000000;
+  --ink: #f0f8ff;
+  --ink-2: #d6ecf8;
+  --ink-dim: #8dbdd8;
+  --ink-faint: #6a9ab8;
+  --accent: #38bdf8;
+  --accent-l: var(--card);
+  --green: #4ade80;
+  --green-l: #0d3320;
+  --red: #f87171;
+  --red-l: #2a0d0d;
+  --gold-l: #2a2200;
+  --gold: #fbbf24;
 
-  --card:        #0f0f0f;
-  --card-raised: #161616;
+  /* surfaces / borders — dark */
+  --line: rgba(255, 255, 255, 0.05);
+  --line-strong: rgba(255, 255, 255, 0.08);
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.09);
 
-  --ink:       #f0f0f0;
-  --ink-2:     #a0a0a0;
-  --ink-dim:   #606060;
-  --ink-faint: #3a3a3a;
-
-  --accent:   #38bdf8;        /* accent is the ONLY thing allowed to glow */
-  --accent-l: rgba(56, 189, 248, 0.10);
-
-  --green:   #4ade80;
-  --green-l: rgba(74, 222, 128, 0.10);
-
-  --red:   #f87171;
-  --red-l: rgba(248, 113, 113, 0.10);
-
-  --gold:   #fbbf24;
-  --gold-l: rgba(251, 191, 36, 0.10);
-
-  --line:          rgba(255, 255, 255, 0.06);
-  --line-strong:   rgba(255, 255, 255, 0.10);
-  --surface:       rgba(255, 255, 255, 0.04);
-  --surface-hover: rgba(255, 255, 255, 0.07);
-
+  /* fonts — theme independent */
   --sans: 'DM Sans', system-ui, sans-serif;
   --mono: 'DM Mono', 'SF Mono', monospace;
+}
+[data-theme="light"] {
+  /* 
+    CRITICAL FIX: The lighter variation of your card hue for the background.
+    This creates the subtle contrast needed to let cards stand out.
+  */
+  --bg: #f0f7f7;        /* Ultra-light, misty ice-blue background */
+  --bg-2: #e5eff0;      /* Slightly deeper mist for structural sections */
+  --bg-3: #d6e5e6;      /* Accent backgrounds */
+  
+  /* The Cards: A bright, clean ice-white variant that pops over --bg */
+  --card: #f9fdfd;      /* Crisp, glowing near-white with a hint of your mint/blue */
+  
+  /* High contrast text hierarchy optimized for this icy palette */
+  --ink: #0b1e29;       /* Deep obsidian blue-black for sharp text readability */
+  --ink-2: #1e3542;     /* Primary labels (BTC, SOL, TSLA) */
+  --ink-dim: #485f6c;   /* Darkened subtext (Qty:, Entry:) so it doesn't wash out */
+  --ink-faint: #678190; /* Secondary text, percentages, and labels */
+  
+  /* Brand accents */
+  --accent: #0ea5e9;
+  --accent-l: var(--card);
+  
+  /* Semantic UI Colors optimized to pop clearly on the light ice background */
+  --green: #116631;     /* Rich emerald green for profit values */
+  --green-l: #dffbe7;   /* Soft background for green pill badges */
+  --red: #9f1239;       /* Rich crimson red for negative metrics */
+  --red-l: #ffe4e6;     /* Soft background for red pill badges */
+  --gold: #9a3412;
+  --gold-l: #fef3c7;
+
+  /* Borders and overlays that match the cool palette tone */
+  --line:          rgba(255, 255, 255, 0.06);
+  --line-strong:   rgba(255, 255, 255, 0.10);
+  
+  --surface: rgba(11, 30, 41, 0.04);
+  --surface-hover: #f0f7f7;
 }
