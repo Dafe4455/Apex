@@ -23,9 +23,9 @@ export default function GoogleTranslate() {
       if (parts.length === 2) return parts.pop()?.split(';').shift();
     };
 
-    const googtrans = getCookie('googtrans'); // Returns something like "/en/ja"
+    const googtrans = getCookie('googtrans');
     if (googtrans) {
-      const langCode = googtrans.split('/').pop(); // Extracts "ja"
+      const langCode = googtrans.split('/').pop();
       if (langCode && languages.some(l => l.code === langCode)) {
         setCurrent(langCode);
       }
@@ -76,7 +76,7 @@ export default function GoogleTranslate() {
   const selected = languages.find(l => l.code === current) || languages[0];
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative', fontFamily: 'var(--sans)' }}>
       {/* Trigger button */}
       <button
         onClick={() => setOpen(o => !o)}
@@ -84,19 +84,22 @@ export default function GoogleTranslate() {
           display: 'flex',
           alignItems: 'center',
           gap: 8,
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          background: 'var(--surface)',
+          border: '1px solid var(--line-strong)',
           borderRadius: 10,
           padding: '8px 14px',
-          color: '#e2e8f0',
+          color: 'var(--ink)',
           fontSize: 14,
           cursor: 'pointer',
           whiteSpace: 'nowrap',
+          transition: 'background 0.2s, border-color 0.2s',
         }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--surface-hover)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--surface)')}
       >
         <span style={{ fontSize: 18 }}>{selected.flag}</span>
         <span>{selected.label}</span>
-        <span style={{ color: '#64748b', fontSize: 10, marginLeft: 2 }}>{open ? '▲' : '▼'}</span>
+        <span style={{ color: 'var(--ink-faint)', fontSize: 10, marginLeft: 2 }}>{open ? '▲' : '▼'}</span>
       </button>
 
       {/* Dropdown */}
@@ -116,58 +119,68 @@ export default function GoogleTranslate() {
             top: 'calc(100% + 8px)',
             right: 0,
             zIndex: 50,
-            background: '#0f1f2e',
-            border: '1px solid rgba(255,255,255,0.08)',
+            background: 'var(--card)',
+            border: '1px solid var(--line-strong)',
             borderRadius: 14,
             overflow: 'hidden',
             minWidth: 200,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
           }}>
-            {languages.map((lang, i) => (
-              <button
-                key={lang.code}
-                onClick={() => switchLocale(lang.code)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  width: '100%',
-                  padding: '14px 18px',
-                  background: lang.code === current ? 'rgba(56,189,248,0.08)' : 'transparent',
-                  border: 'none',
-                  borderBottom: i < languages.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
-                  color: lang.code === current ? '#38bdf8' : '#e2e8f0',
-                  fontSize: 15,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  gap: 12,
-                }}
-              >
-                <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span style={{ fontSize: 20 }}>{lang.flag}</span>
-                  <span>{lang.label}</span>
-                </span>
-                {lang.code === current && (
-                  <span style={{
-                    width: 18,
-                    height: 18,
-                    borderRadius: '50%',
-                    border: '2px solid #38bdf8',
+            {languages.map((lang, i) => {
+              const isActive = lang.code === current;
+              return (
+                <button
+                  key={lang.code}
+                  onClick={() => switchLocale(lang.code)}
+                  style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                    <span style={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      background: '#38bdf8',
-                      display: 'block',
-                    }} />
+                    justifyContent: 'space-between',
+                    width: '100%',
+                    padding: '14px 18px',
+                    background: isActive ? 'var(--surface-hover)' : 'transparent',
+                    border: 'none',
+                    borderBottom: i < languages.length - 1 ? '1px solid var(--line)' : 'none',
+                    color: isActive ? 'var(--accent)' : 'var(--ink-2)',
+                    fontSize: 15,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    gap: 12,
+                    transition: 'background 0.15s, color 0.15s',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.background = 'var(--surface)';
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ fontSize: 20 }}>{lang.flag}</span>
+                    <span style={{ fontWeight: isActive ? '500' : '400' }}>{lang.label}</span>
                   </span>
-                )}
-              </button>
-            ))}
+                  {isActive && (
+                    <span style={{
+                      width: 18,
+                      height: 18,
+                      borderRadius: '50%',
+                      border: '2px solid var(--accent)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}>
+                      <span style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        background: 'var(--accent)',
+                        display: 'block',
+                      }} />
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </>
       )}
