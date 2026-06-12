@@ -433,18 +433,8 @@ export default function AssetsPage() {
       transition: 'border-color 0.15s',
     }}>
      
-  {arrow}
-      </span>
-      <span style={{
-        fontFamily: 'var(--mono)',
-        fontSize: '0.62rem',
-        fontWeight: 700,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        color,
-      }}>
-        {label}
-      </span>
+  
+        
     </Link>
   ))}
 </div>
