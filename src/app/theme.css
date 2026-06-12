@@ -36,43 +36,37 @@
 }
 [data-theme="light"] {
   /* 
-    CRITICAL FIX 1: Slightly deeper background colors. 
-    This creates a beautiful "sandwich" effect where white cards completely pop.
+    CRITICAL FIX: The lighter variation of your card hue for the background.
+    This creates the subtle contrast needed to let cards stand out.
   */
-  --bg: #f4f6f8;        /* Premium cool gray that makes pure white cards stand out */
-  --bg-2: #eaedf1;      /* Deepened for structural page sections */
-  --bg-3: #dbe1e8;      /* Distinct color for interactive backgrounds */
+  --bg: #f0f7f7;        /* Ultra-light, misty ice-blue background */
+  --bg-2: #e5eff0;      /* Slightly deeper mist for structural sections */
+  --bg-3: #d6e5e6;      /* Accent backgrounds */
   
-  /* Cards stay pure white, but now have high contrast against the new --bg */
-  --card: #E0F2F1;      
+  /* The Cards: A bright, clean ice-white variant that pops over --bg */
+  --card: #f9fdfd;      /* Crisp, glowing near-white with a hint of your mint/blue */
   
-  /* 
-    CRITICAL FIX 2: Darker text hierarchy.
-    This fixes the washed-out data rows seen in "1000310620.jpg"
-  */
-  --ink: #0f172a;       /* Main headings and major balances ($407.81) */
-  --ink-2: #1e293b;     /* Primary labels (BTC, SOL, TSLA) */
-  --ink-dim: #475569;   /* Significantly darkened for readable metadata (Qty:, Entry:) */
-  --ink-faint: #64748b; /* Crisper color for secondary metrics and percentages */
+  /* High contrast text hierarchy optimized for this icy palette */
+  --ink: #0b1e29;       /* Deep obsidian blue-black for sharp text readability */
+  --ink-2: #1e3542;     /* Primary labels (BTC, SOL, TSLA) */
+  --ink-dim: #485f6c;   /* Darkened subtext (Qty:, Entry:) so it doesn't wash out */
+  --ink-faint: #678190; /* Secondary text, percentages, and labels */
   
   /* Brand accents */
   --accent: #0ea5e9;
   --accent-l: #e0f2fe;
   
-  /* Semantic UI Colors optimized for maximum legibility on white cards */
-  --green: #166534;     /* Deep, rich green for positive text/percentages */
-  --green-l: #dcfce7;   /* Soft background for green pill badges */
-  --red: #991b1b;       /* Deep, rich red for negative numbers (-$2.12) */
-  --red-l: #fee2e2;     /* Soft background for red pill badges */
+  /* Semantic UI Colors optimized to pop clearly on the light ice background */
+  --green: #116631;     /* Rich emerald green for profit values */
+  --green-l: #dffbe7;   /* Soft background for green pill badges */
+  --red: #9f1239;       /* Rich crimson red for negative metrics */
+  --red-l: #ffe4e6;     /* Soft background for red pill badges */
   --gold: #9a3412;
   --gold-l: #fef3c7;
 
-  /* 
-    CRITICAL FIX 3: Stronger border & surface states.
-    Anchors the bottom navigation bar and creates crisp card boundaries.
-  */
-  --line: rgba(15, 23, 42, 0.12);        /* More visible for subtle divider lines */
-  --line-strong: rgba(15, 23, 42, 0.22); /* Used to anchor the header and bottom nav bar */
-  --surface: rgba(15, 23, 42, 0.05);
-  --surface-hover: rgba(15, 23, 42, 0.09);
+  /* Borders and overlays that match the cool palette tone */
+  --line: rgba(11, 30, 41, 0.09);
+  --line-strong: rgba(11, 30, 41, 0.18);
+  --surface: rgba(11, 30, 41, 0.04);
+  --surface-hover: rgba(11, 30, 41, 0.08);
 }
