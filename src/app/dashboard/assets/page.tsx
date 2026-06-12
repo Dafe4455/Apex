@@ -249,7 +249,7 @@ export default function AssetsPage() {
           --text-dim: #4a6a84;
           --green:    #22d47a;
           --red:      #f87171;
-          --maroon:   #640d14;
+          --maroon:   #b55b4c;
           --mono:     'Space Mono', monospace;
           --sans:     'Space Grotesk', sans-serif;
         }
