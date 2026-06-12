@@ -16,7 +16,7 @@
   --ink-dim: #8dbdd8;
   --ink-faint: #6a9ab8;
   --accent: #38bdf8;
-  --accent-l: #0e3448;
+  --accent-l: var(--card);
   --green: #4ade80;
   --green-l: #0d3320;
   --red: #f87171;
@@ -54,7 +54,7 @@
   
   /* Brand accents */
   --accent: #0ea5e9;
-  --accent-l: #e0f2fe;
+  --accent-l: var(--card);
   
   /* Semantic UI Colors optimized to pop clearly on the light ice background */
   --green: #116631;     /* Rich emerald green for profit values */
