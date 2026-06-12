@@ -34,27 +34,36 @@
   --sans: 'DM Sans', system-ui, sans-serif;
   --mono: 'DM Mono', 'SF Mono', monospace;
 }
-
 [data-theme="light"] {
-  --bg: #f0ffff;
-  --bg-2: #e3f6f6;
-  --bg-3: #d6ecf2;
-  --card: #80CBC4;
-  --ink: #0a1f2e;
-  --ink-2: #234152;
-  --ink-dim: #5b7d8c;
-  --ink-faint: #8aa7b3;
+  /* Clean, crisp light backgrounds */
+  --bg: #f8fafc;        /* Soft off-white instead of harsh neon cyan */
+  --bg-2: #f1f5f9;      /* Slightly darker for page sections */
+  --bg-3: #e2e8f0;      /* Distinct background element color */
+  
+  /* The Fix: Cards should be bright and crisp in light mode */
+  --card: #ffffff;      /* Pure white cards create instant contrast and depth */
+  
+  /* High contrast text hierarchy */
+  --ink: #0f172a;       /* Dark slate for main headings and balances */
+  --ink-2: #334155;     /* Medium slate for primary labels */
+  --ink-dim: #64748b;   /* Muted slate for subtext (e.g., "Qty:", "Entry:") */
+  --ink-faint: #94a3b8; /* Very soft text for secondary metrics */
+  
+  /* Brand accents */
   --accent: #0ea5e9;
   --accent-l: #e0f2fe;
-  --green: #16a34a;
-  --green-l: #dcfce7;
-  --red: #dc2626;
-  --red-l: #fee2e2;
-  --gold-l: #fef3c7;
+  
+  /* Semantic UI Colors (Kept vibrant, but meant for white backgrounds) */
+  --green: #15803d;     /* Darker emerald green for readable text */
+  --green-l: #dcfce7;   /* Soft mint background for P&L badges */
+  --red: #b91c1c;       /* Darker crimson red for readable text */
+  --red-l: #fee2e2;     /* Soft red background for negative metrics */
   --gold: #b45309;
+  --gold-l: #fef3c7;
 
-  --line: rgba(10, 31, 46, 0.08);
-  --line-strong: rgba(10, 31, 46, 0.14);
-  --surface: rgba(10, 31, 46, 0.04);
-  --surface-hover: rgba(10, 31, 46, 0.07);
+  /* Borders and overlays */
+  --line: rgba(15, 23, 42, 0.08);
+  --line-strong: rgba(15, 23, 42, 0.14);
+  --surface: rgba(15, 23, 42, 0.04);
+  --surface-hover: rgba(15, 23, 42, 0.06);
 }
