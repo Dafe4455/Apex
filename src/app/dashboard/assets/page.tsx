@@ -415,29 +415,34 @@ export default function AssetsPage() {
         {/* ── ACTION BUTTONS ── */}
 <div style={{ display: 'flex', gap: 8 }}>
   {[
-    { href: '/dashboard/deposit',  label: '+ Deposit',   color: 'var(--green)' },
-    { href: '/dashboard/withdraw', label: '- Withdraw', color: 'var(--maroon)'   },
-    { href: '/dashboard/history',  label: '📄 History',   color: 'var(--cyan)'  },
-  ].map(({ href, label, arrow, color }) => (
-    <Link key={href} href={href} style={{
-      flex: 1,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 7,
-      padding: '11px 8px',
-      borderRadius: 10,
-      textDecoration: 'none',
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border)',
-      transition: 'border-color 0.15s',
+  { href: '/dashboard/deposit',  label: 'Deposit',  color: 'var(--green)' },
+  { href: '/dashboard/withdraw', label: 'Withdraw', color: 'var(--red)'   },
+  { href: '/dashboard/history',  label: 'History',  color: 'var(--cyan)'  },
+].map(({ href, label, color }) => (
+  <Link key={href} href={href} style={{
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '11px 8px',
+    borderRadius: 10,
+    textDecoration: 'none',
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border)',
+    transition: 'border-color 0.15s',
+  }}>
+    <span style={{
+      fontFamily: 'var(--mono)',
+      fontSize: '0.62rem',
+      fontWeight: 700,
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase' as const,
+      color,
     }}>
-     
-  
-        
-    </Link>
-  ))}
-</div>
+      {label}
+    </span>
+  </Link>
+))}
 
         {/* ── SUMMARY STATS ROW ── */}
         <div style={styles.summaryGrid}>
