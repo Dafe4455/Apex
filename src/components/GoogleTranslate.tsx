@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const languages = [
   { code: 'en', label: 'English', flag: '🇬🇧' },
@@ -15,11 +15,33 @@ export default function GoogleTranslate() {
   const [current, setCurrent] = useState('en');
   const [open, setOpen] = useState(false);
 
-  // Inject CSS to suppress the Google Banner layout shifts
+  // 1. Parse the cookie on mount so the dropdown state persists after page reload
+  useEffect(() => {
+    const getCookie = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+    };
+
+    const googtrans = getCookie('googtrans'); // Returns something like "/en/ja"
+    if (googtrans) {
+      const langCode = googtrans.split('/').pop(); // Extracts "ja"
+      if (langCode && languages.some(l => l.code === langCode)) {
+        setCurrent(langCode);
+      }
+    }
+  }, []);
+
+  // 2. Inject CSS to suppress the Google Banner layout shifts completely
   useEffect(() => {
     const style = document.createElement('style');
     style.innerHTML = `
-      .goog-te-banner-frame, .goog-te-banner, #goog-gt-tt, .goog-te-balloon-frame { 
+      .goog-te-banner-frame, 
+      .goog-te-banner, 
+      #goog-gt-tt, 
+      .goog-te-balloon-frame,
+      #goog-gt-inside,
+      .template-popup { 
         display: none !important; 
       }
       body { 
@@ -37,7 +59,6 @@ export default function GoogleTranslate() {
   }, []);
 
   function switchLocale(langCode: string) {
-    // ... (your cookie switching logic remains perfectly fine!)
     setCurrent(langCode);
     setOpen(false);
 
@@ -52,7 +73,8 @@ export default function GoogleTranslate() {
     window.location.reload();
   }
 
-  const selected = languages.find(l => l.code === current)!;
+  const selected = languages.find(l => l.code === current) || languages[0];
+
   return (
     <div style={{ position: 'relative' }}>
       {/* Trigger button */}
