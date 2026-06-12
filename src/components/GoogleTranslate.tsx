@@ -32,9 +32,10 @@ export default function GoogleTranslate() {
     }
   }, []);
 
-  // 2. Suppress the Google Banner and destroy dynamic scripts/spinners on the fly
+  
+    // Replace your layout injection useEffect hook with this fine-tuned version
   useEffect(() => {
-    // Inject custom CSS to make sure structural components stay hidden
+    // 1. Inject custom CSS to make sure structural components stay hidden
     const style = document.createElement('style');
     style.innerHTML = `
       .goog-te-banner-frame, 
@@ -61,16 +62,17 @@ export default function GoogleTranslate() {
     `;
     document.head.appendChild(style);
 
-    // Watch the DOM body for newly spawned Google elements and eliminate them immediately
+    // 2. Fine-tuned MutationObserver: Target ONLY the visual spinner and banner nodes
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
           if (node instanceof HTMLElement) {
-            const isGoogClass = Array.from(node.classList).some(c => c.startsWith('goog-te-'));
-            const isGoogId = node.id && node.id.startsWith('goog-');
+            // Target the actual layout container elements that make up the banner and spinner
+            const isBannerFrame = node.classList.contains('goog-te-banner-frame') || node.id === 'goog-gt-tt';
+            const isSpinnerWrapper = node.classList.contains('goog-te-spinner-pos') || node.classList.contains('goog-te-spinner');
             
-            if (isGoogClass || isGoogId || node.classList.contains('skiptranslate')) {
-              node.remove();
+            if (isBannerFrame || isSpinnerWrapper) {
+              node.remove(); // Nuke the layout containers, leave the core engine scripts alone
             }
           }
         });
@@ -84,6 +86,7 @@ export default function GoogleTranslate() {
       observer.disconnect();
     };
   }, []);
+
 
   function switchLocale(langCode: string) {
     setCurrent(langCode);
