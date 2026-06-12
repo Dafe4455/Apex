@@ -413,7 +413,7 @@ export default function AssetsPage() {
 
         {/* ── ACTION BUTTONS ── */}
         {/* ── ACTION BUTTONS ── */}
-
+<div style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
   {[
   { href: '/dashboard/deposit',  label: 'Deposit',  color: 'var(--green)' },
   { href: '/dashboard/withdraw', label: 'Withdraw', color: 'var(--red)'   },
