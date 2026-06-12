@@ -21,12 +21,13 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+// Status badge: semantic colors intentionally fixed so they stay vivid in both modes.
 function StatusBadge({ status }: { status: Withdrawal['status'] }) {
   const map: Record<Withdrawal['status'], { bg: string; col: string; border: string; label: string }> = {
-    PENDING:              { bg: 'rgba(251,191,36,0.1)',  col: '#fbbf24', border: 'rgba(251,191,36,0.25)',  label: 'Pending' },
+    PENDING:              { bg: 'rgba(251,191,36,0.1)',  col: '#fbbf24', border: 'rgba(251,191,36,0.25)',  label: 'Pending'   },
     PENDING_VERIFICATION: { bg: 'rgba(251,191,36,0.1)',  col: '#fbbf24', border: 'rgba(251,191,36,0.25)',  label: 'Verifying' },
-    APPROVED:             { bg: 'rgba(74,222,128,0.1)',  col: '#4ade80', border: 'rgba(74,222,128,0.25)',  label: 'Approved' },
-    REJECTED:             { bg: 'rgba(248,113,113,0.1)', col: '#f87171', border: 'rgba(248,113,113,0.25)', label: 'Rejected' },
+    APPROVED:             { bg: 'rgba(74,222,128,0.1)',  col: '#4ade80', border: 'rgba(74,222,128,0.25)',  label: 'Approved'  },
+    REJECTED:             { bg: 'rgba(248,113,113,0.1)', col: '#f87171', border: 'rgba(248,113,113,0.25)', label: 'Rejected'  },
   };
   const s = map[status];
   return (
@@ -45,7 +46,7 @@ function StatusBadge({ status }: { status: Withdrawal['status'] }) {
 const METHODS = [
   { id: 'bank',   label: 'Bank',   icon: Building2,  fields: ['Account Name', 'Bank Name', 'Account Number', 'Routing / Sort Code'] },
   { id: 'card',   label: 'Card',   icon: CreditCard, fields: ['Cardholder Name', 'Card Number (last 4)', 'Expiry'] },
-  { id: 'crypto', label: 'Crypto', icon: Bitcoin,    fields: [] }, // crypto uses custom UI
+  { id: 'crypto', label: 'Crypto', icon: Bitcoin,    fields: [] },
 ];
 
 type CryptoNetwork = { id: string; label: string; tag: string };
@@ -54,35 +55,33 @@ type CryptoCoin = { id: string; symbol: string; name: string; color: string; net
 const CRYPTO_COINS: CryptoCoin[] = [
   {
     id: 'BTC', symbol: 'BTC', name: 'Bitcoin', color: '#f7931a',
-    networks: [
-      { id: 'bitcoin', label: 'Bitcoin Network', tag: 'BTC' },
-    ],
+    networks: [{ id: 'bitcoin', label: 'Bitcoin Network', tag: 'BTC' }],
   },
   {
     id: 'ETH', symbol: 'ETH', name: 'Ethereum', color: '#627eea',
     networks: [
-      { id: 'erc20',  label: 'Ethereum (ERC-20)', tag: 'ERC20' },
-      { id: 'base',   label: 'Base',              tag: 'BASE'  },
+      { id: 'erc20', label: 'Ethereum (ERC-20)', tag: 'ERC20' },
+      { id: 'base',  label: 'Base',              tag: 'BASE'  },
     ],
   },
   {
     id: 'USDC', symbol: 'USDC', name: 'USD Coin', color: '#2775ca',
     networks: [
-      { id: 'trc20',   label: 'Tron (TRC-20)',    tag: 'TRC20'   },
-      { id: 'erc20',   label: 'Ethereum (ERC-20)', tag: 'ERC20'  },
-      { id: 'bsc',     label: 'BNB Smart Chain',   tag: 'BSC'    },
-      { id: 'base',    label: 'Base',               tag: 'BASE'   },
-      { id: 'polygon', label: 'Polygon',            tag: 'POL'    },
+      { id: 'trc20',   label: 'Tron (TRC-20)',     tag: 'TRC20' },
+      { id: 'erc20',   label: 'Ethereum (ERC-20)', tag: 'ERC20' },
+      { id: 'bsc',     label: 'BNB Smart Chain',   tag: 'BSC'   },
+      { id: 'base',    label: 'Base',               tag: 'BASE'  },
+      { id: 'polygon', label: 'Polygon',            tag: 'POL'   },
     ],
   },
   {
     id: 'USDT', symbol: 'USDT', name: 'Tether', color: '#26a17b',
     networks: [
-      { id: 'trc20',   label: 'Tron (TRC-20)',    tag: 'TRC20'   },
-      { id: 'erc20',   label: 'Ethereum (ERC-20)', tag: 'ERC20'  },
-      { id: 'bsc',     label: 'BNB Smart Chain',   tag: 'BSC'    },
-      { id: 'base',    label: 'Base',               tag: 'BASE'   },
-      { id: 'polygon', label: 'Polygon',            tag: 'POL'    },
+      { id: 'trc20',   label: 'Tron (TRC-20)',     tag: 'TRC20' },
+      { id: 'erc20',   label: 'Ethereum (ERC-20)', tag: 'ERC20' },
+      { id: 'bsc',     label: 'BNB Smart Chain',   tag: 'BSC'   },
+      { id: 'base',    label: 'Base',               tag: 'BASE'  },
+      { id: 'polygon', label: 'Polygon',            tag: 'POL'   },
     ],
   },
 ];
@@ -93,8 +92,8 @@ export default function WithdrawPage() {
   const [note, setNote]             = useState('');
   const [details, setDetails]       = useState<Record<string, string>>({});
   const [password, setPassword]     = useState('');
-  const [cryptoCoin, setCryptoCoin] = useState<string>("");
-  const [cryptoNet,  setCryptoNet]  = useState<string>("");
+  const [cryptoCoin, setCryptoCoin] = useState<string>('');
+  const [cryptoNet,  setCryptoNet]  = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted]   = useState(false);
   const [submitErr, setSubmitErr]   = useState('');
@@ -132,17 +131,12 @@ export default function WithdrawPage() {
   const activeCoin   = CRYPTO_COINS.find(c => c.id === cryptoCoin) ?? null;
   const activeNet    = activeCoin?.networks.find(n => n.id === cryptoNet) ?? null;
 
-  // For crypto: coin + network + wallet address required. For others: all text fields.
   const detailsFilled = method === 'crypto'
     ? !!cryptoCoin && !!cryptoNet && !!details['Wallet Address']?.trim()
     : activeMethod.fields.every(f => details[f]?.trim());
 
   const canSubmit =
-    !!amount &&
-    Number(amount) > 0 &&
-    detailsFilled &&
-    !!password.trim() &&
-    !submitting;
+    !!amount && Number(amount) > 0 && detailsFilled && !!password.trim() && !submitting;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -156,11 +150,7 @@ export default function WithdrawPage() {
           currency: 'USD',
           method,
           details: method === 'crypto'
-            ? {
-                Coin:            cryptoCoin,
-                Network:         activeNet?.label ?? cryptoNet,
-                'Wallet Address': details['Wallet Address'] ?? '',
-              }
+            ? { Coin: cryptoCoin, Network: activeNet?.label ?? cryptoNet, 'Wallet Address': details['Wallet Address'] ?? '' }
             : details,
           note: note || undefined,
           password,
@@ -179,68 +169,40 @@ export default function WithdrawPage() {
   };
 
   const resetForm = () => {
-    setSubmitted(false);
-    setAmount('');
-    setNote('');
-    setDetails({});
-    setPassword('');
-    setCryptoCoin('');
-    setCryptoNet('');
-    setSubmitErr('');
+    setSubmitted(false); setAmount(''); setNote('');
+    setDetails({}); setPassword('');
+    setCryptoCoin(''); setCryptoNet(''); setSubmitErr('');
   };
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-        :root {
-          --bg: #0f2535;
-          --bg-1: #0b1e2c;
-          --bg-2: #1a3a50;
-          --bg-3: #234d67;
-          --card: #132f45;
-          --ink: #f0f8ff;
-          --ink-2: #d6ecf8;
-          --ink-dim: #8dbdd8;
-          --ink-faint: #4d7a96;
-          --accent: #38bdf8;
-          --accent-dim: rgba(56,189,248,0.12);
-          --accent-border: rgba(56,189,248,0.25);
-          --green: #4ade80;
-          --green-bg: rgba(74,222,128,0.1);
-          --green-border: rgba(74,222,128,0.2);
-          --red: #f87171;
-          --red-bg: rgba(248,113,113,0.1);
-          --red-border: rgba(248,113,113,0.2);
-          --yellow: #fbbf24;
-          --yellow-bg: rgba(251,191,36,0.1);
-          --yellow-border: rgba(251,191,36,0.2);
-          --sans: 'DM Sans', system-ui, sans-serif;
-          --mono: 'DM Mono', 'SF Mono', monospace;
-          --r: 14px;
-        }
+
+        /*
+          No :root block — consumes shared theme vars from global stylesheet / layout.
+        */
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); font-family: var(--sans); }
 
         .wd-wrap {
-          max-width: 480px;
-          margin: 0 auto;
-          padding: 16px 16px 80px;
-          min-height: 100vh;
+          max-width: 480px; margin: 0 auto;
+          padding: 16px 16px 80px; min-height: 100vh;
+          font-family: var(--sans); color: var(--ink);
         }
 
-        /* Back link */
+        /* ── Back link ── */
         .wd-back {
           display: inline-flex; align-items: center; gap: 6px;
           font-size: 0.7rem; font-weight: 600; color: var(--ink-dim);
           text-decoration: none; margin-bottom: 20px;
           padding: 6px 12px;
-          background: var(--card); border: 1px solid var(--bg-2);
+          background: var(--card); border: 1px solid var(--line);
           border-radius: 8px; transition: background 0.12s, border-color 0.12s;
         }
-        .wd-back:hover { background: var(--bg-2); border-color: var(--bg-3); }
+        .wd-back:hover { background: var(--surface-hover); border-color: var(--line-strong); }
 
-        /* Header */
+        /* ── Header ── */
         .wd-brand {
           font-family: var(--mono); font-size: 0.58rem;
           letter-spacing: 0.18em; color: var(--accent);
@@ -255,12 +217,15 @@ export default function WithdrawPage() {
           color: var(--ink-faint); margin-bottom: 24px;
         }
 
-        /* Balance card */
+        /* ── Balance card ── */
+        /*
+          The gradient uses theme vars so it adapts: dark mode gets a deep blue
+          tint, light mode gets a subtle card-tinted surface.
+        */
         .wd-balance-card {
-          background: linear-gradient(135deg, #0d2d45 0%, #0b2038 100%);
-          border: 1px solid var(--bg-2);
-          border-radius: var(--r); padding: 20px;
-          margin-bottom: 12px;
+          background: linear-gradient(135deg, var(--bg-3) 0%, var(--bg) 100%);
+          border: 1px solid var(--line-strong);
+          border-radius: 14px; padding: 20px; margin-bottom: 12px;
           display: flex; align-items: center; justify-content: space-between;
           position: relative; overflow: hidden;
         }
@@ -268,13 +233,12 @@ export default function WithdrawPage() {
           content: '';
           position: absolute; top: -30px; right: -30px;
           width: 120px; height: 120px; border-radius: 50%;
-          background: rgba(56,189,248,0.05);
+          background: color-mix(in srgb, var(--accent) 5%, transparent);
           pointer-events: none;
         }
         .wd-balance-lbl {
-          font-size: 0.58rem; font-weight: 600;
-          color: var(--ink-faint); letter-spacing: 0.1em;
-          text-transform: uppercase; margin-bottom: 6px;
+          font-size: 0.58rem; font-weight: 600; color: var(--ink-faint);
+          letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px;
           font-family: var(--mono);
         }
         .wd-balance-val {
@@ -283,15 +247,16 @@ export default function WithdrawPage() {
         }
         .wd-balance-arrow {
           width: 44px; height: 44px; border-radius: 50%;
-          background: var(--accent-dim); border: 1px solid var(--accent-border);
+          background: color-mix(in srgb, var(--accent) 12%, transparent);
+          border: 1px solid color-mix(in srgb, var(--accent) 25%, transparent);
           display: flex; align-items: center; justify-content: center;
           color: var(--accent); flex-shrink: 0;
         }
 
-        /* Cards */
+        /* ── Cards ── */
         .wd-card {
-          background: var(--card); border: 1px solid var(--bg-2);
-          border-radius: var(--r); padding: 20px; margin-bottom: 12px;
+          background: var(--card); border: 1px solid var(--line);
+          border-radius: 14px; padding: 20px; margin-bottom: 12px;
         }
         .wd-section-lbl {
           font-size: 0.58rem; font-weight: 700; color: var(--ink-faint);
@@ -299,16 +264,17 @@ export default function WithdrawPage() {
           font-family: var(--mono);
         }
 
-        /* Method selector */
+        /* ── Method selector ── */
         .wd-method-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         .wd-method {
-          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          background: var(--bg); border: 1.5px solid var(--line);
           border-radius: 10px; padding: 14px 10px;
           text-align: center; cursor: pointer; transition: all 0.15s;
         }
-        .wd-method:hover { border-color: var(--bg-3); }
+        .wd-method:hover { border-color: var(--line-strong); }
         .wd-method.active {
-          border-color: var(--accent); background: var(--accent-dim);
+          border-color: var(--accent);
+          background: color-mix(in srgb, var(--accent) 8%, transparent);
         }
         .wd-method-icon {
           margin-bottom: 6px; display: flex;
@@ -321,18 +287,19 @@ export default function WithdrawPage() {
         }
         .wd-method.active .wd-method-lbl { color: var(--accent); }
 
-        /* Warning */
+        /* ── Warning ── */
         .wd-warning {
           display: flex; gap: 8px;
-          background: var(--yellow-bg); border: 1px solid var(--yellow-border);
+          background: color-mix(in srgb, var(--gold) 8%, transparent);
+          border: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
           border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
         }
-        .wd-warning p { font-size: 0.65rem; color: var(--yellow); line-height: 1.6; }
+        .wd-warning p { font-size: 0.65rem; color: var(--gold); line-height: 1.6; }
 
-        /* Amount input */
+        /* ── Amount input ── */
         .wd-amount-row {
           display: flex; align-items: center;
-          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          background: var(--bg); border: 1.5px solid var(--line);
           border-radius: 10px; padding: 14px 16px;
           transition: border-color 0.15s; margin-bottom: 12px;
         }
@@ -346,21 +313,22 @@ export default function WithdrawPage() {
           font-family: var(--mono); font-size: 1.4rem;
           font-weight: 700; color: var(--ink); letter-spacing: -0.02em;
         }
-        .wd-input::placeholder { color: var(--bg-3); }
+        .wd-input::placeholder { color: var(--ink-faint); }
 
-        /* Quick amounts */
+        /* ── Quick amounts ── */
         .wd-quick { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
         .wd-quick-btn {
-          background: var(--bg-1); border: 1px solid var(--bg-2);
+          background: var(--bg); border: 1px solid var(--line);
           border-radius: 8px; padding: 5px 14px;
           font-family: var(--mono); font-size: 0.65rem; font-weight: 500;
           color: var(--ink-dim); cursor: pointer; transition: all 0.12s;
         }
         .wd-quick-btn:hover, .wd-quick-btn.active {
-          background: var(--accent-dim); border-color: var(--accent); color: var(--accent);
+          background: color-mix(in srgb, var(--accent) 8%, transparent);
+          border-color: var(--accent); color: var(--accent);
         }
 
-        /* Fields */
+        /* ── Text fields ── */
         .wd-field { margin-bottom: 12px; }
         .wd-field-label {
           display: block; font-size: 0.58rem; font-weight: 600;
@@ -368,26 +336,26 @@ export default function WithdrawPage() {
           letter-spacing: 0.08em; margin-bottom: 6px; font-family: var(--mono);
         }
         .wd-field-input {
-          width: 100%; background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          width: 100%; background: var(--bg); border: 1.5px solid var(--line);
           border-radius: 10px; padding: 10px 13px;
           font-family: var(--sans); font-size: 0.8rem;
           color: var(--ink); outline: none; transition: border-color 0.15s;
         }
-        .wd-field-input:focus { border-color: var(--accent); background: var(--bg-2); }
+        .wd-field-input:focus { border-color: var(--accent); background: var(--surface); }
         .wd-field-input::placeholder { color: var(--ink-faint); }
 
-        /* Coin selector */
+        /* ── Coin selector ── */
         .wd-coin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
         .wd-coin {
-          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          background: var(--bg); border: 1.5px solid var(--line);
           border-radius: 10px; padding: 12px 14px;
           cursor: pointer; transition: all 0.15s;
           display: flex; align-items: center; gap: 10px;
         }
-        .wd-coin:hover { border-color: var(--bg-3); }
+        .wd-coin:hover { border-color: var(--line-strong); }
         .wd-coin.active {
           border-color: var(--coin-color, var(--accent));
-          background: color-mix(in srgb, var(--coin-color, var(--accent)) 12%, transparent);
+          background: color-mix(in srgb, var(--coin-color, var(--accent)) 10%, transparent);
         }
         .wd-coin-sym {
           font-family: var(--mono); font-size: 0.72rem; font-weight: 700;
@@ -397,38 +365,44 @@ export default function WithdrawPage() {
         .wd-coin-name { font-size: 0.65rem; font-weight: 400; color: var(--ink-faint); }
         .wd-coin.active .wd-coin-name { color: var(--ink-dim); }
 
-        /* Network selector */
+        /* ── Network selector ── */
         .wd-net-list { display: flex; flex-direction: column; gap: 6px; }
         .wd-net {
           display: flex; align-items: center; gap: 10px;
-          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          background: var(--bg); border: 1.5px solid var(--line);
           border-radius: 10px; padding: 10px 13px;
           cursor: pointer; transition: all 0.15s;
         }
-        .wd-net:hover { border-color: var(--bg-3); }
-        .wd-net.active { border-color: var(--accent); background: var(--accent-dim); }
+        .wd-net:hover { border-color: var(--line-strong); }
+        .wd-net.active {
+          border-color: var(--accent);
+          background: color-mix(in srgb, var(--accent) 8%, transparent);
+        }
         .wd-net-tag {
           font-family: var(--mono); font-size: 0.58rem; font-weight: 700;
-          color: var(--ink-faint); background: var(--bg-2);
+          color: var(--ink-faint); background: var(--surface);
           border-radius: 5px; padding: 2px 7px; min-width: 46px;
           text-align: center; flex-shrink: 0;
         }
-        .wd-net.active .wd-net-tag { background: var(--accent-border); color: var(--accent); }
+        .wd-net.active .wd-net-tag {
+          background: color-mix(in srgb, var(--accent) 15%, transparent);
+          color: var(--accent);
+        }
         .wd-net-label { font-size: 0.72rem; color: var(--ink-dim); flex: 1; }
         .wd-net.active .wd-net-label { color: var(--ink); }
         .wd-net-check { color: var(--accent); flex-shrink: 0; }
         .wd-net-warning {
-          font-size: 0.62rem; color: var(--yellow); line-height: 1.6;
-          background: var(--yellow-bg); border: 1px solid var(--yellow-border);
+          font-size: 0.62rem; color: var(--gold); line-height: 1.6;
+          background: color-mix(in srgb, var(--gold) 8%, transparent);
+          border: 1px solid color-mix(in srgb, var(--gold) 20%, transparent);
           border-radius: 8px; padding: 8px 12px; margin-top: 8px;
         }
         .wd-net-warning strong { font-weight: 700; }
 
-        /* Password field */
+        /* ── Password field ── */
         .wd-password-wrap {
-          margin-top: 16px;
-          padding-top: 16px;
-          border-top: 1px solid var(--bg-2);
+          margin-top: 16px; padding-top: 16px;
+          border-top: 1px solid var(--line);
         }
         .wd-password-header {
           display: flex; align-items: center; gap: 7px; margin-bottom: 6px;
@@ -442,11 +416,11 @@ export default function WithdrawPage() {
         }
         .wd-password-row {
           display: flex; align-items: center; gap: 10px;
-          background: var(--bg-1); border: 1.5px solid var(--bg-2);
+          background: var(--bg); border: 1.5px solid var(--line);
           border-radius: 10px; padding: 10px 13px;
           transition: border-color 0.15s;
         }
-        .wd-password-row:focus-within { border-color: var(--accent); background: var(--bg-2); }
+        .wd-password-row:focus-within { border-color: var(--accent); background: var(--surface); }
         .wd-password-icon { color: var(--ink-faint); flex-shrink: 0; }
         .wd-password-input {
           flex: 1; border: none; background: transparent; outline: none;
@@ -454,9 +428,9 @@ export default function WithdrawPage() {
         }
         .wd-password-input::placeholder { color: var(--ink-faint); }
 
-        /* Submit */
+        /* ── Submit button ── */
         .wd-submit {
-          width: 100%; background: var(--accent); color: #0a1f2e;
+          width: 100%; background: var(--accent); color: var(--accent-l);
           border: none; border-radius: 12px; padding: 15px;
           font-family: var(--sans); font-size: 0.85rem; font-weight: 700;
           cursor: pointer; transition: opacity 0.15s, transform 0.1s;
@@ -466,19 +440,17 @@ export default function WithdrawPage() {
         .wd-submit:hover:not(:disabled) { opacity: 0.88; transform: translateY(-1px); }
         .wd-submit:active:not(:disabled) { transform: scale(0.98); }
         .wd-submit:disabled { opacity: 0.35; cursor: not-allowed; }
-        .wd-err {
-          font-size: 0.65rem; color: var(--red);
-          margin-top: 8px; text-align: center;
-        }
+        .wd-err { font-size: 0.65rem; color: var(--red); margin-top: 8px; text-align: center; }
 
-        /* Success */
+        /* ── Success state ── */
         .wd-success {
           display: flex; flex-direction: column;
           align-items: center; padding: 10px 0 6px; text-align: center;
         }
         .wd-success-ico {
           width: 64px; height: 64px; border-radius: 50%;
-          background: var(--green-bg); border: 1px solid var(--green-border);
+          background: color-mix(in srgb, var(--green) 10%, transparent);
+          border: 1px solid color-mix(in srgb, var(--green) 20%, transparent);
           display: flex; align-items: center; justify-content: center;
           color: var(--green); margin-bottom: 16px;
         }
@@ -491,30 +463,34 @@ export default function WithdrawPage() {
         }
         .wd-success-sub strong { color: var(--ink); font-weight: 600; }
         .wd-success-btn {
-          background: var(--accent); color: #0a1f2e;
+          background: var(--accent); color: var(--accent-l);
           border: none; border-radius: 10px; padding: 12px 28px;
           font-family: var(--sans); font-size: 0.78rem; font-weight: 700;
           cursor: pointer; transition: opacity 0.15s;
         }
         .wd-success-btn:hover { opacity: 0.88; }
 
-        /* History */
+        /* ── History ── */
         .wd-history-row {
           display: flex; align-items: center; gap: 12px;
-          padding: 13px 0; border-bottom: 1px solid var(--bg-2);
+          padding: 13px 0; border-bottom: 1px solid var(--line);
         }
         .wd-history-row:last-child { border-bottom: none; padding-bottom: 0; }
         .wd-history-ico {
           width: 34px; height: 34px; border-radius: 50%;
           display: flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-        .wd-spin { animation: spin 0.7s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Empty state ── */
         .wd-empty {
           display: flex; flex-direction: column;
           align-items: center; padding: 24px; gap: 8px; color: var(--ink-faint);
         }
         .wd-empty p { font-size: 0.7rem; font-weight: 300; }
+
+        /* ── Animations ── */
+        .wd-spin { animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
 
       <div className="wd-wrap">
@@ -526,7 +502,7 @@ export default function WithdrawPage() {
         <h1 className="wd-title">Withdraw Funds</h1>
         <p className="wd-sub">Transfer funds to your bank, card, or wallet</p>
 
-        {/* BALANCE */}
+        {/* ── BALANCE ── */}
         <div className="wd-balance-card">
           <div>
             <p className="wd-balance-lbl">Available Balance</p>
@@ -534,12 +510,13 @@ export default function WithdrawPage() {
           </div>
           <div className="wd-balance-arrow">
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 14V4M9 4L4.5 8.5M9 4L13.5 8.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9 14V4M9 4L4.5 8.5M9 4L13.5 8.5"
+                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </div>
         </div>
 
-        {/* METHOD */}
+        {/* ── METHOD ── */}
         {!submitted && (
           <div className="wd-card">
             <p className="wd-section-lbl">Withdrawal Method</p>
@@ -547,8 +524,11 @@ export default function WithdrawPage() {
               {METHODS.map(m => {
                 const Icon = m.icon;
                 return (
-                  <div key={m.id} className={`wd-method${method === m.id ? ' active' : ''}`}
-                    onClick={() => { setMethod(m.id); setDetails({}); setCryptoCoin(''); setCryptoNet(''); }}>
+                  <div
+                    key={m.id}
+                    className={`wd-method${method === m.id ? ' active' : ''}`}
+                    onClick={() => { setMethod(m.id); setDetails({}); setCryptoCoin(''); setCryptoNet(''); }}
+                  >
                     <div className="wd-method-icon"><Icon size={20} strokeWidth={1.5} /></div>
                     <p className="wd-method-lbl">{m.label}</p>
                   </div>
@@ -558,7 +538,7 @@ export default function WithdrawPage() {
           </div>
         )}
 
-        {/* AMOUNT + DETAILS */}
+        {/* ── AMOUNT + DETAILS ── */}
         {!submitted && (
           <div className="wd-card">
             <p className="wd-section-lbl">Amount & Details</p>
@@ -612,7 +592,7 @@ export default function WithdrawPage() {
                   </div>
                 </div>
 
-                {/* Step 2 — Network (only after coin selected) */}
+                {/* Step 2 — Network */}
                 {cryptoCoin && activeCoin && (
                   <div className="wd-field">
                     <label className="wd-field-label">Network</label>
@@ -627,7 +607,8 @@ export default function WithdrawPage() {
                           <span className="wd-net-label">{net.label}</span>
                           {cryptoNet === net.id && (
                             <svg className="wd-net-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
-                              <path d="M2.5 7L5.5 10L11.5 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M2.5 7L5.5 10L11.5 4"
+                                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                           )}
                         </div>
@@ -635,13 +616,14 @@ export default function WithdrawPage() {
                     </div>
                     {cryptoNet && (
                       <p className="wd-net-warning">
-                        ⚠️ Send only <strong>{cryptoCoin}</strong> on the <strong>{activeNet?.label}</strong> network. Sending on the wrong network will result in permanent loss of funds.
+                        ⚠️ Send only <strong>{cryptoCoin}</strong> on the <strong>{activeNet?.label}</strong> network.
+                        Sending on the wrong network will result in permanent loss of funds.
                       </p>
                     )}
                   </div>
                 )}
 
-                {/* Step 3 — Wallet address (only after network selected) */}
+                {/* Step 3 — Wallet address */}
                 {cryptoCoin && cryptoNet && (
                   <div className="wd-field">
                     <label className="wd-field-label">Wallet Address</label>
@@ -689,11 +671,7 @@ export default function WithdrawPage() {
 
             {submitErr && <p className="wd-err">{submitErr}</p>}
 
-            <button
-              className="wd-submit"
-              disabled={!canSubmit}
-              onClick={handleSubmit}
-            >
+            <button className="wd-submit" disabled={!canSubmit} onClick={handleSubmit}>
               {submitting
                 ? <><Loader2 size={16} className="wd-spin" /> Submitting…</>
                 : `Request Withdrawal of $${amount || '0'}`}
@@ -701,7 +679,7 @@ export default function WithdrawPage() {
           </div>
         )}
 
-        {/* SUCCESS */}
+        {/* ── SUCCESS ── */}
         {submitted && (
           <div className="wd-card">
             <div className="wd-success">
@@ -718,7 +696,7 @@ export default function WithdrawPage() {
           </div>
         )}
 
-        {/* HISTORY */}
+        {/* ── HISTORY ── */}
         <div className="wd-card" style={{ marginTop: 4 }}>
           <p className="wd-section-lbl">Withdrawal History</p>
           {historyLoading ? (
@@ -733,11 +711,25 @@ export default function WithdrawPage() {
           ) : history.map(w => (
             <div key={w.id} className="wd-history-row">
               <div className="wd-history-ico" style={{
-                background: w.status === 'APPROVED' ? 'var(--green-bg)' : w.status === 'REJECTED' ? 'var(--red-bg)' : 'var(--yellow-bg)',
-                color: w.status === 'APPROVED' ? 'var(--green)' : w.status === 'REJECTED' ? 'var(--red)' : 'var(--yellow)',
-                border: `1px solid ${w.status === 'APPROVED' ? 'var(--green-border)' : w.status === 'REJECTED' ? 'var(--red-border)' : 'var(--yellow-border)'}`,
+                background: w.status === 'APPROVED'
+                  ? 'color-mix(in srgb, var(--green) 10%, transparent)'
+                  : w.status === 'REJECTED'
+                  ? 'color-mix(in srgb, var(--red) 10%, transparent)'
+                  : 'color-mix(in srgb, var(--gold) 10%, transparent)',
+                color: w.status === 'APPROVED' ? 'var(--green)'
+                  : w.status === 'REJECTED'    ? 'var(--red)'
+                  : 'var(--gold)',
+                border: `1px solid ${
+                  w.status === 'APPROVED'
+                    ? 'color-mix(in srgb, var(--green) 20%, transparent)'
+                    : w.status === 'REJECTED'
+                    ? 'color-mix(in srgb, var(--red) 20%, transparent)'
+                    : 'color-mix(in srgb, var(--gold) 20%, transparent)'
+                }`,
               }}>
-                {w.status === 'APPROVED' ? <CheckCircle2 size={16} /> : w.status === 'REJECTED' ? <XCircle size={16} /> : <Clock size={16} />}
+                {w.status === 'APPROVED' ? <CheckCircle2 size={16} />
+                  : w.status === 'REJECTED' ? <XCircle size={16} />
+                  : <Clock size={16} />}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>
