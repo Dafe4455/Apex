@@ -1,70 +1,34 @@
 :root {
-  /* ── Dark (default) ── */
-  --bg:   #090e12;   /* near-black with blue undertone */
-  --bg-2: #0f1923;   /* clear step up for structural sections */
-  --bg-3: #162231;   /* nav bars, modals */
+  /* ── Abyss Dark ── */
+  --bg:   #000000;
+  --bg-2: #0a0a0a;
+  --bg-3: #111111;
 
-  --card:          #111d27;   /* visibly lifted off --bg */
-  --card-raised:   #172637;   /* hover / active card state */
+  --card:        #0f0f0f;
+  --card-raised: #161616;
 
-  --ink:       #f0f8ff;
-  --ink-2:     #b8d4e8;
-  --ink-dim:   #6a8fa8;
-  --ink-faint: #3d6070;
+  --ink:       #f0f0f0;
+  --ink-2:     #a0a0a0;
+  --ink-dim:   #606060;
+  --ink-faint: #3a3a3a;
 
-  --accent:   #38bdf8;
-  --accent-l: rgba(56, 189, 248, 0.12);   /* tinted bg for accent chips */
+  --accent:   #38bdf8;        /* accent is the ONLY thing allowed to glow */
+  --accent-l: rgba(56, 189, 248, 0.10);
 
   --green:   #4ade80;
-  --green-l: rgba(74, 222, 128, 0.12);
+  --green-l: rgba(74, 222, 128, 0.10);
 
   --red:   #f87171;
-  --red-l: rgba(248, 113, 113, 0.12);
+  --red-l: rgba(248, 113, 113, 0.10);
 
   --gold:   #fbbf24;
-  --gold-l: rgba(251, 191, 36, 0.12);
+  --gold-l: rgba(251, 191, 36, 0.10);
 
-  --line:        rgba(255, 255, 255, 0.07);
-  --line-strong: rgba(255, 255, 255, 0.13);
-  --surface:       rgba(255, 255, 255, 0.05);
-  --surface-hover: rgba(255, 255, 255, 0.09);
+  --line:          rgba(255, 255, 255, 0.06);
+  --line-strong:   rgba(255, 255, 255, 0.10);
+  --surface:       rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.07);
 
   --sans: 'DM Sans', system-ui, sans-serif;
   --mono: 'DM Mono', 'SF Mono', monospace;
-}
-
-[data-theme="light"] {
-  /* ── Light ── */
-  --bg:   #eef5f7;
-  --bg-2: #e2ecef;
-  --bg-3: #d3e4e8;
-
-  --card:        #ffffff;
-  --card-raised: #f5fbfc;
-
-  --ink:       #0a1a24;
-  --ink-2:     #1c3545;
-  --ink-dim:   #4a6475;
-  --ink-faint: #7a9aaa;
-
-  --accent:   #0284c7;
-  --accent-l: rgba(2, 132, 199, 0.10);
-
-  /* 
-    Semantic colors stay hue-consistent between themes.
-    Only lightness shifts — green stays green, red stays red.
-  */
-  --green:   #16a34a;
-  --green-l: rgba(22, 163, 74, 0.10);
-
-  --red:   #dc2626;
-  --red-l: rgba(220, 38, 38, 0.10);
-
-  --gold:   #d97706;   /* same amber hue as dark, darkened for contrast */
-  --gold-l: rgba(217, 119, 6, 0.10);
-
-  --line:        rgba(0, 0, 0, 0.08);
-  --line-strong: rgba(0, 0, 0, 0.14);
-  --surface:       rgba(0, 0, 0, 0.04);
-  --surface-hover: rgba(0, 0, 0, 0.07);
 }
