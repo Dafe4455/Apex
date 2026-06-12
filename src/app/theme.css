@@ -44,7 +44,7 @@
   --bg-3: #dbe1e8;      /* Distinct color for interactive backgrounds */
   
   /* Cards stay pure white, but now have high contrast against the new --bg */
-  --card: #ffffff;      
+  --card: ##E0F2F1;      
   
   /* 
     CRITICAL FIX 2: Darker text hierarchy.
