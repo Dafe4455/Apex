@@ -66,7 +66,7 @@
 
   /* Borders and overlays that match the cool palette tone */
   --line: #A7FFEB;
-  --line-strong: #A7FFEB;
+  --line-strong: #0b1e290d;
   --surface: rgba(11, 30, 41, 0.04);
   --surface-hover: #f0f7f7;
 }
