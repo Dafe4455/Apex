@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import Providers from './providers';
 import SWRegister from './sw-register';
+import './theme.css';
 
 export const metadata: Metadata = {
   title: 'Apex Markets',
@@ -30,8 +31,25 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Theme init — must run before paint to avoid a flash of the wrong theme.
+            Reads saved preference, falls back to system preference, defaults to dark. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('theme');
+                  var theme = saved || (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+                  document.documentElement.setAttribute('data-theme', theme);
+                } catch (e) {
+                  document.documentElement.setAttribute('data-theme', 'dark');
+                }
+              })();
+            `,
+          }}
+        />
         <style dangerouslySetInnerHTML={{ __html: `
           .goog-te-banner-frame,
           .goog-te-banner-frame.skiptranslate,
@@ -69,7 +87,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }
         `}} />
       </head>
-      <body style={{ margin: 0, padding: 0, background: '#0a1a26' }}>
+      <body style={{ margin: 0, padding: 0, background: 'var(--bg, #0a1a26)' }}>
         <div id="google_translate_element" style={{ display: 'none' }} />
         <Providers>{children}</Providers>
         <SWRegister />
