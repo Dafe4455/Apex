@@ -1,0 +1,60 @@
+/* ─────────────────────────────────────────────
+   SHARED THEME — import this once at the layout
+   level instead of redefining :root per page.
+   Toggle by setting data-theme="light" or
+   data-theme="dark" on <html>.
+───────────────────────────────────────────── */
+
+:root {
+  /* base palette — dark (default) */
+  --bg: #000000;
+  --bg-2: #000200;
+  --bg-3: #0f2535;
+  --card: #000000;
+  --ink: #f0f8ff;
+  --ink-2: #d6ecf8;
+  --ink-dim: #8dbdd8;
+  --ink-faint: #6a9ab8;
+  --accent: #38bdf8;
+  --accent-l: #0e3448;
+  --green: #4ade80;
+  --green-l: #0d3320;
+  --red: #f87171;
+  --red-l: #2a0d0d;
+  --gold-l: #2a2200;
+  --gold: #fbbf24;
+
+  /* surfaces / borders — dark */
+  --line: rgba(255, 255, 255, 0.05);
+  --line-strong: rgba(255, 255, 255, 0.08);
+  --surface: rgba(255, 255, 255, 0.05);
+  --surface-hover: rgba(255, 255, 255, 0.09);
+
+  /* fonts — theme independent */
+  --sans: 'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Mono', 'SF Mono', monospace;
+}
+
+[data-theme="light"] {
+  --bg: #f0ffff;
+  --bg-2: #e3f6f6;
+  --bg-3: #d6ecf2;
+  --card: #ffffff;
+  --ink: #0a1f2e;
+  --ink-2: #234152;
+  --ink-dim: #5b7d8c;
+  --ink-faint: #8aa7b3;
+  --accent: #0ea5e9;
+  --accent-l: #e0f2fe;
+  --green: #16a34a;
+  --green-l: #dcfce7;
+  --red: #dc2626;
+  --red-l: #fee2e2;
+  --gold-l: #fef3c7;
+  --gold: #b45309;
+
+  --line: rgba(10, 31, 46, 0.08);
+  --line-strong: rgba(10, 31, 46, 0.14);
+  --surface: rgba(10, 31, 46, 0.04);
+  --surface-hover: rgba(10, 31, 46, 0.07);
+}
