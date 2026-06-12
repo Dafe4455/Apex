@@ -77,7 +77,6 @@ function Sparkline({ positive = true, width = 80, height = 32 }) {
 }
 
 function Badge({ status }: { status: 'COMPLETED' | 'PENDING' | 'FAILED' }) {
-  // Use theme tokens instead of hardcoded hex pairs
   const map: Record<string, [string, string]> = {
     COMPLETED: ['var(--green-l)', 'var(--green)'],
     PENDING:   ['var(--gold-l)',  'var(--gold)'],
@@ -95,69 +94,6 @@ function Badge({ status }: { status: 'COMPLETED' | 'PENDING' | 'FAILED' }) {
   );
 }
 
-// Fear & Greed arc gauge — Binance-style
-function FearGreedGauge({ value }: { value: number }) {
-  const clamped = Math.max(0, Math.min(100, value));
-
-  const getZone = (v: number) => {
-    if (v <= 24) return { label: 'Extreme Fear', color: 'var(--red)' };
-    if (v <= 44) return { label: 'Fear',         color: '#fb923c' };
-    if (v <= 55) return { label: 'Neutral',      color: 'var(--gold)' };
-    if (v <= 74) return { label: 'Greed',        color: '#a3e635' };
-    return             { label: 'Extreme Greed', color: 'var(--green)' };
-  };
-  const zone = getZone(clamped);
-
-  const W = 120, H = 68;
-  const cx = W / 2, cy = 62;
-  const r = 46;
-
-  
-
-  const segments = [
-    { from: 0,  to: 25,  color: '#f87171' },
-    { from: 25, to: 45,  color: '#fb923c' },
-    { from: 45, to: 55,  color: '#fbbf24' },
-    { from: 55, to: 75,  color: '#a3e635' },
-    { from: 75, to: 100, color: '#4ade80' },
-  ];
-
-  function polarToCart(angleDeg: number, radius: number) {
-    const rad = (angleDeg * Math.PI) / 180;
-    return {
-      x: cx + radius * Math.cos(Math.PI - rad),
-      y: cy - radius * Math.sin(Math.PI - rad),
-    };
-  }
-
-  function arcPath(fromPct: number, toPct: number, rOuter: number, rInner: number) {
-    const a1 = (fromPct / 100) * 180;
-    const a2 = (toPct  / 100) * 180;
-    const p1 = polarToCart(a1, rOuter);
-    const p2 = polarToCart(a2, rOuter);
-    const p3 = polarToCart(a2, rInner);
-    const p4 = polarToCart(a1, rInner);
-    const large = a2 - a1 > 180 ? 1 : 0;
-    return `M ${p1.x} ${p1.y} A ${rOuter} ${rOuter} 0 ${large} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${rInner} ${rInner} 0 ${large} 0 ${p4.x} ${p4.y} Z`;
-  }
-
-  const nx = cx + (r - 8) * Math.cos(needleAngle);
-  const ny = cy - (r - 8) * Math.sin(needleAngle);
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
-        {/* background arc — uses surface token */}
-        <path d={arcPath(0, 100, r, r - 10)} fill="var(--bg-3)" />
-        {/* colored segments — sentiment colors are semantic, kept as-is */}
-        {segments.map((seg, i) => (
-          <path key={i} d={arcPath(seg.from, seg.to, r, r - 10)} fill={seg.color} opacity="0.85" />
-        ))}
-        {/* needle */}
-        <g style={{
-  transformOrigin: `${cx}px ${cy}px`,
-  transform: `rotate(${(clamped / 100) * 180 - 90}deg)`,
-  transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
 function FearGreedGauge({ value }: { value: number }) {
   const clamped = Math.max(0, Math.min(100, value));
 
@@ -231,7 +167,7 @@ function FearGreedGauge({ value }: { value: number }) {
       </span>
     </div>
   );
-      }
+}
 
 export default function DashboardPage() {
   const [time, setTime] = useState('');
@@ -342,18 +278,19 @@ export default function DashboardPage() {
   const profitPos     = data?.positions.profit            ?? 0;
   const lossPos       = data?.positions.loss              ?? 0;
   const activityLogs  = data?.activityLogs                ?? [];
+
   const fearGreedValue = useMemo(() => {
-  const weights: Record<string, number> = { BTC: 0.4, ETH: 0.3, SOL: 0.2, BNB: 0.1 };
-  let weightedSum = 0, totalWeight = 0;
-  for (const [sym, w] of Object.entries(weights)) {
-    const asset = markets.find(m => m.symbol === sym);
-    if (asset) { weightedSum += asset.changePercent * w; totalWeight += w; }
-  }
-  if (totalWeight === 0) return data?.user.fearGreedIndex ?? 52;
-  const avg = weightedSum / totalWeight;          // weighted avg % change
-  const clamped = Math.max(-5, Math.min(5, avg)); // clamp to [-5%, +5%]
-  return Math.round(((clamped + 5) / 10) * 100);  // normalize to 0–100
-}, [markets, data?.user.fearGreedIndex]);
+    const weights: Record<string, number> = { BTC: 0.4, ETH: 0.3, SOL: 0.2, BNB: 0.1 };
+    let weightedSum = 0, totalWeight = 0;
+    for (const [sym, w] of Object.entries(weights)) {
+      const asset = markets.find(m => m.symbol === sym);
+      if (asset) { weightedSum += asset.change24h * w; totalWeight += w; }
+    }
+    if (totalWeight === 0) return data?.user.fearGreedIndex ?? 52;
+    const avg = weightedSum / totalWeight;
+    const clamped = Math.max(-5, Math.min(5, avg));
+    return Math.round(((clamped + 5) / 10) * 100);
+  }, [markets, data?.user.fearGreedIndex]);
 
   const activeMethod = depositMethods.find(m => m.id === method);
 
@@ -361,7 +298,6 @@ export default function DashboardPage() {
     .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
     .slice(0, 4);
 
-  // Tag colors: bg uses theme tokens, text is semantic
   const tagColors: Record<string, [string, string]> = {
     CRYPTO:      ['var(--accent-l)', 'var(--accent)'],
     FOREX:       ['var(--green-l)',  '#a3e635'],
@@ -384,14 +320,6 @@ export default function DashboardPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
-        /*
-          NO :root block here — all tokens come from the shared theme file.
-          Consumed: --bg, --bg-2, --bg-3, --card, --ink, --ink-2, --ink-dim,
-          --ink-faint, --accent, --accent-l, --green, --green-l, --red, --red-l,
-          --gold, --gold-l, --line, --line-strong, --surface, --surface-hover,
-          --sans, --mono
-        */
-
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: var(--bg); font-family: var(--sans); }
 
@@ -402,7 +330,6 @@ export default function DashboardPage() {
           transition: background 0.2s ease;
         }
 
-        /* ── HEADER ── */
         .d-header { padding: 20px 20px 16px; display: flex; align-items: flex-start; justify-content: space-between; }
         .d-greeting { font-size: 0.75rem; font-weight: 400; color: var(--ink-faint); margin-bottom: 2px; }
         .d-name { font-size: 1.65rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px; }
@@ -414,14 +341,12 @@ export default function DashboardPage() {
           border: 1px solid var(--green);
           border-radius: 20px; padding: 4px 10px;
           font-family: var(--mono); font-size: 0.6rem; font-weight: 500;
-          color: var(--green);
-          opacity: 0.85;
+          color: var(--green); opacity: 0.85;
         }
         .live-dot { width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: blink 2s ease-in-out infinite; flex-shrink: 0; }
         @keyframes blink { 0%, 100% { opacity: 1 } 50% { opacity: 0.4 } }
         .d-clock { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-dim); letter-spacing: 0.04em; }
 
-        /* ── HERO CARD ── */
         .hero-card {
           margin: 0 16px 6px;
           background: var(--card);
@@ -460,7 +385,6 @@ export default function DashboardPage() {
         }
         .btn-ghost:hover { background: var(--surface-hover); }
 
-        /* ── TX DRAWER ── */
         .tx-drawer { overflow: hidden; transition: max-height 0.35s ease; margin: 0 16px; }
         .tx-drawer-inner {
           background: var(--card);
@@ -474,7 +398,6 @@ export default function DashboardPage() {
           font-size: 0.68rem;
         }
 
-        /* ── STAT ROW ── */
         .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 20px 20px 4px; }
         .stat-cell { padding: 0; }
         .stat-cell + .stat-cell { padding-left: 16px; border-left: 1px solid var(--line-strong); }
@@ -483,10 +406,7 @@ export default function DashboardPage() {
         .stat-val.pos { color: var(--green); }
         .stat-sub { font-size: 0.58rem; font-weight: 300; color: var(--ink-faint); }
 
-        /* ── DIVIDER ── */
         .section-divider { height: 1px; background: var(--line-strong); margin: 18px 16px 16px; }
-
-        /* ── SECTION LABEL ── */
         .section-label {
           font-size: 0.58rem; font-weight: 700; color: var(--ink-faint);
           text-transform: uppercase; letter-spacing: 0.12em;
@@ -494,7 +414,6 @@ export default function DashboardPage() {
         }
         .section-label-pip { display: inline-block; width: 3px; height: 10px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
 
-        /* ── 2-COL CARDS ── */
         .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px 8px; }
         .info-card {
           background: var(--card);
@@ -517,7 +436,6 @@ export default function DashboardPage() {
         }
         .activity-item:last-child { margin-bottom: 0; }
 
-        /* ── MARKETS TABLE ── */
         .asset-section { padding: 0 16px 8px; }
         .asset-table-wrap {
           background: var(--card);
@@ -562,10 +480,8 @@ export default function DashboardPage() {
         }
         .btn-sell:hover { background: var(--surface-hover); }
 
-        /* ── FEAR & GREED CELL ── */
         .fg-cell { display: flex; flex-direction: column; align-items: center; padding-top: 2px; }
 
-        /* ── NEWS ── */
         .news-section { padding: 0 16px 24px; }
         .news-wrap {
           background: var(--card);
@@ -594,7 +510,6 @@ export default function DashboardPage() {
         }
         .news-pulse-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); animation: blink 2s ease-in-out infinite; }
 
-        /* ── DEPOSIT SHEET ── */
         .sheet-overlay {
           position: fixed; inset: 0;
           background: rgba(0, 0, 0, 0.65);
@@ -626,21 +541,17 @@ export default function DashboardPage() {
         }
         .sheet-full-link:hover { opacity: 0.85; }
 
-        /* ── METHOD PILL ── */
         .method-pill {
           flex-shrink: 0; padding: 6px 14px; border-radius: 20px;
           font-family: var(--sans); font-size: 0.7rem; font-weight: 600;
           cursor: pointer; transition: all 0.15s;
         }
-        .method-pill.active {
-          background: var(--accent); color: #0a1f2e; border: none;
-        }
+        .method-pill.active { background: var(--accent); color: #0a1f2e; border: none; }
         .method-pill.inactive {
           background: var(--card); color: var(--ink-dim);
           border: 1px solid var(--line-strong);
         }
 
-        /* ── ADDRESS BOX ── */
         .addr-box {
           background: var(--card);
           border: 1.5px solid var(--line-strong);
@@ -662,7 +573,6 @@ export default function DashboardPage() {
         .copy-btn.idle { background: var(--surface); color: var(--ink-dim); }
         .copy-btn.done { background: var(--green-l); color: var(--green); }
 
-        /* ── NOTE BOX ── */
         .note-box {
           display: flex; gap: 8px;
           background: var(--gold-l);
@@ -675,7 +585,6 @@ export default function DashboardPage() {
 
       <div className="dash-wrap">
 
-        {/* HEADER */}
         <div className="d-header">
           <div>
             <p className="d-greeting">Welcome back,</p>
@@ -688,7 +597,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* HERO BALANCE */}
         <div className="hero-card">
           <p className="bal-eyebrow">Net Asset Value</p>
           <p className="bal-amount"><sup>$</sup>{fmt(balance, 0)}<span className="cents">.00</span></p>
@@ -706,7 +614,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* TX DRAWER */}
         <div className="tx-drawer" style={{ maxHeight: balanceOpen ? 260 : 0 }}>
           <div className="tx-drawer-inner">
             <p className="tx-drawer-label">Recent Transactions</p>
@@ -722,7 +629,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* STAT ROW */}
         <div className="stat-row">
           <div className="stat-cell">
             <p className="stat-lbl">P &amp; L</p>
@@ -742,7 +648,6 @@ export default function DashboardPage() {
 
         <div className="section-divider" />
 
-        {/* MARKET OVERVIEW */}
         <p className="section-label"><span className="section-label-pip" />Market Overview</p>
         <div className="two-col">
           <div className="info-card">
@@ -773,7 +678,6 @@ export default function DashboardPage() {
 
         <div className="section-divider" />
 
-        {/* MARKETS */}
         <p className="section-label"><span className="section-label-pip" />Markets</p>
         <div className="asset-section">
           <div className="asset-table-wrap">
@@ -811,7 +715,6 @@ export default function DashboardPage() {
 
         <div className="section-divider" />
 
-        {/* GLOBAL FINANCE NEWS */}
         <p className="section-label"><span className="section-label-pip" />Global Finance News</p>
         <div className="news-section">
           <div className="news-wrap">
@@ -849,7 +752,6 @@ export default function DashboardPage() {
 
       </div>
 
-      {/* QUICK DEPOSIT SHEET */}
       {sheet === 'deposit' && (
         <>
           <div className="sheet-overlay" onClick={closeSheet} />
