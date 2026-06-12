@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import GoogleTranslate from '@/components/GoogleTranslate';
+
 const navItems = [
   {
     href: '/dashboard',
@@ -84,12 +85,52 @@ const ChevronRight = () => (
   </svg>
 );
 
+// Sun icon for light mode
+const SunIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+    <circle cx="10" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.4" />
+    <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+  </svg>
+);
+
+// Moon icon for dark mode
+const MoonIcon = () => (
+  <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+    <path d="M17 12.3A7 7 0 0 1 7.7 3a7 7 0 1 0 9.3 9.3z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  // On mount: read saved preference or system preference
+  useEffect(() => {
+    const saved = localStorage.getItem('apex-theme') as 'dark' | 'light' | null;
+    if (saved) {
+      setTheme(saved);
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+      setTheme('light');
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+    // dark is already default in :root, no attribute needed
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    localStorage.setItem('apex-theme', next);
+    if (next === 'light') {
+      document.documentElement.setAttribute('data-theme', 'light');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  };
 
   const walletActive = pathname === '/dashboard/assets';
-  const moreActive   = ['/dashboard/support', '/dashboard/settings', '/dashboard/notifications', '/dashboard/kyc'].includes(pathname);
+  const moreActive = ['/dashboard/support', '/dashboard/settings', '/dashboard/notifications', '/dashboard/kyc'].includes(pathname);
 
   return (
     <>
@@ -98,33 +139,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        :root {
-          --bg:    #000000;
-          --bg-1:  #000000;
-          --bg-2:  #1a1a1a;
-          --card:  #132f45;
-
-          /* text / icon tones, brightest to most muted */
-          --ink:     #f0f8ff;
-          --ink-2:   #d6ecf8;
-          --inm:     #ccdff5;
-          --inl:     #4e6e90;
-          --muted:   #759fa1;
-          --muted-2: #8dbdd8;
-
-          /* semantic accents */
-          --accent:     #38bdf8;
-          --accent-rgb: 56, 189, 248;
-          --success:    #4ade80;
-          --danger:     #f87171;
-          --danger-rgb: 248, 113, 113;
-
-          --mono: 'DM Mono', 'Courier New', monospace;
-          --sans: 'Manrope', system-ui, sans-serif;
-        }
+        /*
+          NO :root block here — all tokens come from the shared theme file.
+          This layout only consumes: --bg, --bg-2, --bg-3, --card,
+          --ink, --ink-2, --ink-dim, --ink-faint, --accent, --accent-l,
+          --red, --line, --line-strong, --surface, --surface-hover,
+          --sans, --mono
+        */
 
         html, body {
-          background: var(--bg-1) !important;
+          background: var(--bg) !important;
           min-height: 100vh;
           min-height: 100dvh;
         }
@@ -132,26 +156,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .db-shell {
           min-height: 100vh;
           min-height: 100dvh;
-          background: var(--bg) !important;
+          background: var(--bg);
           font-family: var(--sans);
           display: flex;
+          transition: background 0.2s ease;
         }
 
         /* ── SIDEBAR ── */
         .db-sidebar {
           width: 200px;
           flex-shrink: 0;
-          background: var(--bg-1) !important;
+          background: var(--bg);
           display: flex;
           flex-direction: column;
           position: fixed;
           top: 0; left: 0; bottom: 0;
           z-index: 50;
-          border-right: 1px solid rgba(255,255,255,0.05);
+          border-right: 1px solid var(--line-strong);
+          transition: background 0.2s ease, border-color 0.2s ease;
         }
         .db-sidebar-logo {
           padding: 22px 18px 18px;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid var(--line-strong);
         }
         .db-logo-text {
           font-family: var(--mono);
@@ -159,7 +185,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-weight: 500;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: var(--inm);
+          color: var(--ink-2);
           text-decoration: none;
           display: block;
         }
@@ -169,7 +195,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.52rem;
           letter-spacing: 0.15em;
           text-transform: uppercase;
-          color: var(--inl);
+          color: var(--ink-faint);
           margin-top: 4px;
         }
         .db-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
@@ -182,14 +208,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.65rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: var(--inl);
+          color: var(--ink-faint);
           text-decoration: none;
           transition: color 0.1s, background 0.1s;
           position: relative;
           margin: 1px 0;
         }
-        .db-nav-item:hover { color: var(--muted-2); background: rgba(var(--accent-rgb), 0.04); }
-        .db-nav-item.active { color: var(--inm); }
+        .db-nav-item:hover { color: var(--ink-dim); background: var(--surface-hover); }
+        .db-nav-item.active { color: var(--ink-2); }
         .db-nav-item.active::before {
           content: '';
           position: absolute;
@@ -200,7 +226,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         .db-sidebar-footer {
           padding: 12px 0;
-          border-top: 1px solid rgba(255,255,255,0.04);
+          border-top: 1px solid var(--line);
         }
         .db-signout {
           display: flex;
@@ -211,7 +237,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.65rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: var(--inl);
+          color: var(--ink-faint);
           background: none;
           border: none;
           cursor: pointer;
@@ -219,7 +245,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           transition: color 0.1s;
           text-align: left;
         }
-        .db-signout:hover { color: var(--danger); }
+        .db-signout:hover { color: var(--red); }
+
+        /* ── THEME TOGGLE ── */
+        .db-theme-toggle {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 8px 16px;
+          font-family: var(--mono);
+          font-size: 0.65rem;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--ink-faint);
+          background: none;
+          border: none;
+          cursor: pointer;
+          width: 100%;
+          transition: color 0.1s;
+          text-align: left;
+        }
+        .db-theme-toggle:hover { color: var(--ink-dim); }
 
         /* ── MAIN ── */
         .db-main {
@@ -235,20 +281,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: sticky;
           top: 0;
           z-index: 40;
-          background: var(--bg) !important;
-          border-bottom: 1px solid var(--bg-2);
+          background: var(--bg);
+          border-bottom: 1px solid var(--line-strong);
           padding: 0 32px;
           height: 44px;
           display: flex;
           align-items: center;
           justify-content: space-between;
+          transition: background 0.2s ease, border-color 0.2s ease;
         }
         .db-topbar-title {
           font-family: var(--mono);
           font-size: 0.6rem;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: var(--inl);
+          color: var(--ink-faint);
           display: flex;
           align-items: center;
           gap: 8px;
@@ -266,9 +313,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-family: var(--mono);
           font-size: 0.58rem;
           letter-spacing: 0.1em;
-          color: var(--inl);
+          color: var(--ink-faint);
         }
-        .db-topbar-sep { color: var(--inl); }
+        .db-topbar-sep { color: var(--ink-faint); }
+
+        /* Topbar theme toggle (desktop) */
+        .db-topbar-theme {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px; height: 28px;
+          background: var(--surface);
+          border: 1px solid var(--line-strong);
+          border-radius: 4px;
+          color: var(--ink-dim);
+          cursor: pointer;
+          transition: background 0.15s, color 0.15s;
+        }
+        .db-topbar-theme:hover {
+          background: var(--surface-hover);
+          color: var(--ink);
+        }
 
         /* ── CONTENT (desktop) ── */
         .db-content {
@@ -284,12 +349,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           top: 0; left: 0; right: 0;
           z-index: 60;
-          background: var(--bg-1) !important;
+          background: var(--bg);
           padding: 14px 20px;
           align-items: center;
           justify-content: space-between;
-          border-bottom: 1px solid rgba(255,255,255,0.05);
+          border-bottom: 1px solid var(--line-strong);
           height: 52px;
+          transition: background 0.2s ease;
+        }
+        .db-mobile-bar-left {
+          display: flex;
+          align-items: center;
+          gap: 12px;
         }
         .db-mobile-logo {
           font-family: var(--mono);
@@ -297,9 +368,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-weight: 500;
           letter-spacing: 0.18em;
           text-transform: uppercase;
-          color: var(--inm);
+          color: var(--ink-2);
         }
         .db-mobile-logo span { color: var(--accent); }
+
+        /* Mobile theme toggle */
+        .db-mobile-theme {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 28px; height: 28px;
+          background: var(--surface);
+          border: 1px solid var(--line-strong);
+          border-radius: 4px;
+          color: var(--ink-dim);
+          cursor: pointer;
+          transition: background 0.15s;
+        }
 
         /* ── BOTTOM NAV ── */
         .db-bottom-nav {
@@ -307,11 +392,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           bottom: 0; left: 0; right: 0;
           z-index: 60;
-          background: rgba(0, 0, 0, 0.97);
+          background: var(--bg);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
-          border-top: 1px solid rgba(255,255,255,0.06);
+          border-top: 1px solid var(--line-strong);
           padding-bottom: max(env(safe-area-inset-bottom), 16px);
+          transition: background 0.2s ease;
         }
         .db-bottom-nav-inner {
           display: flex;
@@ -346,7 +432,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           border-radius: 0 0 2px 2px;
         }
         .db-bn-item svg {
-          color: var(--muted);
+          color: var(--ink-faint);
           transition: color 0.15s;
         }
         .db-bn-item.active svg { color: var(--ink); }
@@ -355,16 +441,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.48rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: var(--muted);
+          color: var(--ink-faint);
           transition: color 0.15s;
           line-height: 1;
         }
-        .db-bn-item.active .db-bn-label { color: var(--muted-2); }
+        .db-bn-item.active .db-bn-label { color: var(--ink-dim); }
 
         /* ── BOTTOM SHEET ── */
         .db-sheet-overlay {
           position: fixed; inset: 0;
-          background: rgba(5, 14, 22, 0.8);
+          background: rgba(0, 0, 0, 0.6);
           z-index: 70;
           animation: fadeIn 0.2s ease;
           backdrop-filter: blur(4px);
@@ -375,17 +461,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           position: fixed;
           bottom: 0; left: 0; right: 0;
           z-index: 71;
-          background: var(--bg-1);
+          background: var(--bg);
           border-radius: 20px 20px 0 0;
-          border-top: 1px solid rgba(255,255,255,0.06);
+          border-top: 1px solid var(--line-strong);
           padding: 0 0 max(env(safe-area-inset-bottom), 24px);
           animation: slideUp 0.28s cubic-bezier(0.32,0.72,0,1);
+          transition: background 0.2s ease;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         .db-sheet-handle {
           width: 32px; height: 3px;
-          background: rgba(255,255,255,0.08);
+          background: var(--line-strong);
           border-radius: 2px;
           margin: 14px auto 4px;
         }
@@ -394,9 +481,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.54rem;
           letter-spacing: 0.2em;
           text-transform: uppercase;
-          color: var(--inl);
+          color: var(--ink-faint);
           padding: 8px 20px 14px;
-          border-bottom: 1px solid rgba(255,255,255,0.04);
+          border-bottom: 1px solid var(--line);
         }
 
         /* ── SHEET ROWS ── */
@@ -414,7 +501,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           transition: background 0.12s;
           text-align: left;
         }
-        .db-sheet-row:active { background: rgba(255,255,255,0.03); }
+        .db-sheet-row:active { background: var(--surface-hover); }
         .db-sheet-row-icon {
           width: 16px;
           flex-shrink: 0;
@@ -428,7 +515,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.7rem;
           letter-spacing: 0.06em;
           text-transform: uppercase;
-          color: var(--inm);
+          color: var(--ink-2);
           display: block;
           line-height: 1;
           margin-bottom: 3px;
@@ -437,12 +524,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-family: var(--mono);
           font-size: 0.55rem;
           letter-spacing: 0.04em;
-          color: var(--inl);
+          color: var(--ink-faint);
         }
-        .db-sheet-row-arrow { color: var(--inl); flex-shrink: 0; }
+        .db-sheet-row-arrow { color: var(--ink-faint); flex-shrink: 0; }
         .db-sheet-row-divider {
           height: 1px;
-          background: rgba(255,255,255,0.04);
+          background: var(--line);
           margin: 0 20px;
         }
         .db-sheet-signout-row {
@@ -457,15 +544,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           transition: background 0.12s;
           text-align: left;
           margin-top: 4px;
-          border-top: 1px solid rgba(var(--danger-rgb), 0.08);
+          border-top: 1px solid var(--red-l);
         }
-        .db-sheet-signout-row:active { background: rgba(var(--danger-rgb), 0.04); }
+        .db-sheet-signout-row:active { background: var(--red-l); }
         .db-sheet-signout-label {
           font-family: var(--mono);
           font-size: 0.7rem;
           letter-spacing: 0.06em;
           text-transform: uppercase;
-          color: var(--danger);
+          color: var(--red);
         }
 
         @media (max-width: 768px) {
@@ -474,7 +561,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .db-topbar { display: none; }
           .db-mobile-bar { display: flex; }
           .db-bottom-nav { display: block; }
-          .db-shell { background: var(--bg) !important; }
 
           .db-content {
             padding: 52px 0 calc(74px + max(env(safe-area-inset-bottom), 0px));
@@ -508,6 +594,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
           <GoogleTranslate />
           <div className="db-sidebar-footer">
+            {/* Theme toggle in sidebar */}
+            <button className="db-theme-toggle" onClick={toggleTheme}>
+              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+            </button>
             <button className="db-signout" onClick={() => signOut({ callbackUrl: '/login' })}>
               <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                 <path d="M5 2H2v9h3M8 9l3-2.5L8 4M11 6.5H5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
@@ -519,8 +610,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* MOBILE TOPBAR */}
         <div className="db-mobile-bar">
-          <span className="db-mobile-logo">APEX<span>•</span>MARKETS</span>
-          <GoogleTranslate />
+          <div className="db-mobile-bar-left">
+            <span className="db-mobile-logo">APEX<span>•</span>MARKETS</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Theme toggle on mobile topbar */}
+            <button className="db-mobile-theme" onClick={toggleTheme} aria-label="Toggle theme">
+              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </button>
+            <GoogleTranslate />
+          </div>
         </div>
 
         {/* MAIN */}
@@ -530,6 +629,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {navItems.find((n) => n.href === pathname)?.label ?? 'Dashboard'}
             </span>
             <div className="db-topbar-right">
+              {/* Theme toggle in desktop topbar */}
+              <button className="db-topbar-theme" onClick={toggleTheme} aria-label="Toggle theme">
+                {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
+              </button>
+              <span className="db-topbar-sep">·</span>
               <span>APEX MARKETS</span>
               <span className="db-topbar-sep">·</span>
               <span>Trading Terminal</span>
@@ -601,7 +705,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="db-sheet-title">More</div>
               <div className="db-sheet-rows">
                 <Link href="/dashboard/support" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon" style={{ color: 'var(--muted-2)' }}>
+                  <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
                     <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
                       <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
                       <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
@@ -616,7 +720,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
                 <div className="db-sheet-row-divider" />
                 <Link href="/dashboard/settings" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon" style={{ color: 'var(--muted-2)' }}>
+                  <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
                     <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
                       <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.3" />
                       <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
@@ -630,7 +734,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
                 <div className="db-sheet-row-divider" />
                 <Link href="/dashboard/notifications" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon" style={{ color: 'var(--muted-2)' }}>
+                  <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
                     <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
                       <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.3" />
                       <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
@@ -644,7 +748,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
                 <div className="db-sheet-row-divider" />
                 <Link href="/dashboard/kyc" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon" style={{ color: 'var(--muted-2)' }}>
+                  <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
                     <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
                       <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
                       <circle cx="7.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
@@ -662,7 +766,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="db-sheet-signout-row"
                 onClick={() => { setMoreOpen(false); signOut({ callbackUrl: '/login' }); }}
               >
-                <div className="db-sheet-row-icon" style={{ color: 'var(--danger)' }}>
+                <div className="db-sheet-row-icon" style={{ color: 'var(--red)' }}>
                   <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
                     <path d="M5 2H2v9h3M8 9l3-2.5L8 4M11 6.5H5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
                   </svg>
