@@ -415,9 +415,9 @@ export default function AssetsPage() {
         {/* ── ACTION BUTTONS ── */}
 <div style={{ display: 'flex', gap: 8 }}>
   {[
-    { href: '/dashboard/deposit',  label: 'Deposit',  arrow: '↙', color: 'var(--green)' },
-    { href: '/dashboard/withdraw', label: 'Withdraw', arrow: '↗', color: 'var(--maroon)'   },
-    { href: '/dashboard/history',  label: 'History',  arrow: '↺', color: 'var(--cyan)'  },
+    { href: '/dashboard/deposit',  label: '+Deposit',  arrow: '↙', color: 'var(--green)' },
+    { href: '/dashboard/withdraw', label: '-Withdraw', arrow: '↗', color: 'var(--maroon)'   },
+    { href: '/dashboard/history',  label: '📄History',  arrow: '↺', color: 'var(--cyan)'  },
   ].map(({ href, label, arrow, color }) => (
     <Link key={href} href={href} style={{
       flex: 1,
@@ -432,16 +432,7 @@ export default function AssetsPage() {
       border: '1px solid var(--border)',
       transition: 'border-color 0.15s',
     }}>
-      <span style={{
-  width: 22, height: 22,
-  borderRadius: 6,
-  background: color,          // filled
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  fontSize: '0.75rem',
-  color: '#000',              // black arrow on filled bg
-  fontWeight: 900,            // thicker
-  lineHeight: 1, flexShrink: 0,
-}}>
+     
   {arrow}
       </span>
       <span style={{
