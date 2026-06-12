@@ -57,8 +57,6 @@ const ASSET_ICONS: Record<string, string> = {
 };
 
 // ── Type badge ────────────────────────────────────────────────────────────────
-// Badge colors are semantic and intentionally NOT theme-variable driven —
-// they stay vivid in both modes. Only the border alpha differs slightly.
 
 const TYPE_BADGE: Record<string, { bg: string; color: string }> = {
   CRYPTO:      { bg: 'rgba(251,191,36,0.12)',  color: '#fbbf24' },
@@ -113,6 +111,26 @@ export default function TradePage() {
   const [bids, setBids]                 = useState<{ price: string; amount: string }[]>([]);
   const [asks, setAsks]                 = useState<{ price: string; amount: string }[]>([]);
   const [dropdownPrices, setDropdownPrices] = useState<Record<string, PriceData>>({});
+
+  // ── Theme detection ───────────────────────────────────────────────────────
+  // Watches the data-theme attribute on <html> so the TradingView iframe
+  // re-renders with the correct theme whenever the user toggles light/dark.
+
+  const [isDark, setIsDark] = useState(true);
+
+  useEffect(() => {
+    const getTheme = () =>
+      document.documentElement.getAttribute('data-theme') !== 'light';
+
+    setIsDark(getTheme());
+
+    const observer = new MutationObserver(() => setIsDark(getTheme()));
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -254,7 +272,6 @@ export default function TradePage() {
         duration: 5000,
         icon: orderType === 'BUY' ? '↑' : '↓',
         style: {
-          // Toast bg/color uses semantic vars so it adapts to theme
           background: orderType === 'BUY' ? 'var(--green-l)' : 'var(--red-l)',
           color:      orderType === 'BUY' ? 'var(--green)'   : 'var(--red)',
           fontWeight: 700, fontFamily: 'monospace', fontSize: '13px',
@@ -271,18 +288,21 @@ export default function TradePage() {
     }
   };
 
+  // ── TradingView iframe src ────────────────────────────────────────────────
+  // Rebuilds whenever asset or theme changes, causing the iframe to reload
+  // with the correct symbol and light/dark theme.
+
+  const chartSrc = useMemo(() =>
+    `https://s.tradingview.com/widgetembed/?symbol=${asset}&interval=15&theme=${isDark ? 'dark' : 'light'}&style=1&locale=en&hide_top_toolbar=0&hide_legend=0&save_image=0`,
+    [asset, isDark],
+  );
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-
-        /*
-          No :root block here — consume the shared theme variables
-          declared in your global stylesheet / layout.
-          This page only defines component-scoped styles.
-        */
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -543,7 +563,6 @@ export default function TradePage() {
         .ob-fill { position: absolute; top: 0; right: 0; height: 100%; border-radius: 3px; opacity: 0.1; }
         .ob-fill.ask { background: var(--red); }
         .ob-fill.bid { background: var(--green); }
-        /* Bump opacity in dark mode so fills are visible */
         [data-theme="dark"] .ob-fill { opacity: 0.15; }
         .ob-mid {
           display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 0;
@@ -662,7 +681,8 @@ export default function TradePage() {
 
           <div className="card chart-wrap" style={{ flex: 1 }}>
             <iframe
-              src={`https://s.tradingview.com/widgetembed/?symbol=${asset}&interval=15&theme=dark&style=1&locale=en&hide_top_toolbar=0&hide_legend=0&save_image=0`}
+              key={chartSrc}
+              src={chartSrc}
               allowTransparency
             />
           </div>
