@@ -517,7 +517,7 @@ export default function AssetsPage() {
                         </span>
                       </div>
 
-                      <Link href={`/dashboard/trade?asset=${pos.symbol}`} style={{ color: 'var(--ink-faint)', flexShrink: 0 }}>
+                      <Link href={`/trade?asset=${pos.symbol}`} style={{ color: 'var(--ink-faint)', flexShrink: 0 }}>
                         <ChevronRight size={16} />
                       </Link>
                     </div>
