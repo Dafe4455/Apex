@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 
 type Transaction = {
@@ -112,7 +112,7 @@ function FearGreedGauge({ value }: { value: number }) {
   const cx = W / 2, cy = 62;
   const r = 46;
 
-  const needleAngle = Math.PI - (clamped / 100) * Math.PI;
+  
 
   const segments = [
     { from: 0,  to: 25,  color: '#f87171' },
@@ -154,9 +154,15 @@ function FearGreedGauge({ value }: { value: number }) {
           <path key={i} d={arcPath(seg.from, seg.to, r, r - 10)} fill={seg.color} opacity="0.85" />
         ))}
         {/* needle */}
-        <line x1={cx} y1={cy} x2={nx} y2={ny}
-          stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" />
-        <circle cx={cx} cy={cy} r="4" fill="var(--ink)" />
+        <g style={{
+  transformOrigin: `${cx}px ${cy}px`,
+  transform: `rotate(${(clamped / 100) * 180 - 90}deg)`,
+  transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
+}}>
+  <line x1={cx} y1={cy} x2={cx} y2={cy - (r - 8)}
+    stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" />
+</g>
+<circle cx={cx} cy={cy} r="4" fill="var(--ink)" />
         {/* value text */}
         <text x={cx} y={cy - 14} textAnchor="middle" fill={zone.color}
           style={{ fontFamily: 'DM Mono, monospace', fontSize: '13px', fontWeight: 700 }}>
@@ -283,7 +289,18 @@ export default function DashboardPage() {
   const profitPos     = data?.positions.profit            ?? 0;
   const lossPos       = data?.positions.loss              ?? 0;
   const activityLogs  = data?.activityLogs                ?? [];
-  const fearGreedValue = data?.user.fearGreedIndex ?? 52;
+  const fearGreedValue = useMemo(() => {
+  const weights: Record<string, number> = { BTC: 0.4, ETH: 0.3, SOL: 0.2, BNB: 0.1 };
+  let weightedSum = 0, totalWeight = 0;
+  for (const [sym, w] of Object.entries(weights)) {
+    const asset = markets.find(m => m.symbol === sym);
+    if (asset) { weightedSum += asset.changePercent * w; totalWeight += w; }
+  }
+  if (totalWeight === 0) return data?.user.fearGreedIndex ?? 52;
+  const avg = weightedSum / totalWeight;          // weighted avg % change
+  const clamped = Math.max(-5, Math.min(5, avg)); // clamp to [-5%, +5%]
+  return Math.round(((clamped + 5) / 10) * 100);  // normalize to 0–100
+}, [markets, data?.user.fearGreedIndex]);
 
   const activeMethod = depositMethods.find(m => m.id === method);
 
