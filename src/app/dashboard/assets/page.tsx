@@ -415,9 +415,9 @@ export default function AssetsPage() {
         {/* ── ACTION BUTTONS ── */}
 <div style={{ display: 'flex', gap: 8 }}>
   {[
-    { href: '/dashboard/deposit',  label: '+Deposit',  arrow: '↙', color: 'var(--green)' },
-    { href: '/dashboard/withdraw', label: '-Withdraw', arrow: '↗', color: 'var(--maroon)'   },
-    { href: '/dashboard/history',  label: '📄History',  arrow: '↺', color: 'var(--cyan)'  },
+    { href: '/dashboard/deposit',  label: '+ Deposit',  arrow: '↙', color: 'var(--green)' },
+    { href: '/dashboard/withdraw', label: '- Withdraw', arrow: '↗', color: 'var(--maroon)'   },
+    { href: '/dashboard/history',  label: '📄 History',  arrow: '↺', color: 'var(--cyan)'  },
   ].map(({ href, label, arrow, color }) => (
     <Link key={href} href={href} style={{
       flex: 1,
