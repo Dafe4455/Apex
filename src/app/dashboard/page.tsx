@@ -158,12 +158,65 @@ function FearGreedGauge({ value }: { value: number }) {
   transformOrigin: `${cx}px ${cy}px`,
   transform: `rotate(${(clamped / 100) * 180 - 90}deg)`,
   transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
-}}>
-  <line x1={cx} y1={cy} x2={cx} y2={cy - (r - 8)}
-    stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" />
-</g>
-<circle cx={cx} cy={cy} r="4" fill="var(--ink)" />
-        {/* value text */}
+function FearGreedGauge({ value }: { value: number }) {
+  const clamped = Math.max(0, Math.min(100, value));
+
+  const getZone = (v: number) => {
+    if (v <= 24) return { label: 'Extreme Fear', color: 'var(--red)' };
+    if (v <= 44) return { label: 'Fear',         color: '#fb923c' };
+    if (v <= 55) return { label: 'Neutral',      color: 'var(--gold)' };
+    if (v <= 74) return { label: 'Greed',        color: '#a3e635' };
+    return             { label: 'Extreme Greed', color: 'var(--green)' };
+  };
+  const zone = getZone(clamped);
+
+  const W = 120, H = 68;
+  const cx = W / 2, cy = 62;
+  const r = 46;
+
+  const segments = [
+    { from: 0,  to: 25,  color: '#f87171' },
+    { from: 25, to: 45,  color: '#fb923c' },
+    { from: 45, to: 55,  color: '#fbbf24' },
+    { from: 55, to: 75,  color: '#a3e635' },
+    { from: 75, to: 100, color: '#4ade80' },
+  ];
+
+  function polarToCart(angleDeg: number, radius: number) {
+    const rad = (angleDeg * Math.PI) / 180;
+    return {
+      x: cx + radius * Math.cos(Math.PI - rad),
+      y: cy - radius * Math.sin(Math.PI - rad),
+    };
+  }
+
+  function arcPath(fromPct: number, toPct: number, rOuter: number, rInner: number) {
+    const a1 = (fromPct / 100) * 180;
+    const a2 = (toPct  / 100) * 180;
+    const p1 = polarToCart(a1, rOuter);
+    const p2 = polarToCart(a2, rOuter);
+    const p3 = polarToCart(a2, rInner);
+    const p4 = polarToCart(a1, rInner);
+    const large = a2 - a1 > 180 ? 1 : 0;
+    return `M ${p1.x} ${p1.y} A ${rOuter} ${rOuter} 0 ${large} 1 ${p2.x} ${p2.y} L ${p3.x} ${p3.y} A ${rInner} ${rInner} 0 ${large} 0 ${p4.x} ${p4.y} Z`;
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`}>
+        <path d={arcPath(0, 100, r, r - 10)} fill="var(--bg-3)" />
+        {segments.map((seg, i) => (
+          <path key={i} d={arcPath(seg.from, seg.to, r, r - 10)} fill={seg.color} opacity="0.85" />
+        ))}
+        <g style={{
+          transformOrigin: `${cx}px ${cy}px`,
+          transform: `rotate(${(clamped / 100) * 180 - 90}deg)`,
+          transition: 'transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
+        }}>
+          <line x1={cx} y1={cy} x2={cx} y2={cy - (r - 8)}
+            stroke="var(--ink)" strokeWidth="2" strokeLinecap="round" />
+        </g>
+        <circle cx={cx} cy={cy} r="4" fill="var(--ink)" />
         <text x={cx} y={cy - 14} textAnchor="middle" fill={zone.color}
           style={{ fontFamily: 'DM Mono, monospace', fontSize: '13px', fontWeight: 700 }}>
           {clamped}
@@ -178,7 +231,7 @@ function FearGreedGauge({ value }: { value: number }) {
       </span>
     </div>
   );
-}
+      }
 
 export default function DashboardPage() {
   const [time, setTime] = useState('');
