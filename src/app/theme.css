@@ -65,8 +65,8 @@
   --gold-l: #fef3c7;
 
   /* Borders and overlays that match the cool palette tone */
-  --line: #0C1F25;
-  --line-strong: #0C1F25;
+  --line: #FEFFFB;
+  --line-strong: #FEFFFB;
   --surface: rgba(11, 30, 41, 0.04);
   --surface-hover: #f0f7f7;
 }
