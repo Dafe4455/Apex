@@ -114,16 +114,22 @@ export async function POST(req: Request) {
 
   const fullNote = [note, detailsNote].filter(Boolean).join(' — ') || null;
 
-  // ── Create withdrawal ──────────────────────────────────────────────────────
-  const withdrawal = await prisma.withdrawal.create({
-    data: {
-      userId,
-      amount:   Number(amount),
-      currency,
-      status:   'PENDING',
-      note:     fullNote,
-    },
-  });
+  // ── Create withdrawal + deduct balance atomically ──────────────────────────
+  const [withdrawal] = await prisma.$transaction([
+    prisma.withdrawal.create({
+      data: {
+        userId,
+        amount:   Number(amount),
+        currency,
+        status:   'PENDING',
+        note:     fullNote,
+      },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data:  { portfolioBalance: { decrement: Number(amount) } },
+    }),
+  ]);
 
   // ── Activity log ───────────────────────────────────────────────────────────
   await prisma.activityLog.create({
