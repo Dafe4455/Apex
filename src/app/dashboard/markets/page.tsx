@@ -41,12 +41,13 @@ function ChangeBadge({ value }: { value: number }) {
       gap: 2,
       padding: '2px 6px',
       borderRadius: 5,
-      background: pos ? 'rgba(74,222,128,0.12)' : 'rgba(248,113,113,0.12)',
-      border: `1px solid ${pos ? 'rgba(74,222,128,0.2)' : 'rgba(248,113,113,0.2)'}`,
+      // Use theme vars so badge bg adapts in light mode
+      background: pos ? 'var(--green-l)' : 'var(--red-l)',
+      border: `1px solid color-mix(in srgb, ${pos ? 'var(--green)' : 'var(--red)'} 20%, transparent)`,
       fontFamily: 'var(--mono)',
       fontSize: '0.63rem',
       fontWeight: 600,
-      color: pos ? '#4ade80' : '#f87171',
+      color: pos ? 'var(--green)' : 'var(--red)',
       letterSpacing: '0.02em',
       whiteSpace: 'nowrap',
     }}>
@@ -121,24 +122,21 @@ export default function MarketsPage() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-        :root {
-          --bg:#000000;--bg-1:#000000;--bg-2:#000000;--bg-3:#234d67;
-          --card:#000000;--ink:#f0f8ff;--ink-2:#d6ecf8;--ink-dim:#8dbdd8;
-          --ink-faint:#4d7a96;--accent:#38bdf8;
-          --green:#4ade80;--green-bg:rgba(74,222,128,0.1);--green-border:rgba(74,222,128,0.2);
-          --red:#f87171;--red-bg:rgba(248,113,113,0.1);--red-border:rgba(248,113,113,0.2);
-          --sans:'DM Sans',system-ui,sans-serif;
-          --mono:'DM Mono','SF Mono',monospace;
-        }
+
+        /*
+          No :root block — consumes shared theme vars from global stylesheet / layout.
+        */
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); font-family: var(--sans); }
 
         .mkt-wrap {
           max-width: 900px;
           padding: 16px 16px 80px;
+          color: var(--ink);
+          font-family: var(--sans);
         }
 
-        /* Header */
+        /* ── Header ── */
         .mkt-header { margin-bottom: 20px; }
         .mkt-title {
           font-size: 1.4rem; font-weight: 700; color: var(--ink);
@@ -162,13 +160,13 @@ export default function MarketsPage() {
           color: var(--ink-faint); letter-spacing: 0.04em;
         }
 
-        /* Gainers / Losers strip */
+        /* ── Gainers / Losers strip ── */
         .mover-strip {
           display: grid; grid-template-columns: 1fr 1fr;
           gap: 10px; margin-bottom: 18px;
         }
         .mover-strip-card {
-          background: var(--card); border: 1px solid var(--bg-2);
+          background: var(--card); border: 1px solid var(--line-strong);
           border-radius: 12px; padding: 14px 16px;
         }
         .strip-label {
@@ -180,7 +178,7 @@ export default function MarketsPage() {
         .strip-label.dn { color: var(--red); }
         .strip-row {
           display: flex; justify-content: space-between; align-items: center;
-          padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+          padding: 5px 0; border-bottom: 1px solid var(--line);
         }
         .strip-row:last-child { border-bottom: none; padding-bottom: 0; }
         .strip-sym {
@@ -194,10 +192,10 @@ export default function MarketsPage() {
           font-family: var(--mono); font-size: 0.65rem; font-weight: 700;
           padding: 2px 6px; border-radius: 4px;
         }
-        .strip-chg.up { color: var(--green); background: var(--green-bg); }
-        .strip-chg.dn { color: var(--red); background: var(--red-bg); }
+        .strip-chg.up { color: var(--green); background: var(--green-l); }
+        .strip-chg.dn { color: var(--red);   background: var(--red-l); }
 
-        /* Controls */
+        /* ── Controls ── */
         .mkt-controls {
           display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;
         }
@@ -206,7 +204,7 @@ export default function MarketsPage() {
         }
         .search-box {
           flex: 1; display: flex; align-items: center; gap: 8px;
-          background: var(--card); border: 1px solid var(--bg-2);
+          background: var(--card); border: 1px solid var(--line-strong);
           border-radius: 10px; padding: 9px 14px;
           transition: border-color 0.15s;
         }
@@ -217,29 +215,30 @@ export default function MarketsPage() {
           color: var(--ink); width: 100%;
         }
         .search-box input::placeholder { color: var(--ink-faint); }
+
         .tab-row { display: flex; gap: 6px; }
         .tab-btn {
-          padding: 6px 16px; border-radius: 20px; border: 1px solid var(--bg-2);
+          padding: 6px 16px; border-radius: 20px; border: 1px solid var(--line-strong);
           background: none; font-family: var(--mono); font-size: 0.6rem;
           font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
           color: var(--ink-faint); cursor: pointer; transition: all 0.15s;
         }
         .tab-btn.active {
-          background: var(--accent); border-color: var(--accent); color: #0a1f2e;
+          background: var(--accent); border-color: var(--accent); color: var(--accent-l);
         }
-        .tab-btn:hover:not(.active) { color: var(--ink-dim); border-color: var(--bg-3); }
+        .tab-btn:hover:not(.active) { color: var(--ink-dim); border-color: var(--line-strong); }
 
-        /* Table */
+        /* ── Table ── */
         .mkt-table-wrap {
-          background: var(--card); border: 1px solid var(--bg-2);
+          background: var(--card); border: 1px solid var(--line-strong);
           border-radius: 14px; overflow: hidden;
         }
         .mkt-thead {
           display: grid;
           grid-template-columns: 2.2fr 1.4fr 1.6fr 1fr 1.8fr;
           padding: 10px 16px;
-          border-bottom: 1px solid var(--bg-2);
-          background: var(--bg-1);
+          border-bottom: 1px solid var(--line-strong);
+          background: var(--bg);
         }
         .mkt-th {
           font-size: 0.54rem; font-weight: 700; color: var(--ink-faint);
@@ -255,20 +254,21 @@ export default function MarketsPage() {
           display: grid;
           grid-template-columns: 2.2fr 1.4fr 1.6fr 1fr 1.8fr;
           align-items: center; padding: 13px 16px;
-          border-bottom: 1px solid rgba(255,255,255,0.03);
+          border-bottom: 1px solid var(--line);
           transition: background 0.12s;
         }
         .mkt-row:last-child { border-bottom: none; }
-        .mkt-row:hover { background: rgba(56,189,248,0.03); }
+        .mkt-row:hover { background: var(--surface-hover); }
 
+        /* ── Asset cell ── */
         .asset-cell { display: flex; align-items: center; gap: 10px; }
         .asset-logo {
           width: 36px; height: 36px; border-radius: 50%;
-          object-fit: cover; flex-shrink: 0; background: var(--bg-2);
+          object-fit: cover; flex-shrink: 0; background: var(--surface);
         }
         .asset-logo-placeholder {
           width: 36px; height: 36px; border-radius: 50%;
-          background: var(--bg-2); display: flex; align-items: center;
+          background: var(--surface); display: flex; align-items: center;
           justify-content: center; font-size: 0.65rem; font-weight: 700;
           color: var(--ink-dim); flex-shrink: 0;
         }
@@ -280,43 +280,43 @@ export default function MarketsPage() {
           font-weight: 600; color: var(--ink);
         }
 
-        /* Buy / Sell buttons */
+        /* ── Trade buttons ── */
         .trade-cell { display: flex; gap: 6px; }
         .btn-buy {
-          background: var(--green-bg);
+          background: var(--green-l);
           color: var(--green);
-          border: 1px solid var(--green-border);
+          border: 1px solid color-mix(in srgb, var(--green) 20%, transparent);
           border-radius: 7px; padding: 6px 14px;
           font-family: var(--sans); font-size: 0.62rem; font-weight: 700;
           cursor: pointer; transition: all 0.15s;
           letter-spacing: 0.03em;
         }
         .btn-buy:hover {
-          background: var(--green); color: #0a2e14;
+          background: var(--green); color: var(--green-l);
           border-color: var(--green); transform: translateY(-1px);
         }
         .btn-buy:active { transform: scale(0.97); }
         .btn-sell {
-          background: var(--red-bg);
+          background: var(--red-l);
           color: var(--red);
-          border: 1px solid var(--red-border);
+          border: 1px solid color-mix(in srgb, var(--red) 20%, transparent);
           border-radius: 7px; padding: 6px 14px;
           font-family: var(--sans); font-size: 0.62rem; font-weight: 700;
           cursor: pointer; transition: all 0.15s;
           letter-spacing: 0.03em;
         }
         .btn-sell:hover {
-          background: var(--red); color: #2a0505;
+          background: var(--red); color: var(--red-l);
           border-color: var(--red); transform: translateY(-1px);
         }
         .btn-sell:active { transform: scale(0.97); }
 
-        /* Empty / Loading */
+        /* ── Empty / Loading ── */
         .mkt-empty { padding: 48px 24px; text-align: center; }
         .mkt-empty p { font-size: 0.7rem; color: var(--ink-faint); font-weight: 300; }
         .spinner {
           width: 28px; height: 28px;
-          border: 2.5px solid var(--bg-2);
+          border: 2.5px solid var(--line-strong);
           border-top-color: var(--accent);
           border-radius: 50%;
           animation: spin 0.7s linear infinite;
@@ -324,7 +324,7 @@ export default function MarketsPage() {
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Mobile */
+        /* ── Mobile ── */
         @media (max-width: 640px) {
           .mkt-wrap { padding: 16px 14px 80px; }
           .mkt-thead { grid-template-columns: 2fr 1.3fr 1.6fr 1.6fr; }
@@ -382,8 +382,8 @@ export default function MarketsPage() {
           <div className="controls-row">
             <div className="search-box">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <circle cx="6" cy="6" r="4.5" stroke="#4d7a96" strokeWidth="1.2" />
-                <path d="M9.5 9.5L12 12" stroke="#4d7a96" strokeWidth="1.2" strokeLinecap="round" />
+                <circle cx="6" cy="6" r="4.5" stroke="var(--ink-faint)" strokeWidth="1.2" />
+                <path d="M9.5 9.5L12 12" stroke="var(--ink-faint)" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
               <input
                 placeholder="Search assets…"
@@ -443,7 +443,7 @@ export default function MarketsPage() {
                 <MiniSparkline positive={a.changePercent >= 0} />
               </span>
               <div className="trade-cell">
-                <button className="btn-buy" onClick={() => handleTrade(a, 'BUY')}>Buy</button>
+                <button className="btn-buy"  onClick={() => handleTrade(a, 'BUY')}>Buy</button>
                 <button className="btn-sell" onClick={() => handleTrade(a, 'SELL')}>Sell</button>
               </div>
             </div>
