@@ -32,7 +32,7 @@ const ALL_ASSETS = [
   { symbol: 'USDJPY', name: 'US Dollar / Yen',     type: 'FOREX' },
 ];
 
-// ── Asset logos (same sources as /api/market) ─────────────────────────────────
+// ── Asset logos ───────────────────────────────────────────────────────────────
 
 const ASSET_LOGOS: Record<string, string> = {
   BTCUSD: 'https://assets.coingecko.com/coins/images/1/small/bitcoin.png',
@@ -55,7 +55,10 @@ const ASSET_ICONS: Record<string, string> = {
   GBPUSD: '🇬🇧',
   USDJPY: '🇯🇵',
 };
+
 // ── Type badge ────────────────────────────────────────────────────────────────
+// Badge colors are semantic and intentionally NOT theme-variable driven —
+// they stay vivid in both modes. Only the border alpha differs slightly.
 
 const TYPE_BADGE: Record<string, { bg: string; color: string }> = {
   CRYPTO:      { bg: 'rgba(251,191,36,0.12)',  color: '#fbbf24' },
@@ -153,9 +156,7 @@ export default function TradePage() {
   // ── Lazy-fetch prices when dropdown opens ─────────────────────────────────
 
   useEffect(() => {
-  // remove: if (!dropdownOpen) return;
-  ALL_ASSETS.forEach(async (a) => {
-    
+    ALL_ASSETS.forEach(async (a) => {
       const sym = getPriceSymbol(a.symbol);
       try {
         const res = await fetch(`/api/price?symbol=${sym}`);
@@ -253,10 +254,11 @@ export default function TradePage() {
         duration: 5000,
         icon: orderType === 'BUY' ? '↑' : '↓',
         style: {
-          background: orderType === 'BUY' ? '#0d3320' : '#2a0d0d',
-          color:      orderType === 'BUY' ? '#4ade80' : '#f87171',
+          // Toast bg/color uses semantic vars so it adapts to theme
+          background: orderType === 'BUY' ? 'var(--green-l)' : 'var(--red-l)',
+          color:      orderType === 'BUY' ? 'var(--green)'   : 'var(--red)',
           fontWeight: 700, fontFamily: 'monospace', fontSize: '13px',
-          border: `1px solid ${orderType === 'BUY' ? '#4ade8040' : '#f8717140'}`,
+          border: `1px solid color-mix(in srgb, ${orderType === 'BUY' ? 'var(--green)' : 'var(--red)'} 25%, transparent)`,
         },
       });
 
@@ -275,26 +277,14 @@ export default function TradePage() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
-        :root {
-          --bg:     #000000;
-          --bg-1:   #000000;
-          --bg-2:   #0F1115;
-          --bg-3:   #12151B;
-          --card:   #000000;
-          --ink:    #e8f4fd;
-          --ink-2:  #c8dfed;
-          --dim:    #7aaec8;
-          --faint:  #4d7a96;
-          --accent: #38bdf8;
-          --green:  #4ade80;
-          --green-d:#0d3320;
-          --red:    #f87171;
-          --red-d:  #2a0d0d;
-          --mono:   'DM Mono', 'SF Mono', monospace;
-          --sans:   'DM Sans', system-ui, sans-serif;
-        }
+
+        /*
+          No :root block here — consume the shared theme variables
+          declared in your global stylesheet / layout.
+          This page only defines component-scoped styles.
+        */
+
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); font-family: var(--sans); }
 
         .trade-wrap {
           min-height: calc(100vh - 44px);
@@ -302,13 +292,20 @@ export default function TradePage() {
           display: flex; flex-direction: column;
           gap: 10px; padding: 12px;
           color: var(--ink);
+          font-family: var(--sans);
         }
         @media (min-width: 1024px) {
           .trade-wrap { flex-direction: row; height: calc(100vh - 44px); overflow: hidden; }
         }
 
-        .card { background: var(--card); border: 1px solid var(--bg-2); border-radius: 14px; }
+        /* ── Card ── */
+        .card {
+          background: var(--card);
+          border: 1px solid var(--line-strong);
+          border-radius: 14px;
+        }
 
+        /* ── Header ── */
         .trade-header {
           display: flex; align-items: center; justify-content: space-between;
           padding: 14px 18px; flex-wrap: wrap; gap: 12px;
@@ -319,7 +316,7 @@ export default function TradePage() {
           display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
           padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
         }
-        .asset-btn:hover { background: rgba(56,189,248,0.06); }
+        .asset-btn:hover { background: var(--surface-hover); }
         .asset-name {
           font-family: var(--mono); font-size: 1.4rem; font-weight: 600;
           color: var(--ink); display: flex; align-items: center; gap: 6px;
@@ -327,17 +324,17 @@ export default function TradePage() {
         }
         .chevron-wrap {
           display: flex; align-items: center;
-          color: var(--faint); transition: transform 0.2s;
+          color: var(--ink-faint); transition: transform 0.2s;
         }
         .chevron-wrap.open { transform: rotate(180deg); }
 
-        /* ── BIGGER DROPDOWN ── */
+        /* ── Dropdown ── */
         .asset-dropdown {
           position: absolute; top: calc(100% + 6px); left: 0;
           width: 380px;
           background: var(--card);
-          border: 1px solid var(--bg-2); border-radius: 14px;
-          box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+          border: 1px solid var(--line-strong); border-radius: 14px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
           overflow: hidden; z-index: 50;
           animation: dropIn 0.15s ease;
         }
@@ -350,43 +347,42 @@ export default function TradePage() {
         }
         .dropdown-search {
           display: flex; align-items: center; gap: 10px;
-          padding: 12px 16px; border-bottom: 1px solid var(--bg-2);
-          background: var(--bg-1);
+          padding: 12px 16px; border-bottom: 1px solid var(--line-strong);
+          background: var(--bg);
         }
         .dropdown-search input {
           background: none; border: none; outline: none;
           font-family: var(--mono); font-size: 0.8rem;
           color: var(--ink-2); width: 100%;
         }
-        .dropdown-search input::placeholder { color: var(--faint); }
+        .dropdown-search input::placeholder { color: var(--ink-faint); }
         .dropdown-list { max-height: 480px; overflow-y: auto; }
         .dropdown-item {
           display: flex; justify-content: space-between; align-items: center;
           padding: 14px 16px; border: none; background: none; width: 100%;
-          cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.03);
+          cursor: pointer; border-bottom: 1px solid var(--line);
           transition: background 0.1s; text-align: left; gap: 12px;
         }
-        .dropdown-item:hover { background: rgba(56,189,248,0.05); }
+        .dropdown-item:hover { background: var(--surface-hover); }
         .dropdown-item-left { display: flex; align-items: center; gap: 12px; }
         .dropdown-icon {
           width: 42px; height: 42px; border-radius: 50%;
-          background: var(--bg-2); display: flex; align-items: center;
+          background: var(--surface); display: flex; align-items: center;
           justify-content: center; font-family: var(--mono); font-size: 0.75rem;
-          color: var(--faint); flex-shrink: 0; font-weight: 700;
+          color: var(--ink-faint); flex-shrink: 0; font-weight: 700;
           overflow: hidden;
         }
-        .dropdown-icon img {
-          width: 100%; height: 100%; object-fit: cover;
-        }
+        .dropdown-icon img { width: 100%; height: 100%; object-fit: cover; }
         .dropdown-item-sym {
           font-family: var(--mono); font-size: 0.85rem; font-weight: 600;
           color: var(--ink); margin-bottom: 3px;
         }
-        .dropdown-item-name { font-size: 0.68rem; color: var(--faint); }
+        .dropdown-item-name { font-size: 0.68rem; color: var(--ink-faint); }
         .dropdown-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
         .dropdown-item-price { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-2); }
         .dropdown-item-chg   { font-family: var(--mono); font-size: 0.65rem; font-weight: 700; }
 
+        /* ── Price display ── */
         .price-display {
           font-family: var(--mono); font-size: 1.8rem; font-weight: 600;
           letter-spacing: -0.03em; transition: color 0.4s;
@@ -395,12 +391,14 @@ export default function TradePage() {
         .price-display.down { color: var(--red); }
         .price-display.flat { color: var(--ink); }
 
+        /* ── Layout columns ── */
         .left-col  { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
         .right-col { width: 100%; display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
         @media (min-width: 1024px) {
           .right-col { width: 320px; overflow-y: auto; padding-bottom: 0; }
         }
 
+        /* ── Chart ── */
         .chart-wrap {
           flex: 1; position: relative; overflow: hidden;
           border-radius: 14px; min-height: 380px;
@@ -408,9 +406,10 @@ export default function TradePage() {
         @media (min-width: 1024px) { .chart-wrap { min-height: unset; } }
         .chart-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
+        /* ── Order panel ── */
         .order-panel { padding: 16px; }
         .order-toggle {
-          display: flex; background: var(--bg-1); border: 1px solid var(--bg-2);
+          display: flex; background: var(--bg); border: 1px solid var(--line-strong);
           border-radius: 8px; padding: 3px; margin-bottom: 16px;
         }
         .order-btn {
@@ -419,15 +418,16 @@ export default function TradePage() {
           letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
           transition: all 0.15s;
         }
-        .order-btn.buy.active   { background: var(--green-d); color: var(--green); }
-        .order-btn.sell.active  { background: var(--red-d);   color: var(--red); }
-        .order-btn.inactive     { background: none; color: var(--faint); }
-        .order-btn.inactive:hover { color: var(--dim); }
+        .order-btn.buy.active   { background: var(--green-l); color: var(--green); }
+        .order-btn.sell.active  { background: var(--red-l);   color: var(--red); }
+        .order-btn.inactive     { background: none; color: var(--ink-faint); }
+        .order-btn.inactive:hover { color: var(--ink-dim); }
 
+        /* ── Leverage row ── */
         .lev-row { margin-bottom: 14px; }
         .lev-label {
           display: flex; justify-content: space-between; font-size: 0.58rem;
-          font-weight: 700; color: var(--faint); text-transform: uppercase;
+          font-weight: 700; color: var(--ink-faint); text-transform: uppercase;
           letter-spacing: 0.08em; margin-bottom: 8px;
         }
         .margin-toggle-btn {
@@ -437,7 +437,7 @@ export default function TradePage() {
         }
         .lev-inputs { display: flex; gap: 6px; align-items: center; }
         .lev-field {
-          flex: 1; background: var(--bg-1); border: 1px solid var(--bg-2);
+          flex: 1; background: var(--bg); border: 1px solid var(--line-strong);
           border-radius: 6px; padding: 8px 10px;
           display: flex; align-items: center; gap: 4px;
         }
@@ -445,72 +445,88 @@ export default function TradePage() {
           background: none; border: none; outline: none;
           font-family: var(--mono); font-size: 0.8rem; color: var(--ink); width: 100%;
         }
-        .lev-field span { font-family: var(--mono); font-size: 0.7rem; color: var(--faint); }
+        .lev-field span { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-faint); }
         .lev-presets { display: flex; gap: 4px; }
         .lev-preset {
-          padding: 6px 8px; border-radius: 6px; border: 1px solid var(--bg-2);
+          padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line-strong);
           background: none; font-family: var(--mono); font-size: 0.62rem;
-          color: var(--faint); cursor: pointer; transition: all 0.12s;
+          color: var(--ink-faint); cursor: pointer; transition: all 0.12s;
         }
-        .lev-preset:hover { color: var(--dim); border-color: var(--bg-3); }
-        .lev-preset.active { background: rgba(56,189,248,0.1); color: var(--accent); border-color: rgba(56,189,248,0.3); }
+        .lev-preset:hover { color: var(--ink-dim); border-color: var(--line-strong); }
+        .lev-preset.active {
+          background: var(--surface);
+          color: var(--accent);
+          border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+        }
 
+        /* ── Balance row ── */
         .balance-row {
           display: flex; justify-content: space-between; align-items: center;
           font-family: var(--mono); font-size: 0.65rem;
-          color: var(--faint); margin-bottom: 10px;
+          color: var(--ink-faint); margin-bottom: 10px;
         }
 
+        /* ── Amount field ── */
         .amount-field {
-          background: var(--bg-1); border: 1px solid var(--bg-2); border-radius: 8px;
+          background: var(--bg); border: 1px solid var(--line-strong); border-radius: 8px;
           padding: 10px 14px; display: flex; align-items: center;
           justify-content: space-between; margin-bottom: 10px;
           transition: border-color 0.15s;
         }
         .amount-field:focus-within { border-color: var(--accent); }
-        .amount-field label { font-family: var(--mono); font-size: 0.58rem; color: var(--faint); }
+        .amount-field label { font-family: var(--mono); font-size: 0.58rem; color: var(--ink-faint); }
         .amount-field input {
           background: none; border: none; outline: none; text-align: right;
           font-family: var(--mono); font-size: 0.9rem; color: var(--ink); width: 120px;
         }
-        .amount-field .unit { font-family: var(--mono); font-size: 0.62rem; color: var(--faint); margin-left: 4px; }
+        .amount-field .unit { font-family: var(--mono); font-size: 0.62rem; color: var(--ink-faint); margin-left: 4px; }
 
+        /* ── % presets ── */
         .pct-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
         .pct-btn {
-          background: var(--bg-1); border: 1px solid var(--bg-2); border-radius: 6px;
+          background: var(--bg); border: 1px solid var(--line-strong); border-radius: 6px;
           padding: 7px; font-family: var(--mono); font-size: 0.62rem;
-          color: var(--faint); cursor: pointer; transition: all 0.12s;
+          color: var(--ink-faint); cursor: pointer; transition: all 0.12s;
         }
-        .pct-btn:hover { background: var(--bg-2); color: var(--dim); }
+        .pct-btn:hover { background: var(--surface-hover); color: var(--ink-dim); }
 
+        /* ── Summary box ── */
         .summary-box {
-          background: var(--bg-1); border: 1px solid var(--bg-2); border-radius: 8px;
+          background: var(--bg); border: 1px solid var(--line-strong); border-radius: 8px;
           padding: 10px 14px; margin-bottom: 14px;
         }
         .summary-row {
           display: flex; justify-content: space-between;
-          font-family: var(--mono); font-size: 0.65rem; color: var(--faint); margin-bottom: 6px;
+          font-family: var(--mono); font-size: 0.65rem; color: var(--ink-faint); margin-bottom: 6px;
         }
         .summary-row:last-child { margin-bottom: 0; }
         .summary-row span.val { color: var(--ink-2); }
 
+        /* ── Execute button ── */
         .exec-btn {
           width: 100%; padding: 13px; border: none; border-radius: 10px;
           font-family: var(--mono); font-size: 0.75rem; font-weight: 700;
           letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
           transition: all 0.15s; display: flex; align-items: center; justify-content: center;
         }
-        .exec-btn.buy  { background: var(--green); color: #0a1f10; box-shadow: 0 4px 20px rgba(74,222,128,0.2); }
-        .exec-btn.sell { background: var(--red);   color: #2a0505; box-shadow: 0 4px 20px rgba(248,113,113,0.2); }
+        .exec-btn.buy {
+          background: var(--green); color: var(--green-l);
+          box-shadow: 0 4px 20px color-mix(in srgb, var(--green) 20%, transparent);
+        }
+        .exec-btn.sell {
+          background: var(--red); color: var(--red-l);
+          box-shadow: 0 4px 20px color-mix(in srgb, var(--red) 20%, transparent);
+        }
         .exec-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
         .exec-btn:active:not(:disabled) { transform: scale(0.98); }
         .exec-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+        /* ── Orderbook ── */
         .orderbook { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; }
         .ob-header {
           display: flex; justify-content: space-between;
           font-family: var(--mono); font-size: 0.55rem; font-weight: 700;
-          color: var(--faint); text-transform: uppercase; letter-spacing: 0.1em;
+          color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.1em;
           margin-bottom: 10px;
         }
         .ob-side { flex: 1; display: flex; flex-direction: column; gap: 2px; }
@@ -523,23 +539,27 @@ export default function TradePage() {
         .ob-price { font-family: var(--mono); font-size: 0.68rem; font-weight: 500; z-index: 1; }
         .ob-price.ask { color: var(--red); }
         .ob-price.bid { color: var(--green); }
-        .ob-qty  { font-family: var(--mono); font-size: 0.62rem; color: var(--faint); z-index: 1; }
-        .ob-fill { position: absolute; top: 0; right: 0; height: 100%; border-radius: 3px; opacity: 0.12; }
+        .ob-qty  { font-family: var(--mono); font-size: 0.62rem; color: var(--ink-faint); z-index: 1; }
+        .ob-fill { position: absolute; top: 0; right: 0; height: 100%; border-radius: 3px; opacity: 0.1; }
         .ob-fill.ask { background: var(--red); }
         .ob-fill.bid { background: var(--green); }
+        /* Bump opacity in dark mode so fills are visible */
+        [data-theme="dark"] .ob-fill { opacity: 0.15; }
         .ob-mid {
           display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 0;
-          border-top: 1px solid var(--bg-2); border-bottom: 1px solid var(--bg-2);
+          border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong);
           font-family: var(--mono); font-size: 0.8rem; font-weight: 600;
         }
 
+        /* ── Scrollbars ── */
         .dropdown-list::-webkit-scrollbar,
         .right-col::-webkit-scrollbar { width: 4px; }
         .dropdown-list::-webkit-scrollbar-track,
         .right-col::-webkit-scrollbar-track { background: transparent; }
         .dropdown-list::-webkit-scrollbar-thumb,
-        .right-col::-webkit-scrollbar-thumb { background: var(--bg-3); border-radius: 2px; }
+        .right-col::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 2px; }
 
+        /* ── Animations ── */
         @keyframes spin  { to { transform: rotate(360deg); } }
         @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
       `}</style>
@@ -566,7 +586,7 @@ export default function TradePage() {
               {dropdownOpen && (
                 <div className="asset-dropdown">
                   <div className="dropdown-search">
-                    <Search size={14} style={{ color: 'var(--faint)', flexShrink: 0 }} />
+                    <Search size={14} style={{ color: 'var(--ink-faint)', flexShrink: 0 }} />
                     <input
                       placeholder="Search assets…"
                       value={searchQuery}
@@ -591,13 +611,12 @@ export default function TradePage() {
                         >
                           <div className="dropdown-item-left">
                             <div className="dropdown-icon">
-  {logo
-    ? <img src={logo} alt={a.symbol}
-        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-    : <span style={{ fontSize: '1.1rem' }}>{ASSET_ICONS[a.symbol] ?? a.symbol[0]}</span>
-  }
-</div>
-                            
+                              {logo
+                                ? <img src={logo} alt={a.symbol}
+                                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                : <span style={{ fontSize: '1.1rem' }}>{ASSET_ICONS[a.symbol] ?? a.symbol[0]}</span>
+                              }
+                            </div>
                             <div>
                               <div className="dropdown-item-sym">{a.symbol}</div>
                               <div className="dropdown-item-name">{a.name}</div>
@@ -615,7 +634,7 @@ export default function TradePage() {
                                 </span>
                               </>
                             ) : (
-                              <span style={{ fontFamily: 'var(--mono)', fontSize: '0.6rem', color: 'var(--faint)' }}>—</span>
+                              <span style={{ fontFamily: 'var(--mono)', fontSize: '0.6rem', color: 'var(--ink-faint)' }}>—</span>
                             )}
                           </div>
                         </button>
@@ -628,7 +647,7 @@ export default function TradePage() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               {priceLoading && (
-                <Loader2 size={14} style={{ color: 'var(--faint)', animation: 'spin 1s linear infinite' }} />
+                <Loader2 size={14} style={{ color: 'var(--ink-faint)', animation: 'spin 1s linear infinite' }} />
               )}
               <span className={`price-display ${price === null ? 'flat' : priceUp ? 'up' : 'down'}`}>
                 {price !== null ? priceFormatter.format(price) : '—'}
