@@ -37,13 +37,19 @@ export default function GoogleTranslate() {
     const style = document.createElement('style');
     style.innerHTML = `
       .goog-te-banner-frame, 
-      .goog-te-banner, 
-      #goog-gt-tt, 
-      .goog-te-balloon-frame,
-      #goog-gt-inside,
-      .template-popup { 
-        display: none !important; 
-      }
+.goog-te-banner, 
+#goog-gt-tt, 
+.goog-te-balloon-frame,
+#goog-gt-inside,
+.template-popup,
+.goog-te-spinner-pos,     /* Targets the wrapper element for the loading spinner */
+.goog-te-spinner,         /* Targets the raw CSS animated spinner circle */
+#google_translate_element /* Prevents the Google framework from rendering its own root box badge */ { 
+  display: none !important; 
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
       body { 
         top: 0 !important; 
         position: static !important; 
