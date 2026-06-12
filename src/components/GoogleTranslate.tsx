@@ -32,35 +32,56 @@ export default function GoogleTranslate() {
     }
   }, []);
 
-  // 2. Inject CSS to suppress the Google Banner layout shifts completely
+  // 2. Suppress the Google Banner and destroy dynamic scripts/spinners on the fly
   useEffect(() => {
+    // Inject custom CSS to make sure structural components stay hidden
     const style = document.createElement('style');
     style.innerHTML = `
       .goog-te-banner-frame, 
-.goog-te-banner, 
-#goog-gt-tt, 
-.goog-te-balloon-frame,
-#goog-gt-inside,
-.template-popup,
-.goog-te-spinner-pos,     /* Targets the wrapper element for the loading spinner */
-.goog-te-spinner,         /* Targets the raw CSS animated spinner circle */
-#google_translate_element /* Prevents the Google framework from rendering its own root box badge */ { 
-  display: none !important; 
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-}
+      .goog-te-banner, 
+      #goog-gt-tt, 
+      .goog-te-balloon-frame,
+      #goog-gt-inside,
+      .template-popup,
+      .goog-te-spinner-pos,     
+      .goog-te-spinner,         
+      #google_translate_element { 
+        display: none !important; 
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
       body { 
-  top: 0 !important; 
-  position: static !important; 
-}
-.skiptranslate { 
-  display: none !important; 
-}
+        top: 0 !important; 
+        position: static !important; 
+      }
+      .skiptranslate { 
+        display: none !important; 
+      }
     `;
     document.head.appendChild(style);
+
+    // Watch the DOM body for newly spawned Google elements and eliminate them immediately
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node instanceof HTMLElement) {
+            const isGoogClass = Array.from(node.classList).some(c => c.startsWith('goog-te-'));
+            const isGoogId = node.id && node.id.startsWith('goog-');
+            
+            if (isGoogClass || isGoogId || node.classList.contains('skiptranslate')) {
+              node.remove();
+            }
+          }
+        });
+      });
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
     return () => {
       document.head.removeChild(style);
+      observer.disconnect();
     };
   }, []);
 
