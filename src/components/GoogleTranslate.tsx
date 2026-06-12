@@ -15,7 +15,29 @@ export default function GoogleTranslate() {
   const [current, setCurrent] = useState('en');
   const [open, setOpen] = useState(false);
 
+  // Inject CSS to suppress the Google Banner layout shifts
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      .goog-te-banner-frame, .goog-te-banner, #goog-gt-tt, .goog-te-balloon-frame { 
+        display: none !important; 
+      }
+      body { 
+        top: 0 !important; 
+        position: static !important; 
+      }
+      .skiptranslate { 
+        display: none !important; 
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   function switchLocale(langCode: string) {
+    // ... (your cookie switching logic remains perfectly fine!)
     setCurrent(langCode);
     setOpen(false);
 
@@ -31,7 +53,6 @@ export default function GoogleTranslate() {
   }
 
   const selected = languages.find(l => l.code === current)!;
-
   return (
     <div style={{ position: 'relative' }}>
       {/* Trigger button */}
