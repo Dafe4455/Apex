@@ -86,10 +86,9 @@ const ChevronRight = () => (
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [walletOpen, setWalletOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
 
-  const walletActive = ['/dashboard/deposit', '/dashboard/withdraw', '/dashboard/history', '/dashboard/assets'].includes(pathname);
+  const walletActive = pathname === '/dashboard/assets';
   const moreActive   = ['/dashboard/support', '/dashboard/settings', '/dashboard/notifications', '/dashboard/kyc'].includes(pathname);
 
   return (
@@ -103,13 +102,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           --bg:    #000000;
           --bg-1:  #000000;
           --bg-2:  #1a1a1a;
-          --bg-3:  #000000;
           --card:  #132f45;
-          --ink:   #f0f8ff;
-          --ink-2: #d6ecf8;
-          --inl:   #4e6e90;
-          --inm:   #ccdff5;
-          --accent: #38bdf8;
+
+          /* text / icon tones, brightest to most muted */
+          --ink:     #f0f8ff;
+          --ink-2:   #d6ecf8;
+          --inm:     #ccdff5;
+          --inl:     #4e6e90;
+          --muted:   #759fa1;
+          --muted-2: #8dbdd8;
+
+          /* semantic accents */
+          --accent:     #38bdf8;
+          --accent-rgb: 56, 189, 248;
+          --success:    #4ade80;
+          --danger:     #f87171;
+          --danger-rgb: 248, 113, 113;
+
           --mono: 'DM Mono', 'Courier New', monospace;
           --sans: 'Manrope', system-ui, sans-serif;
         }
@@ -160,7 +169,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.52rem;
           letter-spacing: 0.15em;
           text-transform: uppercase;
-          color: var(--bg-3);
+          color: var(--inl);
           margin-top: 4px;
         }
         .db-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
@@ -173,13 +182,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.65rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: var(--bg-3);
+          color: var(--inl);
           text-decoration: none;
           transition: color 0.1s, background 0.1s;
           position: relative;
           margin: 1px 0;
         }
-        .db-nav-item:hover { color: #7a9ec0; background: rgba(56,189,248,0.04); }
+        .db-nav-item:hover { color: var(--muted-2); background: rgba(var(--accent-rgb), 0.04); }
         .db-nav-item.active { color: var(--inm); }
         .db-nav-item.active::before {
           content: '';
@@ -202,7 +211,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.65rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: var(--bg-3);
+          color: var(--inl);
           background: none;
           border: none;
           cursor: pointer;
@@ -210,7 +219,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           transition: color 0.1s;
           text-align: left;
         }
-        .db-signout:hover { color: #f87171; }
+        .db-signout:hover { color: var(--danger); }
 
         /* ── MAIN ── */
         .db-main {
@@ -259,7 +268,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           letter-spacing: 0.1em;
           color: var(--inl);
         }
-        .db-topbar-sep { color: var(--bg-2); }
+        .db-topbar-sep { color: var(--inl); }
 
         /* ── CONTENT (desktop) ── */
         .db-content {
@@ -337,7 +346,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           border-radius: 0 0 2px 2px;
         }
         .db-bn-item svg {
-          color: #759fa1;
+          color: var(--muted);
           transition: color 0.15s;
         }
         .db-bn-item.active svg { color: var(--ink); }
@@ -346,11 +355,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           font-size: 0.48rem;
           letter-spacing: 0.08em;
           text-transform: uppercase;
-          color: #759fa1;
+          color: var(--muted);
           transition: color 0.15s;
           line-height: 1;
         }
-        .db-bn-item.active .db-bn-label { color: #7a9ec0; }
+        .db-bn-item.active .db-bn-label { color: var(--muted-2); }
 
         /* ── BOTTOM SHEET ── */
         .db-sheet-overlay {
@@ -430,7 +439,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           letter-spacing: 0.04em;
           color: var(--inl);
         }
-        .db-sheet-row-arrow { color: var(--bg-3); flex-shrink: 0; }
+        .db-sheet-row-arrow { color: var(--inl); flex-shrink: 0; }
         .db-sheet-row-divider {
           height: 1px;
           background: rgba(255,255,255,0.04);
@@ -448,15 +457,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           transition: background 0.12s;
           text-align: left;
           margin-top: 4px;
-          border-top: 1px solid rgba(248,113,113,0.08);
+          border-top: 1px solid rgba(var(--danger-rgb), 0.08);
         }
-        .db-sheet-signout-row:active { background: rgba(248,113,113,0.04); }
+        .db-sheet-signout-row:active { background: rgba(var(--danger-rgb), 0.04); }
         .db-sheet-signout-label {
           font-family: var(--mono);
           font-size: 0.7rem;
           letter-spacing: 0.06em;
           text-transform: uppercase;
-          color: #f87171;
+          color: var(--danger);
         }
 
         @media (max-width: 768px) {
@@ -558,10 +567,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="db-bn-label">Trade</span>
             </Link>
 
-            <button
-              className={`db-bn-item ${walletActive ? 'active' : ''}`}
-              onClick={() => { setWalletOpen(true); setMoreOpen(false); }}
-            >
+            <Link href="/dashboard/assets" className={`db-bn-item ${walletActive ? 'active' : ''}`}>
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                 <rect x="2" y="5" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
                 <path d="M2 8h16" stroke="currentColor" strokeWidth="1.3" />
@@ -569,11 +575,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <path d="M6 3l8 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
               </svg>
               <span className="db-bn-label">Wallet</span>
-            </button>
+            </Link>
 
             <button
               className={`db-bn-item ${moreActive ? 'active' : ''}`}
-              onClick={() => { setMoreOpen(true); setWalletOpen(false); }}
+              onClick={() => setMoreOpen(true)}
             >
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
                 <circle cx="4" cy="10" r="1.5" fill="currentColor" />
@@ -586,81 +592,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </nav>
 
-        {/* WALLET SHEET */}
-        {walletOpen && (
-          <>
-            <div className="db-sheet-overlay" onClick={() => setWalletOpen(false)} />
-            <div className="db-sheet">
-              <div className="db-sheet-handle" />
-              <div className="db-sheet-title">Wallet</div>
-              <div className="db-sheet-rows">
-
-                {/* Assets */}
-                <Link href="/dashboard/assets" className="db-sheet-row" onClick={() => setWalletOpen(false)}>
-                  <div className="db-sheet-row-icon">
-                    <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
-                      <path d="M1 10l3-4 2.5 2 3.5-5 2 2.5" stroke="#38bdf8" strokeWidth="1.1" strokeLinecap="square" strokeLinejoin="miter" />
-                      <circle cx="6.5" cy="6.5" r="2" stroke="#38bdf8" strokeWidth="1.1" />
-                    </svg>
-                  </div>
-                  <div className="db-sheet-row-text">
-                    <span className="db-sheet-row-label">Assets</span>
-                    <span className="db-sheet-row-sub">Positions, P&amp;L and trade history</span>
-                  </div>
-                  <div className="db-sheet-row-arrow"><ChevronRight /></div>
-                </Link>
-                <div className="db-sheet-row-divider" />
-
-                {/* Deposit */}
-                <Link href="/dashboard/deposit" className="db-sheet-row" onClick={() => setWalletOpen(false)}>
-                  <div className="db-sheet-row-icon">
-                    <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
-                      <path d="M6.5 1v8M4 7l2.5 2.5L9 7M1 11h11" stroke="#4ade80" strokeWidth="1.1" strokeLinecap="square" />
-                    </svg>
-                  </div>
-                  <div className="db-sheet-row-text">
-                    <span className="db-sheet-row-label">Deposit</span>
-                    <span className="db-sheet-row-sub">Add funds to your account</span>
-                  </div>
-                  <div className="db-sheet-row-arrow"><ChevronRight /></div>
-                </Link>
-                <div className="db-sheet-row-divider" />
-
-                {/* Withdraw */}
-                <Link href="/dashboard/withdraw" className="db-sheet-row" onClick={() => setWalletOpen(false)}>
-                  <div className="db-sheet-row-icon">
-                    <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
-                      <path d="M6.5 9V1M4 3l2.5-2.5L9 3M1 11h11" stroke="#f87171" strokeWidth="1.1" strokeLinecap="square" />
-                    </svg>
-                  </div>
-                  <div className="db-sheet-row-text">
-                    <span className="db-sheet-row-label">Withdraw</span>
-                    <span className="db-sheet-row-sub">Send funds to your bank or wallet</span>
-                  </div>
-                  <div className="db-sheet-row-arrow"><ChevronRight /></div>
-                </Link>
-                <div className="db-sheet-row-divider" />
-
-                {/* History */}
-                <Link href="/dashboard/history" className="db-sheet-row" onClick={() => setWalletOpen(false)}>
-                  <div className="db-sheet-row-icon">
-                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                      <circle cx="10" cy="10" r="7" stroke="#8dbdd8" strokeWidth="1.3" />
-                      <path d="M10 6v4l3 2" stroke="#8dbdd8" strokeWidth="1.3" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <div className="db-sheet-row-text">
-                    <span className="db-sheet-row-label">History</span>
-                    <span className="db-sheet-row-sub">View all past transactions</span>
-                  </div>
-                  <div className="db-sheet-row-arrow"><ChevronRight /></div>
-                </Link>
-
-              </div>
-            </div>
-          </>
-        )}
-
         {/* MORE SHEET */}
         {moreOpen && (
           <>
@@ -670,11 +601,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div className="db-sheet-title">More</div>
               <div className="db-sheet-rows">
                 <Link href="/dashboard/support" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon">
+                  <div className="db-sheet-row-icon" style={{ color: 'var(--muted-2)' }}>
                     <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
-                      <circle cx="6.5" cy="6.5" r="5" stroke="#8dbdd8" strokeWidth="1.1" />
-                      <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="#8dbdd8" strokeWidth="1.1" strokeLinecap="square" />
-                      <circle cx="6.5" cy="9.5" r="0.6" fill="#8dbdd8" />
+                      <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
+                      <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+                      <circle cx="6.5" cy="9.5" r="0.6" fill="currentColor" />
                     </svg>
                   </div>
                   <div className="db-sheet-row-text">
@@ -685,10 +616,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
                 <div className="db-sheet-row-divider" />
                 <Link href="/dashboard/settings" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon">
+                  <div className="db-sheet-row-icon" style={{ color: 'var(--muted-2)' }}>
                     <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                      <circle cx="10" cy="10" r="2.5" stroke="#8dbdd8" strokeWidth="1.3" />
-                      <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="#8dbdd8" strokeWidth="1.3" strokeLinecap="round" />
+                      <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+                      <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                     </svg>
                   </div>
                   <div className="db-sheet-row-text">
@@ -699,10 +630,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
                 <div className="db-sheet-row-divider" />
                 <Link href="/dashboard/notifications" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon">
+                  <div className="db-sheet-row-icon" style={{ color: 'var(--muted-2)' }}>
                     <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                      <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="#8dbdd8" strokeWidth="1.3" />
-                      <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="#8dbdd8" strokeWidth="1.3" strokeLinecap="round" />
+                      <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.3" />
+                      <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
                     </svg>
                   </div>
                   <div className="db-sheet-row-text">
@@ -713,11 +644,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
                 <div className="db-sheet-row-divider" />
                 <Link href="/dashboard/kyc" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon">
+                  <div className="db-sheet-row-icon" style={{ color: 'var(--muted-2)' }}>
                     <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                      <rect x="3" y="5" width="14" height="10" rx="2" stroke="#8dbdd8" strokeWidth="1.3" />
-                      <circle cx="7.5" cy="9.5" r="1.5" stroke="#8dbdd8" strokeWidth="1.1" />
-                      <path d="M11 8h4M11 11h3" stroke="#8dbdd8" strokeWidth="1.1" strokeLinecap="round" />
+                      <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                      <circle cx="7.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
+                      <path d="M11 8h4M11 11h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
                     </svg>
                   </div>
                   <div className="db-sheet-row-text">
@@ -731,9 +662,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 className="db-sheet-signout-row"
                 onClick={() => { setMoreOpen(false); signOut({ callbackUrl: '/login' }); }}
               >
-                <div className="db-sheet-row-icon">
+                <div className="db-sheet-row-icon" style={{ color: 'var(--danger)' }}>
                   <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
-                    <path d="M5 2H2v9h3M8 9l3-2.5L8 4M11 6.5H5" stroke="#f87171" strokeWidth="1.1" strokeLinecap="square" />
+                    <path d="M5 2H2v9h3M8 9l3-2.5L8 4M11 6.5H5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
                   </svg>
                 </div>
                 <span className="db-sheet-signout-label">Sign Out</span>
