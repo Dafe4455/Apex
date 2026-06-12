@@ -432,13 +432,16 @@ export default function AssetsPage() {
       transition: 'border-color 0.15s',
     }}>
       <span style={{
-        width: 22, height: 22,
-        borderRadius: 6,
-        border: `1.5px solid ${color}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: '0.75rem', color, lineHeight: 1, flexShrink: 0,
-      }}>
-        {arrow}
+  width: 22, height: 22,
+  borderRadius: 6,
+  background: color,          // filled
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  fontSize: '0.75rem',
+  color: '#000',              // black arrow on filled bg
+  fontWeight: 900,            // thicker
+  lineHeight: 1, flexShrink: 0,
+}}>
+  {arrow}
       </span>
       <span style={{
         fontFamily: 'var(--mono)',
