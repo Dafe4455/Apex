@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   TrendingUp, TrendingDown, RefreshCw, ChevronRight,
-  BarChart2, Clock, Layers, ArrowDownLeft, ArrowUpRight, History
+  BarChart2, Clock, Layers,
 } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -90,18 +90,18 @@ function fmtTime(iso: string) {
 
 function fmtQty(n: number) {
   if (n >= 1000) return n.toFixed(2);
-  if (n >= 1) return n.toFixed(4);
+  if (n >= 1)    return n.toFixed(4);
   return n.toFixed(6);
 }
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function AssetsPage() {
-  const [data, setData] = useState<AssetsData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData]           = useState<AssetsData | null>(null);
+  const [loading, setLoading]     = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [livePrices, setLivePrices] = useState<Record<string, number>>({});
-  const [tab, setTab] = useState<'open' | 'closed' | 'history'>('open');
+  const [tab, setTab]             = useState<'open' | 'closed' | 'history'>('open');
 
   const loadData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -129,7 +129,7 @@ export default function AssetsPage() {
       const apiSym = PRICE_SYMBOL_MAP[sym] ?? sym.replace('USD', '');
       try {
         const res = await fetch(`/api/price?symbol=${apiSym}`);
-        const d = await res.json();
+        const d   = await res.json();
         if (d.price) setLivePrices(prev => ({ ...prev, [sym]: d.price }));
       } catch {}
     }
@@ -151,9 +151,10 @@ export default function AssetsPage() {
 
   const PnlChip = ({ value }: { value: number }) => (
     <span style={{
-      color: value >= 0 ? 'var(--green)' : 'var(--red)',
-      background: value >= 0 ? 'rgba(34,212,122,0.08)' : 'rgba(248,113,113,0.08)',
-      border: `1px solid ${value >= 0 ? 'rgba(34,212,122,0.2)' : 'rgba(248,113,113,0.2)'}`,
+      color:      value >= 0 ? 'var(--green)' : 'var(--red)',
+      background: value >= 0 ? 'var(--green-l)' : 'var(--red-l)',
+      border:     `1px solid ${value >= 0 ? 'var(--green)' : 'var(--red)'}`,
+      opacity: 0.9,
       borderRadius: 6,
       padding: '2px 8px',
       fontFamily: 'var(--mono)',
@@ -173,20 +174,21 @@ export default function AssetsPage() {
   const EmptyState = ({ message, cta }: { message: string; cta?: boolean }) => (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      gap: 12, padding: '48px 24px', color: 'var(--text-dim)',
+      gap: 12, padding: '48px 24px', color: 'var(--ink-faint)',
     }}>
-      <BarChart2 size={32} strokeWidth={1.2} />
-      <p style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', letterSpacing: '0.06em', textAlign: 'center' }}>
+      <BarChart2 size={32} strokeWidth={1.2} color="var(--ink-faint)" />
+      <p style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', letterSpacing: '0.06em', textAlign: 'center', color: 'var(--ink-faint)' }}>
         {message}
       </p>
       {cta && (
         <Link href="/dashboard/trade" style={{
-          background: 'var(--cyan)', color: 'var(--bg)',
+          background: 'var(--accent)',
+          color: '#0a1f2e',              // always dark text on accent — safe in both modes
           borderRadius: 8, padding: '9px 20px',
           fontFamily: 'var(--mono)', fontSize: '0.7rem',
           fontWeight: 700, letterSpacing: '0.12em',
           textTransform: 'uppercase', textDecoration: 'none',
-          boxShadow: '0 4px 16px rgba(0,201,177,0.2)',
+          boxShadow: '0 4px 16px rgba(56,189,248,0.2)',
         }}>
           Start Trading
         </Link>
@@ -234,111 +236,99 @@ export default function AssetsPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+        /*
+          NO :root block — all tokens from shared theme.css.
+          Consumed: --bg, --bg-3, --card, --ink, --ink-2, --ink-dim, --ink-faint,
+          --accent, --accent-l, --green, --green-l, --red, --red-l,
+          --line, --line-strong, --surface, --surface-hover, --sans, --mono
+        */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        :root {
-          --bg:       #000000;
-          --bg-card:  #0f1318;
-          --bg-inner: #0f1318;
-          --border:   rgba(255,255,255,0.06);
-          --border-strong: rgba(255,255,255,0.1);
-          --cyan:     #00c9b1;
-          --cyan-dim: rgba(0,201,177,0.10);
-          --text:     #e2eaf4;
-          --text-mid: #7b9ab5;
-          --text-dim: #4a6a84;
-          --green:    #22d47a;
-          --red:      #f87171;
-          --maroon:   #ff5542;
-          --mono:     'Space Mono', monospace;
-          --sans:     'Space Grotesk', sans-serif;
-        }
-        body { background: var(--bg); font-family: var(--sans); color: var(--text); }
+        body { background: var(--bg); font-family: var(--sans); color: var(--ink); }
 
         .tab-btn {
           background: none; border: none; cursor: pointer;
           font-family: var(--mono); font-size: 0.65rem; font-weight: 700;
           letter-spacing: 0.12em; text-transform: uppercase;
-          color: var(--text-dim); padding: 8px 14px; border-radius: 8px;
+          color: var(--ink-faint); padding: 8px 14px; border-radius: 8px;
           transition: all 0.15s; white-space: nowrap;
         }
-        .tab-btn:hover { color: var(--text-mid); }
+        .tab-btn:hover { color: var(--ink-dim); }
         .tab-btn.active {
-          background: var(--cyan-dim);
-          color: var(--cyan);
-          border: 1px solid rgba(0,201,177,0.2);
+          background: var(--accent-l);
+          color: var(--accent);
+          border: 1px solid var(--accent);
+          opacity: 0.9;
         }
 
         .pos-row {
           display: flex; align-items: center; gap: 10px;
-          padding: 12px 14px; border-bottom: 1px solid var(--border);
+          padding: 12px 14px; border-bottom: 1px solid var(--line);
           transition: background 0.15s; cursor: default;
           overflow: hidden; min-width: 0;
         }
         .pos-row:last-child { border-bottom: none; }
-        .pos-row:hover { background: rgba(255,255,255,0.02); }
+        .pos-row:hover { background: var(--surface-hover); }
 
         .trade-row {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 12px 16px; border-bottom: 1px solid var(--border);
+          padding: 12px 16px; border-bottom: 1px solid var(--line);
           transition: background 0.15s;
         }
         .trade-row:last-child { border-bottom: none; }
-        .trade-row:hover { background: rgba(255,255,255,0.02); }
-
-        .action-btn {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-          flex: 1;
-          padding: 14px 8px;
-          border-radius: 14px;
-          text-decoration: none;
-          border: 1px solid var(--border);
-          background: var(--bg-card);
-          transition: background 0.15s, border-color 0.15s, transform 0.1s;
-          cursor: pointer;
-        }
-        .action-btn:hover {
-          background: rgba(255,255,255,0.04);
-          border-color: var(--border-strong);
-          transform: translateY(-1px);
-        }
-        .action-btn:active { transform: translateY(0); }
-
-        .action-btn .icon-wrap {
-          width: 40px; height: 40px; border-radius: 12px;
-          display: flex; align-items: center; justify-content: center;
-        }
-
-        .action-btn .btn-label {
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          font-weight: 700;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-        }
+        .trade-row:hover { background: var(--surface-hover); }
 
         .refresh-btn {
           background: none;
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          padding: 8px 10px;
-          cursor: pointer;
-          color: var(--text-dim);
+          border: 1px solid var(--line-strong);
+          border-radius: 8px; padding: 8px 10px;
+          cursor: pointer; color: var(--ink-faint);
           transition: all 0.2s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          display: flex; align-items: center; justify-content: center;
         }
-        .refresh-btn:hover {
-          border-color: var(--border-strong);
-          color: var(--text-mid);
+        .refresh-btn:hover { border-color: var(--line-strong); color: var(--ink-dim); }
+
+        .side-badge-long {
+          font-family: var(--mono); font-size: 0.58rem; font-weight: 700;
+          padding: 1px 6px; border-radius: 4;
+          background: var(--green-l); color: var(--green);
+          border: 1px solid var(--green); opacity: 0.85;
+        }
+        .side-badge-short {
+          font-family: var(--mono); font-size: 0.58rem; font-weight: 700;
+          padding: 1px 6px; border-radius: 4;
+          background: var(--red-l); color: var(--red);
+          border: 1px solid var(--red); opacity: 0.85;
+        }
+        .side-badge-closed {
+          font-family: var(--mono); font-size: 0.58rem; font-weight: 700;
+          padding: 1px 6px; border-radius: 4;
+          background: var(--surface); color: var(--ink-faint);
+          border: 1px solid var(--line-strong);
         }
 
+        .status-ok {
+          font-family: var(--mono); font-size: 0.58rem; font-weight: 700;
+          padding: 2px 7px; border-radius: 4;
+          background: var(--green-l); color: var(--green);
+          border: 1px solid var(--green); opacity: 0.85;
+        }
+        .status-fail {
+          font-family: var(--mono); font-size: 0.58rem; font-weight: 700;
+          padding: 2px 7px; border-radius: 4;
+          background: var(--red-l); color: var(--red);
+          border: 1px solid var(--red); opacity: 0.85;
+        }
+
+        .action-link {
+          flex: 1; display: flex; align-items: center; justify-content: center;
+          padding: 11px 8px; border-radius: 10px; text-decoration: none;
+          background: var(--card); border: 1px solid var(--line-strong);
+          transition: background 0.15s, border-color 0.15s;
+        }
+        .action-link:hover { background: var(--surface-hover); }
+
         @keyframes shimmer { to { background-position: -200% 0; } }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin    { to { transform: rotate(360deg); } }
       `}</style>
 
       <div style={styles.page}>
@@ -355,7 +345,7 @@ export default function AssetsPage() {
             className="refresh-btn"
             onClick={() => loadData(true)}
             disabled={refreshing}
-            style={{ color: refreshing ? 'var(--cyan)' : undefined }}
+            style={{ color: refreshing ? 'var(--accent)' : undefined }}
           >
             <RefreshCw size={15} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
           </button>
@@ -365,35 +355,32 @@ export default function AssetsPage() {
         <div style={{
           ...styles.card,
           padding: '20px 20px 18px',
-          background: 'linear-gradient(135deg, #0f1318 0%, #111820 100%)',
-          borderColor: 'var(--border-strong)',
           position: 'relative',
           overflow: 'hidden',
         }}>
-          {/* subtle glow */}
+          {/* accent glow — uses theme token */}
           <div style={{
             position: 'absolute', top: -40, right: -40,
             width: 160, height: 160,
-            background: 'radial-gradient(circle, rgba(0,201,177,0.06) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, var(--accent-l) 0%, transparent 70%)',
             pointerEvents: 'none',
           }} />
 
           <span style={{
             fontFamily: 'var(--mono)', fontSize: '0.58rem',
             letterSpacing: '0.14em', textTransform: 'uppercase',
-            color: 'var(--text-dim)', display: 'block', marginBottom: 6,
+            color: 'var(--ink-faint)', display: 'block', marginBottom: 6,
           }}>
             Portfolio Balance
           </span>
           <span style={{
             fontFamily: 'var(--mono)', fontSize: '1.9rem',
-            fontWeight: 700, color: 'var(--text)', display: 'block',
+            fontWeight: 700, color: 'var(--ink)', display: 'block',
             letterSpacing: '-0.01em',
           }}>
             {fmtUsd(data?.portfolioBalance ?? 0)}
           </span>
 
-          {/* Total P&L inline below balance */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
             {totalPnl >= 0
               ? <TrendingUp size={13} color="var(--green)" />
@@ -405,44 +392,29 @@ export default function AssetsPage() {
             }}>
               {totalPnl >= 0 ? '+' : ''}{fmtUsd(totalPnl)}
             </span>
-            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', color: 'var(--text-dim)' }}>
+            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', color: 'var(--ink-faint)' }}>
               total P&L
             </span>
           </div>
         </div>
 
         {/* ── ACTION BUTTONS ── */}
-<div style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
-  {[
-    { href: '/dashboard/deposit',  label: 'Deposit',  color: 'var(--green)' },
-    { href: '/dashboard/withdraw', label: 'Withdraw', color: 'var(--red)'   },
-    { href: '/dashboard/history',  label: 'History',  color: 'var(--cyan)'  },
-  ].map(({ href, label, color }) => (
-    <Link key={href} href={href} style={{
-      flex: 1,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '11px 8px',
-      borderRadius: 10,
-      textDecoration: 'none',
-      background: 'var(--bg-card)',
-      border: '1px solid var(--border)',
-      transition: 'border-color 0.15s',
-    }}>
-      <span style={{
-        fontFamily: 'var(--mono)',
-        fontSize: '0.62rem',
-        fontWeight: 700,
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase' as const,
-        color,
-      }}>
-        {label}
-      </span>
-    </Link>
-  ))}
-</div>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
+          {[
+            { href: '/dashboard/deposit',  label: 'Deposit',  color: 'var(--green)' },
+            { href: '/dashboard/withdraw', label: 'Withdraw', color: 'var(--red)'   },
+            { href: '/dashboard/history',  label: 'History',  color: 'var(--accent)' },
+          ].map(({ href, label, color }) => (
+            <Link key={href} href={href} className="action-link">
+              <span style={{
+                fontFamily: 'var(--mono)', fontSize: '0.62rem', fontWeight: 700,
+                letterSpacing: '0.08em', textTransform: 'uppercase' as const, color,
+              }}>
+                {label}
+              </span>
+            </Link>
+          ))}
+        </div>
 
         {/* ── SUMMARY STATS ROW ── */}
         <div style={styles.summaryGrid}>
@@ -482,10 +454,12 @@ export default function AssetsPage() {
                 {t.icon} {t.label}
                 {t.key === 'open' && openPositions.length > 0 && (
                   <span style={{
-                    background: 'var(--cyan)', color: 'var(--bg)',
+                    background: 'var(--accent)', color: '#0a1f2e',
                     borderRadius: 999, padding: '1px 6px',
                     fontSize: '0.55rem', fontWeight: 700,
-                  }}>{openPositions.length}</span>
+                  }}>
+                    {openPositions.length}
+                  </span>
                 )}
               </span>
             </button>
@@ -513,26 +487,20 @@ export default function AssetsPage() {
 
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>{pos.symbol}</span>
-                          <span style={{
-                            fontFamily: 'var(--mono)', fontSize: '0.58rem', fontWeight: 700,
-                            padding: '1px 6px', borderRadius: 4,
-                            background: pos.side === 'LONG' ? 'rgba(34,212,122,0.1)' : 'rgba(248,113,113,0.1)',
-                            color: pos.side === 'LONG' ? 'var(--green)' : 'var(--red)',
-                            border: `1px solid ${pos.side === 'LONG' ? 'rgba(34,212,122,0.2)' : 'rgba(248,113,113,0.2)'}`,
-                          }}>
+                          <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--ink)' }}>{pos.symbol}</span>
+                          <span className={pos.side === 'LONG' ? 'side-badge-long' : 'side-badge-short'}>
                             {pos.side}
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: 8, marginTop: 3, flexWrap: 'wrap' }}>
-                          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-dim)' }}>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--ink-faint)' }}>
                             Qty: {fmtQty(pos.quantity)}
                           </span>
-                          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-dim)' }}>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--ink-faint)' }}>
                             Entry: {fmtUsd(pos.entryPrice)}
                           </span>
                           {current > 0 && (
-                            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-mid)' }}>
+                            <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--ink-dim)' }}>
                               Now: {fmtUsd(current)}
                             </span>
                           )}
@@ -549,7 +517,7 @@ export default function AssetsPage() {
                         </span>
                       </div>
 
-                      <Link href={`dashboard/trade?asset=${pos.symbol}`} style={{ color: 'var(--text-dim)', flexShrink: 0 }}>
+                      <Link href={`dashboard/trade?asset=${pos.symbol}`} style={{ color: 'var(--ink-faint)', flexShrink: 0 }}>
                         <ChevronRight size={16} />
                       </Link>
                     </div>
@@ -570,21 +538,14 @@ export default function AssetsPage() {
 
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>{pos.symbol}</span>
-                        <span style={{
-                          fontFamily: 'var(--mono)', fontSize: '0.58rem', fontWeight: 700,
-                          padding: '1px 6px', borderRadius: 4,
-                          background: 'rgba(255,255,255,0.05)', color: 'var(--text-dim)',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                        }}>
-                          {pos.side}
-                        </span>
+                        <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--ink)' }}>{pos.symbol}</span>
+                        <span className="side-badge-closed">{pos.side}</span>
                       </div>
                       <div style={{ display: 'flex', gap: 8, marginTop: 3, flexWrap: 'wrap' }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-dim)' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--ink-faint)' }}>
                           Entry: {fmtUsd(pos.entryPrice)}
                         </span>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-dim)' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--ink-faint)' }}>
                           Closed: {fmtDate(pos.closedAt ?? pos.openedAt)}
                         </span>
                       </div>
@@ -604,13 +565,13 @@ export default function AssetsPage() {
           <div style={styles.card}>
             <div style={{
               display: 'flex', justifyContent: 'space-between',
-              padding: '10px 16px', borderBottom: '1px solid var(--border)',
+              padding: '10px 16px', borderBottom: '1px solid var(--line-strong)',
             }}>
               {['Asset', 'Amount', 'Status', 'Date'].map(h => (
                 <span key={h} style={{
                   fontFamily: 'var(--mono)', fontSize: '0.58rem',
                   letterSpacing: '0.12em', textTransform: 'uppercase',
-                  color: 'var(--text-dim)', flex: h === 'Asset' ? 1.5 : 1,
+                  color: 'var(--ink-faint)', flex: h === 'Asset' ? 1.5 : 1,
                 }}>
                   {h}
                 </span>
@@ -620,40 +581,34 @@ export default function AssetsPage() {
             {data?.trades.length === 0
               ? <EmptyState message="No trade history yet." cta />
               : data?.trades.map(t => {
-                  const sym  = t.asset?.split(':')[1]?.trim() ?? '—';
-                  const ok   = t.status === 'COMPLETED';
+                  const sym = t.asset?.split(':')[1]?.trim() ?? '—';
+                  const ok  = t.status === 'COMPLETED';
                   return (
                     <div className="trade-row" key={t.id}>
                       <div style={{ flex: 1.5, display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                         <AssetIcon symbol={sym} size={28} />
                         <div style={{ minWidth: 0 }}>
-                          <p style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sym}</p>
-                          <p style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', color: 'var(--text-dim)' }}>
+                          <p style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', fontWeight: 700, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sym}</p>
+                          <p style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', color: 'var(--ink-faint)' }}>
                             {fmtTime(t.createdAt)}
                           </p>
                         </div>
                       </div>
 
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                           {fmtUsd(t.amount)}
                         </span>
                       </div>
 
                       <div style={{ flex: 1 }}>
-                        <span style={{
-                          fontFamily: 'var(--mono)', fontSize: '0.58rem', fontWeight: 700,
-                          padding: '2px 7px', borderRadius: 4,
-                          background: ok ? 'rgba(34,212,122,0.08)' : 'rgba(248,113,113,0.08)',
-                          color: ok ? 'var(--green)' : 'var(--red)',
-                          border: `1px solid ${ok ? 'rgba(34,212,122,0.2)' : 'rgba(248,113,113,0.2)'}`,
-                        }}>
+                        <span className={ok ? 'status-ok' : 'status-fail'}>
                           {t.status}
                         </span>
                       </div>
 
                       <div style={{ flex: 1 }}>
-                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--text-mid)' }}>
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--ink-dim)' }}>
                           {fmtDate(t.createdAt)}
                         </span>
                       </div>
@@ -691,15 +646,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   headerLeft: { display: 'flex', flexDirection: 'column', gap: 2 },
   pageTitle: {
-    fontFamily: "'Space Grotesk', sans-serif",
+    fontFamily: 'var(--sans)',
     fontSize: '1.45rem',
     fontWeight: 700,
-    color: 'var(--text)',
+    color: 'var(--ink)',
   },
   pageSub: {
-    fontFamily: "'Space Mono', monospace",
+    fontFamily: 'var(--mono)',
     fontSize: '0.62rem',
-    color: 'var(--text-dim)',
+    color: 'var(--ink-faint)',
     letterSpacing: '0.08em',
   },
   summaryGrid: {
@@ -708,8 +663,8 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
   },
   summaryCard: {
-    background: 'var(--bg-card)',
-    border: '1px solid var(--border)',
+    background: 'var(--card)',
+    border: '1px solid var(--line-strong)',
     borderRadius: 12,
     padding: '12px 14px',
     display: 'flex',
@@ -718,29 +673,29 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: 'hidden',
   },
   summaryLabel: {
-    fontFamily: "'Space Mono', monospace",
+    fontFamily: 'var(--mono)',
     fontSize: '0.55rem',
     letterSpacing: '0.1em',
     textTransform: 'uppercase' as const,
-    color: 'var(--text-dim)',
+    color: 'var(--ink-faint)',
   },
   summaryValue: {
-    fontFamily: "'Space Mono', monospace",
+    fontFamily: 'var(--mono)',
     fontSize: '0.82rem',
     fontWeight: 700,
-    color: 'var(--text)',
+    color: 'var(--ink)',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap' as const,
   },
   card: {
-    background: 'var(--bg-card)',
-    border: '1px solid var(--border)',
+    background: 'var(--card)',
+    border: '1px solid var(--line-strong)',
     borderRadius: 14,
     overflow: 'hidden',
   },
   skeletonBox: {
-    background: 'linear-gradient(90deg, #0f1e2e 25%, #162030 50%, #0f1e2e 75%)',
+    background: 'linear-gradient(90deg, var(--bg-3) 25%, var(--card) 50%, var(--bg-3) 75%)',
     backgroundSize: '200% 100%',
     animation: 'shimmer 1.4s infinite',
     borderRadius: 10,
