@@ -1,138 +1,93 @@
 import { NextResponse } from 'next/server';
-import { auth } from '../../../../../auth';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../../../../../../lib/prisma';
 
-export async function GET() {
-  const session = await auth();
+export async function POST(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    const body = await request.json();
+    const { amount, type, source, note } = body;
 
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!amount || amount <= 0) {
+      return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
+    }
+
+    const currentUser = await prisma.user.findUnique({ where: { id } });
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const currentBalance = Number(currentUser.portfolioBalance) || 0;
+
+    // ── Compute new balance ───────────────────────────────────────────────────
+    let newBalance = currentBalance;
+    if (type === 'add')      newBalance = currentBalance + amount;
+    else if (type === 'subtract') newBalance = currentBalance - amount;
+
+    // ── Recalculate realisedPnl ───────────────────────────────────────────────
+    // Sum all completed deposits for this user — that is the true cost basis.
+    const depositAgg = await prisma.deposit.aggregate({
+      where: { userId: id, status: 'COMPLETED' },
+      _sum: { amount: true },
+    });
+    const totalDeposited = Number(depositAgg._sum.amount) || 0;
+
+    // If we are crediting a manual deposit/trade-profit we also need to factor
+    // in the *new* balance, so compute PnL against total deposited.
+    // For a "subtract" / trade-loss the cost basis doesn't change.
+    const newRealisedPnl = newBalance - totalDeposited;
+
+    // ── Recalculate portfolioChangePercent ────────────────────────────────────
+    // Percentage gain/loss relative to total deposited (cost basis).
+    // Guard against divide-by-zero when no deposits exist.
+    const newChangePercent =
+      totalDeposited > 0
+        ? ((newBalance - totalDeposited) / totalDeposited) * 100
+        : 0;
+
+    // ── Persist ───────────────────────────────────────────────────────────────
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: {
+        previousBalance:       currentBalance,
+        portfolioBalance:      newBalance,
+        realisedPnl:           newRealisedPnl,
+        portfolioChangePercent: newChangePercent,
+      },
+    });
+
+    // ── Derive transaction label ──────────────────────────────────────────────
+    const txType =
+      source === 'trade_profit' ? 'Profit'     :
+      source === 'trade_loss'   ? 'Loss'       :
+      type   === 'add'          ? 'Deposit'    :
+                                  'Withdrawal';
+
+    await prisma.transaction.create({
+      data: {
+        userId: id,
+        type:   txType,
+        amount: amount,
+        status: 'Completed',
+        asset:  'USD',
+        source: source || type,
+        ...(note ? { note } : {}),
+      },
+    });
+
+    console.log(
+      `[Balance] user=${id} source=${source || type} ` +
+      `old=${currentBalance} → new=${newBalance} ` +
+      `pnl=${newRealisedPnl.toFixed(2)} pct=${newChangePercent.toFixed(2)}%`
+    );
+
+    return NextResponse.json({ user: updatedUser });
+
+  } catch (error) {
+    console.error('Balance API Error:', error);
+    return NextResponse.json({ error: 'Failed to update balance' }, { status: 500 });
   }
-
-  const user = await prisma.user.findUnique({
-    where: { email: session.user.email },
-    select: {
-      id:                    true,
-      name:                  true,
-      firstName:             true,
-      email:                 true,
-      portfolioBalance:      true,
-      portfolioChangePercent:true,
-      realisedPnl:           true,
-      volatility:            true,
-      riskLabel:             true,
-      kycStatus:             true,
-      deposits: {
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-        select: {
-          id:        true,
-          amount:    true,
-          status:    true,
-          createdAt: true,
-          methodLabel: true,
-        },
-      },
-      withdrawals: {
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-        select: {
-          id:        true,
-          amount:    true,
-          status:    true,
-          createdAt: true,
-        },
-      },
-      positions: {
-        where:   { status: 'OPEN' },
-        orderBy: { openedAt: 'desc' },
-        select: {
-          id:         true,
-          asset:      true,
-          symbol:     true,
-          side:       true,
-          currentPnl: true,
-          entryPrice: true,
-          quantity:   true,
-          openedAt:   true,
-        },
-      },
-      notifications: {
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-        select: {
-          id:        true,
-          message:   true,
-          read:      true,
-          createdAt: true,
-        },
-      },
-      activityLogs: {
-        orderBy: { createdAt: 'desc' },
-        take: 5,
-        select: {
-          id:          true,
-          description: true,
-          createdAt:   true,
-        },
-      },
-    },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: 'User not found' }, { status: 404 });
-  }
-
-  // Merge deposits + withdrawals into unified transaction list
-  const transactions = [
-    ...user.deposits.map(d => ({
-      id:        d.id,
-      type:      'Deposit' as const,
-      asset:     d.methodLabel ?? 'USD',
-      amount:    d.amount,
-      status:    d.status === 'COMPLETED' ? 'COMPLETED'
-               : d.status === 'REJECTED'  ? 'FAILED'
-               : 'PENDING',
-      createdAt: d.createdAt.toISOString(),
-    })),
-    ...user.withdrawals.map(w => ({
-      id:        w.id,
-      type:      'Withdrawal' as const,
-      asset:     'USD',
-      amount:    w.amount,
-      status:    w.status === 'APPROVED'  ? 'COMPLETED'
-               : w.status === 'REJECTED'  ? 'FAILED'
-               : 'PENDING',
-      createdAt: w.createdAt.toISOString(),
-    })),
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-   .slice(0, 10);
-
-  const openPositions  = user.positions.length;
-  const profitPositions = user.positions.filter(p => p.currentPnl >= 0).length;
-  const lossPositions   = user.positions.filter(p => p.currentPnl < 0).length;
-
-  return NextResponse.json({
-    user: {
-      id:                    user.id,
-      name:                  user.name,
-      firstName:             user.firstName ?? user.name?.split(' ')[0] ?? 'there',
-      email:                 user.email,
-      portfolioBalance:      user.portfolioBalance,
-      portfolioChangePercent:user.portfolioChangePercent,
-      realisedPnl:           user.realisedPnl,
-      volatility:            user.volatility,
-      riskLabel:             user.riskLabel,
-      kycStatus:             user.kycStatus,
-    },
-    transactions,
-    positions: {
-      open:   openPositions,
-      profit: profitPositions,
-      loss:   lossPositions,
-      items:  user.positions,
-    },
-    notifications: user.notifications,
-    activityLogs:  user.activityLogs,
-  });
 }
