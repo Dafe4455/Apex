@@ -849,8 +849,8 @@ export default function AdminDashboard() {
                     <div style={{ background: 'var(--card)', border: '1px solid var(--bg-2)', borderRadius: 'var(--r)', overflow: 'hidden' }}>
                       {deposits.filter(d => d.status !== 'PENDING').slice(0, 20).map(d => (
                         <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--bg-2)' }}>
-                          <div className={`adm-avatar${d.status === 'CONFIRMED' ? ' green' : ''}`} style={{ width: 32, height: 32, fontSize: '0.6rem' }}>
-                            {d.status === 'CONFIRMED' ? <CheckCircle size={14} /> : <XCircle size={14} />}
+                          <div className={`adm-avatar${d.status === 'COMPLETED' ? ' green' : ''}`} style={{ width: 32, height: 32, fontSize: '0.6rem' }}>
+                            {d.status === 'COMPLETED' ? <CheckCircle size={14} /> : <XCircle size={14} />}
                           </div>
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink)' }}>{d.user?.name}</p>
@@ -858,7 +858,7 @@ export default function AdminDashboard() {
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <p style={{ fontFamily: 'var(--mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink)' }}>${(d.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                            <span className={`adm-status ${d.status === 'CONFIRMED' ? 'ok' : 'bad'}`}>{d.status}</span>
+                            <span className={`adm-status ${d.status === 'COMPLETED' ? 'ok' : 'bad'}`}>{d.status}</span>
                           </div>
                         </div>
                       ))}
