@@ -1,6 +1,93 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+// ── GET /api/user/dashboard ───────────────────────────────────────────────────
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: {
+        id:                    true,
+        name:                  true,
+        firstName:             true,
+        email:                 true,
+        portfolioBalance:      true,
+        portfolioChangePercent: true,
+        realisedPnl:           true,
+        volatility:            true,
+        riskLabel:             true,
+        kycStatus:             true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    const [transactions, positions, notifications, activityLogs] = await Promise.all([
+      prisma.transaction.findMany({
+        where:   { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        take:    10,
+        select: {
+          id:        true,
+          type:      true,
+          asset:     true,
+          amount:    true,
+          status:    true,
+          createdAt: true,
+        },
+      }),
+
+      prisma.position.findMany({
+        where: { userId: user.id },
+      }),
+
+      prisma.notification.findMany({
+        where:   { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        take:    10,
+        select: { id: true, message: true, read: true },
+      }),
+
+      prisma.activityLog.findMany({
+        where:   { userId: user.id },
+        orderBy: { createdAt: 'desc' },
+        take:    10,
+        select: { id: true, description: true },
+      }),
+    ]);
+
+    const openPositions   = positions.filter(p => p.status === 'OPEN');
+    const profitPositions = openPositions.filter(p => p.currentPnl > 0);
+    const lossPositions   = openPositions.filter(p => p.currentPnl <= 0);
+
+    return NextResponse.json({
+      user,
+      transactions,
+      positions: {
+        open:   openPositions.length,
+        profit: profitPositions.length,
+        loss:   lossPositions.length,
+      },
+      notifications,
+      activityLogs,
+    });
+
+  } catch (error) {
+    console.error('Dashboard GET error:', error);
+    return NextResponse.json({ error: 'Failed to load dashboard' }, { status: 500 });
+  }
+}
+
+// ── POST /api/user/dashboard ──────────────────────────────────────────────────
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -28,13 +115,12 @@ export async function POST(request: Request) {
 
     const depositAgg = await prisma.deposit.aggregate({
       where: { userId: id, status: 'COMPLETED' },
-      _sum: { amount: true },
+      _sum:  { amount: true },
     });
     const totalDeposited = Number(depositAgg._sum.amount) || 0;
 
-    const newRealisedPnl = newBalance - totalDeposited;
-
-    const newChangePercent =
+    const newRealisedPnl    = newBalance - totalDeposited;
+    const newChangePercent  =
       totalDeposited > 0
         ? ((newBalance - totalDeposited) / totalDeposited) * 100
         : 0;
@@ -49,18 +135,16 @@ export async function POST(request: Request) {
       },
     });
 
-    // Map to valid TransactionType enum: Deposit | Withdrawal | Trade
     const txType =
       source === 'trade_profit' ? 'Trade'      :
       source === 'trade_loss'   ? 'Trade'      :
       type   === 'add'          ? 'Deposit'    :
                                   'Withdrawal';
 
-    // Store profit/loss direction in the action field
     const txAction =
-      source === 'trade_profit' ? 'Profit'     :
-      source === 'trade_loss'   ? 'Loss'       :
-      note                      ? note         :
+      source === 'trade_profit' ? 'Profit' :
+      source === 'trade_loss'   ? 'Loss'   :
+      note                      ? note     :
                                   undefined;
 
     await prisma.transaction.create({
