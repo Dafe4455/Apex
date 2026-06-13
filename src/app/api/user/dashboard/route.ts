@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@root/auth';
+import { auth } from '@root/auth';
 import { prisma } from '@/lib/prisma';
 
 // ── GET /api/user/dashboard ───────────────────────────────────────────────────
 export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -14,16 +13,16 @@ export async function GET() {
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: {
-        id:                    true,
-        name:                  true,
-        firstName:             true,
-        email:                 true,
-        portfolioBalance:      true,
+        id:                     true,
+        name:                   true,
+        firstName:              true,
+        email:                  true,
+        portfolioBalance:       true,
         portfolioChangePercent: true,
-        realisedPnl:           true,
-        volatility:            true,
-        riskLabel:             true,
-        kycStatus:             true,
+        realisedPnl:            true,
+        volatility:             true,
+        riskLabel:              true,
+        kycStatus:              true,
       },
     });
 
@@ -119,8 +118,8 @@ export async function POST(request: Request) {
     });
     const totalDeposited = Number(depositAgg._sum.amount) || 0;
 
-    const newRealisedPnl    = newBalance - totalDeposited;
-    const newChangePercent  =
+    const newRealisedPnl   = newBalance - totalDeposited;
+    const newChangePercent =
       totalDeposited > 0
         ? ((newBalance - totalDeposited) / totalDeposited) * 100
         : 0;
@@ -136,9 +135,9 @@ export async function POST(request: Request) {
     });
 
     const txType =
-      source === 'trade_profit' ? 'Trade'      :
-      source === 'trade_loss'   ? 'Trade'      :
-      type   === 'add'          ? 'Deposit'    :
+      source === 'trade_profit' ? 'Trade'     :
+      source === 'trade_loss'   ? 'Trade'     :
+      type   === 'add'          ? 'Deposit'   :
                                   'Withdrawal';
 
     const txAction =
