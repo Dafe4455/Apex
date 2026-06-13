@@ -148,11 +148,11 @@ function WithdrawalActions({ id, onDone }: { id: string; onDone: () => void }) {
 // ── Deposit actions ───────────────────────────────────────────────────────────
 function DepositActions({ id, onDone }: { id: string; onDone: () => void }) {
   const [note, setNote]   = useState('');
-  const [loading, setL]   = useState<'CONFIRMED' | 'REJECTED' | null>(null);
+  const [loading, setL]   = useState<'COMPLETED' | 'REJECTED' | null>(null);
   const [error, setError] = useState('');
   const [done, setDone]   = useState(false);
 
-  const act = async (action: 'CONFIRMED' | 'REJECTED') => {
+  const act = async (action: 'COMPLETED' | 'REJECTED') => {
     setL(action); setError('');
     const res = await fetch(`/api/admin/deposits/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
@@ -170,8 +170,8 @@ function DepositActions({ id, onDone }: { id: string; onDone: () => void }) {
         placeholder="Admin note (optional)" className="adm-note-input" />
       {error && <p className="adm-err">{error}</p>}
       <div className="adm-action-btns">
-        <button onClick={() => act('CONFIRMED')} disabled={!!loading} className="adm-btn-approve">
-          {loading === 'CONFIRMED' ? <Loader2 className="adm-spin" size={14} /> : <CheckCircle size={14} />} Confirm
+        <button onClick={() => act('COMPLETED')} disabled={!!loading} className="adm-btn-approve">
+          {loading === 'COMPLETED' ? <Loader2 className="adm-spin" size={14} /> : <CheckCircle size={14} />} Confirm
         </button>
         <button onClick={() => act('REJECTED')} disabled={!!loading} className="adm-btn-reject">
           {loading === 'REJECTED' ? <Loader2 className="adm-spin" size={14} /> : <XCircle size={14} />} Reject
