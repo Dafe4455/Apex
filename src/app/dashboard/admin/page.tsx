@@ -383,31 +383,7 @@ export default function AdminDashboard() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
-        :root {
-          --bg:        #f0ece6;
-          --bg-1:      #e8e3db;
-          --bg-2:      #ddd7cd;
-          --bg-3:      #cbc4b8;
-          --card:      #eeeae4;
-          --white:     #ffffff;
-          --ink:       #1c1a17;
-          --ink-2:     #2e2b26;
-          --ink-dim:   #6b6457;
-          --ink-faint: #9e9485;
-          --orange:    #e85c0d;
-          --orange-l:  #fde8dc;
-          --orange-m:  #f5c4a8;
-          --green:     #2e7d4f;
-          --green-l:   #e4f2ea;
-          --red:       #b83232;
-          --red-l:     #faeaea;
-          --gold-l:    #fdf3d0;
-          --gold:      #8a6800;
-          --sans: 'DM Sans', system-ui, sans-serif;
-          --mono: 'DM Mono', 'SF Mono', monospace;
-          --r: 14px;
-        }
-
+       
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: var(--bg); font-family: var(--sans); }
 
