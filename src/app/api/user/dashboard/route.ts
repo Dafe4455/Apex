@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: Request) {
   try {
-    const { id } = params;
     const body = await request.json();
-    const { amount, type, source, note } = body;
+    const { id, amount, type, source, note } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Missing user id' }, { status: 400 });
+    }
 
     if (!amount || amount <= 0) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
@@ -22,48 +22,37 @@ export async function POST(
 
     const currentBalance = Number(currentUser.portfolioBalance) || 0;
 
-    // ── Compute new balance ───────────────────────────────────────────────────
     let newBalance = currentBalance;
-    if (type === 'add')      newBalance = currentBalance + amount;
+    if (type === 'add')           newBalance = currentBalance + amount;
     else if (type === 'subtract') newBalance = currentBalance - amount;
 
-    // ── Recalculate realisedPnl ───────────────────────────────────────────────
-    // Sum all completed deposits for this user — that is the true cost basis.
     const depositAgg = await prisma.deposit.aggregate({
       where: { userId: id, status: 'COMPLETED' },
       _sum: { amount: true },
     });
     const totalDeposited = Number(depositAgg._sum.amount) || 0;
 
-    // If we are crediting a manual deposit/trade-profit we also need to factor
-    // in the *new* balance, so compute PnL against total deposited.
-    // For a "subtract" / trade-loss the cost basis doesn't change.
     const newRealisedPnl = newBalance - totalDeposited;
 
-    // ── Recalculate portfolioChangePercent ────────────────────────────────────
-    // Percentage gain/loss relative to total deposited (cost basis).
-    // Guard against divide-by-zero when no deposits exist.
     const newChangePercent =
       totalDeposited > 0
         ? ((newBalance - totalDeposited) / totalDeposited) * 100
         : 0;
 
-    // ── Persist ───────────────────────────────────────────────────────────────
     const updatedUser = await prisma.user.update({
       where: { id },
       data: {
-        previousBalance:       currentBalance,
-        portfolioBalance:      newBalance,
-        realisedPnl:           newRealisedPnl,
+        previousBalance:        currentBalance,
+        portfolioBalance:       newBalance,
+        realisedPnl:            newRealisedPnl,
         portfolioChangePercent: newChangePercent,
       },
     });
 
-    // ── Derive transaction label ──────────────────────────────────────────────
     const txType =
-      source === 'trade_profit' ? 'Profit'     :
-      source === 'trade_loss'   ? 'Loss'       :
-      type   === 'add'          ? 'Deposit'    :
+      source === 'trade_profit' ? 'Profit'    :
+      source === 'trade_loss'   ? 'Loss'      :
+      type   === 'add'          ? 'Deposit'   :
                                   'Withdrawal';
 
     await prisma.transaction.create({
