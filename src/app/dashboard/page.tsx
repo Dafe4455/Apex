@@ -101,7 +101,7 @@ function FearGreedGauge({ value }: { value: number }) {
     if (v <= 24) return { label: 'Extreme Fear', color: 'var(--red)' };
     if (v <= 44) return { label: 'Fear',         color: '#fb923c' };
     if (v <= 55) return { label: 'Neutral',      color: 'var(--gold)' };
-    if (v <= 74) return { label: 'Greed',        color: '#a3e635' };
+    if (v <= 74) return { label: 'Positive',        color: '#a3e635' };
     return             { label: 'Extreme Greed', color: 'var(--green)' };
   };
   const zone = getZone(clamped);
