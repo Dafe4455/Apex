@@ -101,7 +101,7 @@ function FearGreedGauge({ value }: { value: number }) {
     if (v <= 24) return { label: 'Extreme Bear', color: 'var(--red)' };
     if (v <= 44) return { label: 'Fear',         color: '#fb923c' };
     if (v <= 55) return { label: 'Neutral',      color: 'var(--gold)' };
-    if (v <= 74) return { label: 'Positive',        color: '#a3e635' };
+    if (v <= 74) return { label: 'Positive',     color: '#a3e635' };
     return             { label: 'Very Positive', color: 'var(--green)' };
   };
   const zone = getZone(clamped);
@@ -268,17 +268,26 @@ export default function DashboardPage() {
 
   const closeSheet = () => { setSheet(null); setCopied(false); };
 
-  const balance       = data?.user.portfolioBalance       ?? 0;
-  const changePercent = data?.user.portfolioChangePercent ?? 0;
-  const profit        = data?.user.realisedPnl            ?? 0;
-  const firstName     = data?.user.firstName              ?? '';
-  const userId        = data?.user.id?.slice(-6).toUpperCase() ?? '------';
-  const transactions  = data?.transactions                ?? [];
-  const openPositions = data?.positions.open              ?? 0;
-  const profitPos     = data?.positions.profit            ?? 0;
-  const lossPos       = data?.positions.loss              ?? 0;
-  const activityLogs  = data?.activityLogs                ?? [];
+  const balance      = data?.user.portfolioBalance ?? 0;
+  const firstName    = data?.user.firstName        ?? '';
+  const userId       = data?.user.id?.slice(-6).toUpperCase() ?? '------';
+  const transactions = data?.transactions          ?? [];
+  const openPositions = data?.positions.open       ?? 0;
+  const profitPos    = data?.positions.profit      ?? 0;
+  const lossPos      = data?.positions.loss        ?? 0;
+  const activityLogs = data?.activityLogs          ?? [];
 
+  // ── PnL display ─────────────────────────────────────────────────────────────
+  // realisedPnl = balance − totalDeposited  (set correctly by the balance API)
+  // portfolioChangePercent = (pnl / totalDeposited) × 100  (also set by API)
+  // We trust these stored values — they are recalculated on every admin balance
+  // update. We never recompute them on the frontend.
+  const profit        = data?.user.realisedPnl            ?? 0;
+  const changePercent = data?.user.portfolioChangePercent ?? 0;
+  const isProfitable  = profit >= 0;
+
+  // ── 24h market % change for display only (not used in PnL) ──────────────────
+  // The sentiment gauge uses live market 24h changes — this is correct as-is.
   const fearGreedValue = useMemo(() => {
     const weights: Record<string, number> = { BTC: 0.4, ETH: 0.3, SOL: 0.2, BNB: 0.1 };
     let weightedSum = 0, totalWeight = 0;
@@ -366,7 +375,9 @@ export default function DashboardPage() {
         .bal-amount sup { font-size: 1rem; font-weight: 500; vertical-align: super; margin-right: 1px; }
         .bal-amount .cents { font-size: 1.1rem; font-weight: 400; color: var(--ink-dim); }
         .bal-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-        .bal-change { font-size: 0.78rem; font-weight: 600; color: var(--green); }
+        .bal-change { font-size: 0.78rem; font-weight: 600; }
+        .bal-change.pos { color: var(--green); }
+        .bal-change.neg { color: var(--red); }
         .bal-period { font-size: 0.62rem; font-weight: 300; color: var(--ink-faint); }
         .bal-sparkline { margin-bottom: 18px; }
         .bal-actions { display: flex; gap: 8px; }
@@ -404,6 +415,7 @@ export default function DashboardPage() {
         .stat-lbl { font-size: 0.56rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.09em; margin-bottom: 5px; }
         .stat-val { font-size: 1.05rem; font-weight: 700; color: var(--ink); line-height: 1; margin-bottom: 3px; }
         .stat-val.pos { color: var(--green); }
+        .stat-val.neg { color: var(--red); }
         .stat-sub { font-size: 0.58rem; font-weight: 300; color: var(--ink-faint); }
 
         .section-divider { height: 1px; background: var(--line-strong); margin: 18px 16px 16px; }
@@ -601,10 +613,13 @@ export default function DashboardPage() {
           <p className="bal-eyebrow">Net Asset Value</p>
           <p className="bal-amount"><sup>$</sup>{fmt(balance, 0)}<span className="cents">.00</span></p>
           <div className="bal-row">
-            <span className="bal-change">{profit >= 0 ? '+' : ''}${fmt(profit)} ({changePercent >= 0 ? '+' : ''}{fmt(changePercent)}%)</span>
-            <span className="bal-period">Current period</span>
+            {/* PnL vs cost basis — sourced from DB fields set by balance API */}
+            <span className={`bal-change ${isProfitable ? 'pos' : 'neg'}`}>
+              {isProfitable ? '+' : ''}{fmt(profit)} ({isProfitable ? '+' : ''}{fmt(changePercent)}%)
+            </span>
+            <span className="bal-period">vs. total deposited</span>
           </div>
-          <div className="bal-sparkline"><Sparkline positive={profit >= 0} width={140} height={30} /></div>
+          <div className="bal-sparkline"><Sparkline positive={isProfitable} width={140} height={30} /></div>
           <div className="bal-actions">
             <button className="btn-dep" onClick={openDeposit}>+ Deposit</button>
             <Link href="/dashboard/withdraw" className="btn-ghost">Withdraw</Link>
@@ -632,7 +647,10 @@ export default function DashboardPage() {
         <div className="stat-row">
           <div className="stat-cell">
             <p className="stat-lbl">P &amp; L</p>
-            <p className="stat-val pos">{profit >= 0 ? '+' : ''}${fmt(profit)}</p>
+            {/* Sign-aware color: green for profit, red for loss */}
+            <p className={`stat-val ${isProfitable ? 'pos' : 'neg'}`}>
+              {isProfitable ? '+' : ''}{fmt(profit)}
+            </p>
             <p className="stat-sub">Realised</p>
           </div>
           <div className="stat-cell">
@@ -641,6 +659,7 @@ export default function DashboardPage() {
             <p className="stat-sub">{profitPos} profit · {lossPos} loss</p>
           </div>
           <div className="stat-cell fg-cell">
+            {/* Sentiment gauge uses live 24h market changes — intentionally separate from PnL */}
             <p className="stat-lbl" style={{ textAlign: 'center', marginBottom: 4 }}>Sentiment</p>
             <FearGreedGauge value={fearGreedValue} />
           </div>
