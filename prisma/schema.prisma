@@ -64,6 +64,7 @@ model User {
   image                 String?
   role                  Role      @default(USER)
   portfolioBalance      Float     @default(0)
+previousBalance       Float     @default(0)
   portfolioChangePercent Float    @default(0)
   realisedPnl           Float     @default(0)
   volatility            Float     @default(0)
