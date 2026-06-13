@@ -15,8 +15,8 @@ export async function PATCH(
   const { id } = await params;
   const { action, adminNote } = await req.json();
 
-  if (!['CONFIRMED', 'REJECTED'].includes(action))
-    return NextResponse.json({ error: 'action must be CONFIRMED or REJECTED' }, { status: 400 });
+  if (!['COMPLETED', 'REJECTED'].includes(action))
+    return NextResponse.json({ error: 'action must be COMPLETED or REJECTED' }, { status: 400 });
 
   const deposit = await prisma.deposit.findUnique({ where: { id } });
   if (!deposit)
@@ -31,10 +31,59 @@ export async function PATCH(
       data: { status: action, adminNote: adminNote ?? null },
     });
 
-    if (action === 'CONFIRMED') {
+    if (action === 'COMPLETED') {
+      const user = await tx.user.findUnique({ where: { id: deposit.userId } });
+      const currentBalance  = Number(user?.portfolioBalance) || 0;
+      const newBalance      = currentBalance + deposit.amount;
+
+      // Recalculate PnL against all completed deposits including this one
+      const depositAgg = await tx.deposit.aggregate({
+        where: { userId: deposit.userId, status: 'COMPLETED' },
+        _sum:  { amount: true },
+      });
+      const totalDeposited   = Number(depositAgg._sum.amount) || 0;
+      const newRealisedPnl   = newBalance - totalDeposited;
+      const newChangePercent =
+        totalDeposited > 0
+          ? ((newBalance - totalDeposited) / totalDeposited) * 100
+          : 0;
+
       await tx.user.update({
         where: { id: deposit.userId },
-        data: { portfolioBalance: { increment: deposit.amount } },
+        data: {
+          previousBalance:        currentBalance,
+          portfolioBalance:       newBalance,
+          realisedPnl:            newRealisedPnl,
+          portfolioChangePercent: newChangePercent,
+        },
+      });
+
+      await tx.activityLog.create({
+        data: {
+          userId:      deposit.userId,
+          description: `Deposit of $${deposit.amount.toLocaleString()} approved`,
+        },
+      });
+
+      await tx.notification.create({
+        data: {
+          userId:  deposit.userId,
+          message: `Your deposit of $${deposit.amount.toLocaleString()} has been approved`,
+        },
+      });
+    } else {
+      await tx.activityLog.create({
+        data: {
+          userId:      deposit.userId,
+          description: `Deposit of $${deposit.amount.toLocaleString()} rejected`,
+        },
+      });
+
+      await tx.notification.create({
+        data: {
+          userId:  deposit.userId,
+          message: `Your deposit of $${deposit.amount.toLocaleString()} was rejected`,
+        },
       });
     }
 
