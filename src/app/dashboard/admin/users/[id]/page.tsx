@@ -555,32 +555,111 @@ export default function AdminUserDetailPage() {
           padding: 9px 18px; border-radius: 20px; z-index: 300;
           font-size: 0.72rem; font-weight: 500; white-space: nowrap;
           animation: fadein 0.2s; box-shadow: 0 4px 20px rgba(28,26,23,0.2);
-          font-family: var(--sans);
-        }
-        .ud-toast.ok  { background: var(--green); }
-        .ud-toast.err { background: var(--red); }
-        @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-
-        .ud-spin { animation: spin 0.7s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .ud-role {
-          font-family: var(--mono); font-size: 0.5rem; font-weight: 700;
-          letter-spacing: 0.1em; text-transform: uppercase;
-          padding: 2px 8px; border-radius: 20px;
-          background: var(--bg-2); color: var(--ink-dim);
-        }
-        .ud-role.admin { background: #ede8f8; color: #6b5ce7; }
-
-        .ud-divider { height: 1px; background: var(--bg-2); margin: 20px 0; }
-
-        textarea.ud-input { resize: none; line-height: 1.6; }
-
-        @media (max-width: 480px) {
-          .ud-grid-2 { grid-template-columns: 1fr; }
-          .ud-op-grid { grid-template-columns: 1fr 1fr; }
-        }
-      `}</style>
+<style>{`
+  .ud-wrap { max-width: 600px; margin: 0 auto; padding: 24px 16px 80px; }
+  .ud-back { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 600; color: var(--ink-dim); text-decoration: none; margin-bottom: 20px; padding: 6px 12px; background: var(--card); border: 1px solid var(--line-strong); border-radius: 8px; transition: background 0.12s; cursor: pointer; font-family: var(--sans); }
+  .ud-back:hover { background: var(--surface-hover); }
+  .ud-brand { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
+  .ud-title { font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 20px; }
+  .ud-profile { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 22px 20px; margin-bottom: 12px; position: relative; overflow: hidden; }
+  .ud-profile-stripe { position: absolute; top: 0; left: 0; bottom: 0; width: 3px; background: var(--accent); border-radius: 3px 0 0 3px; }
+  .ud-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; flex-shrink: 0; }
+  .ud-edit-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: var(--surface); color: var(--accent); border: 1px solid var(--line-strong); border-radius: 8px; font-family: var(--sans); font-size: 0.68rem; font-weight: 600; cursor: pointer; transition: background 0.12s; flex-shrink: 0; }
+  .ud-edit-btn:hover { background: var(--surface-hover); }
+  .ud-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .ud-action-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-family: var(--sans); font-size: 0.7rem; font-weight: 600; cursor: pointer; border: 1px solid; transition: opacity 0.12s; }
+  .ud-action-btn:hover { opacity: 0.8; }
+  .ud-action-btn.orange { background: var(--surface); color: var(--accent); border-color: var(--line-strong); }
+  .ud-action-btn.red    { background: var(--red-l);   color: var(--red);    border-color: var(--red); }
+  .ud-action-btn.green  { background: var(--green-l); color: var(--green);  border-color: var(--green); }
+  .ud-action-btn.gold   { background: var(--gold-l);  color: var(--gold);   border-color: var(--gold); }
+  .ud-info-grid { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
+  .ud-info-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .ud-info-row:last-child { border-bottom: none; }
+  .ud-info-ico { width: 32px; height: 32px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--ink-faint); }
+  .ud-info-label { font-size: 0.58rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
+  .ud-info-val { font-size: 0.82rem; font-weight: 500; color: var(--ink); }
+  .ud-info-val.mono { font-family: var(--mono); font-size: 0.75rem; }
+  .ud-info-val.large { font-size: 1.3rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; font-family: var(--mono); }
+  .ud-info-val.faint { color: var(--ink-faint); font-style: italic; }
+  .ud-form { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 20px; margin-bottom: 12px; }
+  .ud-form-title { font-size: 0.88rem; font-weight: 700; color: var(--ink); margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; }
+  .ud-field { margin-bottom: 14px; }
+  .ud-field-label { display: block; font-size: 0.58rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .ud-input { width: 100%; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 10px 13px; font-family: var(--sans); font-size: 0.8rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
+  .ud-input:focus { border-color: var(--accent); background: var(--card); }
+  .ud-input::placeholder { color: var(--ink-faint); }
+  .ud-input:disabled { color: var(--ink-faint); cursor: not-allowed; opacity: 0.6; }
+  .ud-kyc-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+  .ud-kyc-pill { padding: 6px 14px; border-radius: 20px; border: 1.5px solid var(--line-strong); background: var(--card); font-family: var(--sans); font-size: 0.65rem; font-weight: 600; cursor: pointer; transition: all 0.12s; color: var(--ink-dim); }
+  .ud-kyc-pill.sel-NONE     { background: var(--surface);  border-color: var(--line-strong); color: var(--ink-dim); }
+  .ud-kyc-pill.sel-PENDING  { background: var(--gold-l);   border-color: var(--gold);        color: var(--gold); }
+  .ud-kyc-pill.sel-APPROVED { background: var(--green-l);  border-color: var(--green);       color: var(--green); }
+  .ud-kyc-pill.sel-REJECTED { background: var(--red-l);    border-color: var(--red);         color: var(--red); }
+  .ud-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .ud-form-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .ud-btn-save { flex: 1; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; padding: 12px; font-family: var(--sans); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .ud-btn-save:hover { opacity: 0.88; }
+  .ud-btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ud-btn-cancel { background: var(--surface); color: var(--ink-dim); border: 1px solid var(--line-strong); border-radius: 10px; padding: 12px 18px; font-family: var(--sans); font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .ud-err { font-size: 0.65rem; color: var(--red); margin-top: 8px; }
+  .ud-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .ud-modal { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); overflow: hidden; }
+  .ud-modal.lg { max-width: 520px; max-height: 88vh; display: flex; flex-direction: column; }
+  .ud-modal-head { padding: 16px 20px; border-bottom: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+  .ud-modal-head-title { font-size: 0.82rem; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+  .ud-modal-close { background: none; border: none; cursor: pointer; color: var(--ink-faint); display: flex; align-items: center; padding: 4px; border-radius: 6px; transition: background 0.1s; }
+  .ud-modal-close:hover { background: var(--surface-hover); color: var(--ink); }
+  .ud-modal-body { padding: 20px; }
+  .ud-modal-scroll { overflow-y: auto; flex: 1; }
+  .ud-op-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ud-op-card { text-align: left; padding: 10px 12px; border-radius: 10px; border: 1.5px solid var(--line-strong); background: var(--surface); cursor: pointer; transition: all 0.12s; font-family: var(--sans); }
+  .ud-op-card:hover { border-color: var(--accent); }
+  .ud-op-card.sel-credit { background: var(--green-l); border-color: var(--green); }
+  .ud-op-card.sel-debit  { background: var(--red-l);   border-color: var(--red); }
+  .ud-op-sign { font-size: 0.65rem; font-weight: 800; margin-right: 4px; font-family: var(--mono); }
+  .ud-op-sign.credit { color: var(--green); }
+  .ud-op-sign.debit  { color: var(--red); }
+  .ud-op-label { font-size: 0.7rem; font-weight: 600; color: var(--ink); }
+  .ud-op-desc { font-size: 0.6rem; color: var(--ink-faint); margin-top: 2px; font-family: var(--mono); }
+  .ud-amount-wrap { position: relative; }
+  .ud-amount-sign { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.85rem; font-weight: 700; font-family: var(--mono); pointer-events: none; }
+  .ud-amount-sign.credit { color: var(--green); }
+  .ud-amount-sign.debit  { color: var(--red); }
+  .ud-amount-input { padding-left: 26px !important; }
+  .ud-preview { font-size: 0.65rem; font-family: var(--mono); color: var(--ink-faint); margin-top: 5px; padding-left: 2px; }
+  .ud-preview .credit { color: var(--green); font-weight: 600; }
+  .ud-preview .debit  { color: var(--red); font-weight: 600; }
+  .ud-modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+  .ud-mbtn { flex: 1; padding: 11px; border-radius: 10px; border: none; font-family: var(--sans); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: opacity 0.12s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .ud-mbtn:hover { opacity: 0.85; }
+  .ud-mbtn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .ud-mbtn.ghost  { background: var(--surface);  color: var(--ink-dim); border: 1px solid var(--line-strong); }
+  .ud-mbtn.credit { background: var(--green-l);  color: var(--green);  border: 1px solid var(--green); font-weight: 700; }
+  .ud-mbtn.debit  { background: var(--red-l);    color: var(--red);    border: 1px solid var(--red);   font-weight: 700; }
+  .ud-mbtn.danger { background: var(--red-l);    color: var(--red);    border: 1px solid var(--red);   font-weight: 700; }
+  .ud-mbtn.send   { background: var(--accent);   color: var(--bg);     font-weight: 700; }
+  .ud-email-log { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; padding: 12px; margin-bottom: 8px; }
+  .ud-email-log-subject { font-size: 0.75rem; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+  .ud-email-log-meta { font-size: 0.6rem; color: var(--ink-faint); font-family: var(--mono); margin-bottom: 5px; }
+  .ud-email-log-msg { font-size: 0.65rem; color: var(--ink-dim); font-family: var(--mono); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .ud-section-label { font-size: 0.58rem; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+  .ud-email-status { font-size: 0.68rem; font-family: var(--mono); padding: 8px 12px; border-radius: 8px; margin-top: 4px; }
+  .ud-email-status.ok  { background: var(--green-l); color: var(--green); border: 1px solid var(--green); }
+  .ud-email-status.err { background: var(--red-l);   color: var(--red);   border: 1px solid var(--red); }
+  .ud-center { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 10px; color: var(--ink-faint); }
+  .ud-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--line-strong); color: var(--ink); padding: 9px 18px; border-radius: 20px; z-index: 300; font-size: 0.72rem; font-weight: 500; white-space: nowrap; animation: fadein 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+  .ud-toast.ok  { background: var(--green-l); color: var(--green); border-color: var(--green); }
+  .ud-toast.err { background: var(--red-l);   color: var(--red);   border-color: var(--red); }
+  .ud-spin { animation: spin 0.7s linear infinite; }
+  .ud-role { font-family: var(--mono); font-size: 0.5rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; background: var(--surface); color: var(--ink-faint); }
+  .ud-role.admin { background: var(--surface); color: var(--accent); border: 1px solid var(--accent); }
+  .ud-divider { height: 1px; background: var(--line-strong); margin: 20px 0; }
+  textarea.ud-input { resize: none; line-height: 1.6; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @media (max-width: 480px) { .ud-grid-2 { grid-template-columns: 1fr; } }
+`}</style>
 
       <div className="ud-wrap">
 
