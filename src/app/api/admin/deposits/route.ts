@@ -16,7 +16,7 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json(deposits);
+  return NextResponse.json({ deposits });
 }
 
 // PATCH — approve or reject a deposit
