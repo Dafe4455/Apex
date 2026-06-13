@@ -617,7 +617,7 @@ export default function DashboardPage() {
             <span className={`bal-change ${isProfitable ? 'pos' : 'neg'}`}>
               {isProfitable ? '+' : ''}{fmt(profit)} ({isProfitable ? '+' : ''}{fmt(changePercent)}%)
             </span>
-            <span className="bal-period">vs. total deposited</span>
+            <span className="bal-period">vs. </span>
           </div>
           <div className="bal-sparkline"><Sparkline positive={isProfitable} width={140} height={30} /></div>
           <div className="bal-actions">
