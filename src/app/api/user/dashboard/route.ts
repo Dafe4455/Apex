@@ -49,21 +49,28 @@ export async function POST(request: Request) {
       },
     });
 
+    // Map to valid TransactionType enum: Deposit | Withdrawal | Trade
     const txType =
-      source === 'trade_profit' ? 'Profit'    :
-      source === 'trade_loss'   ? 'Loss'      :
-      type   === 'add'          ? 'Deposit'   :
+      source === 'trade_profit' ? 'Trade'      :
+      source === 'trade_loss'   ? 'Trade'      :
+      type   === 'add'          ? 'Deposit'    :
                                   'Withdrawal';
+
+    // Store profit/loss direction in the action field
+    const txAction =
+      source === 'trade_profit' ? 'Profit'     :
+      source === 'trade_loss'   ? 'Loss'       :
+      note                      ? note         :
+                                  undefined;
 
     await prisma.transaction.create({
       data: {
         userId: id,
         type:   txType,
         amount: amount,
-        status: 'Completed',
+        status: 'COMPLETED',
         asset:  'USD',
-        source: source || type,
-        ...(note ? { note } : {}),
+        ...(txAction ? { action: txAction } : {}),
       },
     });
 
