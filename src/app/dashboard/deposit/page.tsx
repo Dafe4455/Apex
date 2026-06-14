@@ -35,7 +35,7 @@ function fmtDate(d: string) {
 function StatusBadge({ status }: { status: 'PENDING' | 'CONFIRMED' | 'REJECTED' }) {
   const map = {
     PENDING:   { bg: 'rgba(251,191,36,0.1)',  col: '#fbbf24', border: 'rgba(251,191,36,0.25)',  label: 'Pending'   },
-    CONFIRMED: { bg: 'rgba(34,212,122,0.1)',  col: '#22d47a', border: 'rgba(34,212,122,0.25)',  label: 'Confirmed' },
+    COMPLETED: { bg: 'rgba(34,212,122,0.1)',  col: '#22d47a', border: 'rgba(34,212,122,0.25)',  label: 'Confirmed' },
     REJECTED:  { bg: 'rgba(248,113,113,0.1)', col: '#f87171', border: 'rgba(248,113,113,0.25)', label: 'Rejected'  },
   };
   const s = map[status];
@@ -513,16 +513,16 @@ export default function DepositPage() {
                   <div style={{
                     width: 36, height: 36, borderRadius: 10, flexShrink: 0,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: d.status === 'CONFIRMED'
+                    background: d.status === 'COMPLETED'
                       ? 'color-mix(in srgb, var(--green) 10%, transparent)'
                       : d.status === 'REJECTED'
                       ? 'color-mix(in srgb, var(--red) 10%, transparent)'
                       : 'color-mix(in srgb, var(--gold) 10%, transparent)',
-                    color: d.status === 'CONFIRMED' ? 'var(--green)'
+                    color: d.status === 'COMPLETED' ? 'var(--green)'
                       : d.status === 'REJECTED'    ? 'var(--red)'
                       : 'var(--gold)',
                   }}>
-                    {d.status === 'CONFIRMED' ? <CheckCircle2 size={16} />
+                    {d.status === 'COMPLETED ' ? <CheckCircle2 size={16} />
                       : d.status === 'REJECTED' ? <XCircle size={16} />
                       : <Clock size={16} />}
                   </div>
