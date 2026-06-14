@@ -861,7 +861,7 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                         ${(u.portfolioBalance || 0).toLocaleString()}
                       </p>
                       <Link href={`/dashboard/admin/users/${u.id}`}
-                        style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', background: 'var(--ink)', color: 'var(--orange)', borderRadius: 6, fontSize: '0.6rem', fontWeight: 600, textDecoration: 'none', border: '1px solid var(--orange-m)' }}>
+                        style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', background: 'var(--ink-dim)', color: 'var(--card)', borderRadius: 6, fontSize: '0.6rem', fontWeight: 600, textDecoration: 'none', border: '1px solid var(--orange-m)' }}>
                         <Edit size={10} /> Edit
                       </Link>
                     </div>
