@@ -32,7 +32,7 @@ function fmtDate(d: string) {
 
 // Status badge: semantic colors are intentionally fixed (not theme-variable driven)
 // so they remain vivid in both dark and light modes.
-function StatusBadge({ status }: { status: 'PENDING' | 'CONFIRMED' | 'REJECTED' }) {
+function StatusBadge({ status }: { status: 'PENDING' | 'COMPLETED' | 'REJECTED' }) {
   const map = {
     PENDING:   { bg: 'rgba(251,191,36,0.1)',  col: '#fbbf24', border: 'rgba(251,191,36,0.25)',  label: 'Pending'   },
     COMPLETED: { bg: 'rgba(34,212,122,0.1)',  col: '#22d47a', border: 'rgba(34,212,122,0.25)',  label: 'Confirmed' },
@@ -522,7 +522,7 @@ export default function DepositPage() {
                       : d.status === 'REJECTED'    ? 'var(--red)'
                       : 'var(--gold)',
                   }}>
-                    {d.status === 'COMPLETED ' ? <CheckCircle2 size={16} />
+                    {d.status === 'COMPLETED' ? <CheckCircle2 size={16} />
                       : d.status === 'REJECTED' ? <XCircle size={16} />
                       : <Clock size={16} />}
                   </div>
