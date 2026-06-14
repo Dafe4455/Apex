@@ -17,7 +17,7 @@ type Deposit = {
   id: string;
   amount: number;
   currency: string;
-  status: 'PENDING' | 'CONFIRMED' | 'REJECTED';
+  status: 'PENDING' | 'COMPLETED' | 'REJECTED';
   methodLabel?: string;
   createdAt: string;
 };
