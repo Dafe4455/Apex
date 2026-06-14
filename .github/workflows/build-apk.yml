@@ -53,6 +53,7 @@ jobs:
 
       - name: Build APK
         run: |
+          rm -rf ~/.gradle/caches
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
