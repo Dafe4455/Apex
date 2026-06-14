@@ -109,12 +109,9 @@ function initials(name?: string | null, email?: string) {
 // ── Parse the pipe-separated note field into structured details ───────────────
 function parseWithdrawalNote(note?: string): { userNote: string | null; details: Record<string, string> } {
   if (!note) return { userNote: null, details: {} };
-
-  // Format is either "user note — Key: Value | Key: Value" or just "Key: Value | Key: Value"
   const parts = note.split(' — ');
   const detailsStr = parts.length > 1 ? parts[1] : parts[0];
   const userNote   = parts.length > 1 ? parts[0] : null;
-
   const details: Record<string, string> = {};
   detailsStr.split(' | ').forEach(pair => {
     const idx = pair.indexOf(': ');
@@ -124,7 +121,6 @@ function parseWithdrawalNote(note?: string): { userNote: string | null; details:
       if (key && val) details[key] = val;
     }
   });
-
   return { userNote, details };
 }
 
@@ -154,8 +150,6 @@ function WithdrawalDetails({ note }: { note?: string }) {
           </span>
         </div>
       )}
-
-      {/* Crypto fields */}
       {details['Coin'] && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <DetailRow label="Coin"    value={details['Coin']} />
@@ -163,8 +157,6 @@ function WithdrawalDetails({ note }: { note?: string }) {
           <DetailRow label="Wallet"  value={details['Wallet Address']} mono />
         </div>
       )}
-
-      {/* Bank fields */}
       {details['Account Name'] && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <DetailRow label="Account Name" value={details['Account Name']} />
@@ -173,8 +165,6 @@ function WithdrawalDetails({ note }: { note?: string }) {
           <DetailRow label="Routing"      value={details['Routing / Sort Code']} mono />
         </div>
       )}
-
-      {/* Card fields */}
       {details['Cardholder Name'] && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <DetailRow label="Cardholder" value={details['Cardholder Name']} />
@@ -182,7 +172,6 @@ function WithdrawalDetails({ note }: { note?: string }) {
           <DetailRow label="Expiry"     value={details['Expiry']} mono />
         </div>
       )}
-
       {userNote && (
         <p style={{
           fontSize: '0.65rem', color: 'var(--ink-dim)',
@@ -416,7 +405,6 @@ export default function AdminDashboard() {
     return () => clearInterval(i);
   }, [fetchTicketDetail, selectedId]);
 
-  // ── Scroll only when message count increases ──
   useEffect(() => {
     const msgs = selectedTicket?.messages ?? [];
     if (msgs.length > prevMsgCount.current) {
@@ -425,7 +413,6 @@ export default function AdminDashboard() {
     prevMsgCount.current = msgs.length;
   }, [selectedTicket?.messages]);
 
-  // ── Reset prevMsgCount when switching tickets ──
   useEffect(() => { prevMsgCount.current = 0; }, [selectedId]);
 
   // ── Support handlers ──
@@ -585,14 +572,56 @@ export default function AdminDashboard() {
         .adm-filter-btn.active-closed { background: var(--surface-hover); color: var(--ink-dim); }
 
         .adm-ticket-scroll { flex: 1; overflow-y: auto; }
-        .adm-ticket-item { width: 100%; text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); background: transparent; border-left: none; border-right: none; cursor: pointer; transition: background 0.12s; display: flex; align-items: flex-start; gap: 10px; }
+
+        /*
+          FIX 1 — ticket list items: give each row a proper min-height and
+          ensure the text column never collapses below its content.
+        */
+        .adm-ticket-item {
+          width: 100%;
+          text-align: left;
+          padding: 12px 14px;
+          border-bottom: 1px solid var(--line);
+          background: transparent;
+          border-left: 3px solid transparent;
+          border-right: none;
+          border-top: none;
+          cursor: pointer;
+          transition: background 0.12s, border-left-color 0.12s;
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          min-height: 68px;
+        }
         .adm-ticket-item:hover { background: var(--surface); }
-        .adm-ticket-item.sel { background: var(--surface-hover); border-left: 2px solid var(--accent); }
+
+        /*
+          FIX 3 — active item: solid sky-blue tint + strong left accent bar.
+          #38bdf8 is hardcoded as requested — works well in both light & dark.
+        */
+        .adm-ticket-item.sel {
+          background: rgba(56, 189, 248, 0.12);
+          border-left-color: #38bdf8;
+        }
+
+        .adm-ticket-item-body {
+          flex: 1;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 3px;
+        }
+        .adm-ticket-item-row1 {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 4px;
+        }
 
         /* ── Thread ── */
         .adm-thread { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 600px; }
         .adm-thread-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
-        .adm-thread-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+        .adm-thread-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
         .adm-thread-input { border-top: 1px solid var(--line-strong); padding: 12px 14px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
         .adm-textarea { flex: 1; resize: none; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 9px 13px; font-family: var(--sans); font-size: 0.78rem; color: var(--ink); outline: none; transition: all 0.15s; min-height: 40px; max-height: 120px; }
         .adm-textarea:focus { border-color: var(--accent); background: var(--card); }
@@ -600,12 +629,35 @@ export default function AdminDashboard() {
         .adm-send-btn:hover { opacity: 0.85; }
         .adm-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        .adm-msg-row { display: flex; margin-bottom: 8px; }
+        /*
+          FIX 2 — message bubbles: the outer column wrapper gets max-width: 75%
+          so the bubble never stretches full width. The bubble itself uses
+          width: fit-content so it only grows as wide as its text needs.
+          Removed any property that could cause mid-word wrapping.
+        */
+        .adm-msg-row { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 6px; }
         .adm-msg-row.admin { justify-content: flex-end; }
-        .adm-bubble { max-width: 75%; width: fit-content; padding: 9px 13px; border-radius: 14px; font-size: 0.78rem; line-height: 1.5; word-break: break-word; }
+        .adm-msg-col {
+          display: flex;
+          flex-direction: column;
+          max-width: 75%;
+        }
+        .adm-msg-col.admin { align-items: flex-end; }
+        .adm-msg-col.user  { align-items: flex-start; }
+        .adm-bubble {
+          width: fit-content;
+          max-width: 100%;
+          padding: 9px 13px;
+          border-radius: 14px;
+          font-size: 0.78rem;
+          line-height: 1.5;
+          word-break: break-word;
+          overflow-wrap: break-word;
+          white-space: pre-wrap;
+        }
         .adm-bubble.user  { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); border-bottom-left-radius: 4px; }
         .adm-bubble.admin { background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
-        .adm-msg-time { font-size: 0.55rem; color: var(--ink-faint); margin-top: 3px; padding: 0 4px; }
+        .adm-msg-time { font-size: 0.55rem; color: var(--ink-faint); margin-top: 3px; padding: 0 2px; }
 
         .adm-divider { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
         .adm-divider-line { flex: 1; height: 1px; background: var(--line-strong); }
@@ -697,6 +749,8 @@ export default function AdminDashboard() {
         {/* ══ Support ══ */}
         {tab === 'chat' && (
           <div className="adm-chat-grid">
+
+            {/* Conversation list */}
             <div className="adm-ticket-list">
               <div className="adm-ticket-head">
                 <span className="adm-ticket-head-title">Conversations</span>
@@ -712,6 +766,7 @@ export default function AdminDashboard() {
                   ))}
                 </div>
               </div>
+
               <div className="adm-ticket-scroll">
                 {tixErr && <p style={{ padding: '12px 16px', fontSize: '0.65rem', color: 'var(--red)' }}>{tixErr}</p>}
                 {loadingTix ? (
@@ -725,22 +780,56 @@ export default function AdminDashboard() {
                   </div>
                 ) : tickets.map(t => {
                   const last = t.messages?.[t.messages.length - 1];
+                  const isSelected = selectedId === t.id;
                   return (
-                    <button key={t.id} className={`adm-ticket-item${selectedId === t.id ? ' sel' : ''}`} onClick={() => handleSelect(t.id)}>
-                      <div className="adm-avatar" style={{ width: 32, height: 32, fontSize: '0.6rem' }}>
+                    <button
+                      key={t.id}
+                      className={`adm-ticket-item${isSelected ? ' sel' : ''}`}
+                      onClick={() => handleSelect(t.id)}
+                    >
+                      <div className="adm-avatar" style={{ width: 34, height: 34, fontSize: '0.62rem', flexShrink: 0 }}>
                         {initials(t.user?.name, t.user?.email)}
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4 }}>
-                          <p style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+
+                      {/* FIX 2: structured body div prevents name/lines from colliding */}
+                      <div className="adm-ticket-item-body">
+                        <div className="adm-ticket-item-row1">
+                          <p style={{
+                            fontSize: '0.73rem', fontWeight: 700,
+                            color: isSelected ? '#38bdf8' : 'var(--ink)',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                            flex: 1,
+                          }}>
                             {t.user?.name || t.user?.email || 'Unknown'}
                           </p>
-                          <span style={{ fontSize: '0.55rem', color: 'var(--ink-faint)', flexShrink: 0 }}>{fmtTime(t.updatedAt)}</span>
+                          <span style={{ fontSize: '0.55rem', color: 'var(--ink-faint)', flexShrink: 0, marginLeft: 6 }}>
+                            {fmtTime(t.updatedAt)}
+                          </span>
                         </div>
-                        <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>{t.subject}</p>
-                        {last && <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{last.sender === 'ADMIN' ? 'You: ' : ''}{last.body}</p>}
+                        <p style={{
+                          fontSize: '0.63rem', color: 'var(--ink-dim)',
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                          {t.subject}
+                        </p>
+                        {last && (
+                          <p style={{
+                            fontSize: '0.6rem', color: 'var(--ink-faint)',
+                            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          }}>
+                            {last.sender === 'ADMIN' ? 'You: ' : ''}{last.body}
+                          </p>
+                        )}
                       </div>
-                      <Circle size={8} style={{ fill: t.status === 'OPEN' ? 'var(--accent)' : 'var(--line-strong)', color: t.status === 'OPEN' ? 'var(--accent)' : 'var(--line-strong)', flexShrink: 0, marginTop: 4 }} />
+
+                      <Circle
+                        size={8}
+                        style={{
+                          fill: t.status === 'OPEN' ? 'var(--accent)' : 'var(--line-strong)',
+                          color: t.status === 'OPEN' ? 'var(--accent)' : 'var(--line-strong)',
+                          flexShrink: 0, marginTop: 4,
+                        }}
+                      />
                     </button>
                   );
                 })}
@@ -762,7 +851,9 @@ export default function AdminDashboard() {
                         {initials(selectedTicket.user?.name, selectedTicket.user?.email)}
                       </div>
                       <div>
-                        <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink)' }}>{selectedTicket.user?.name || selectedTicket.user?.email || 'Unknown'}</p>
+                        <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink)' }}>
+                          {selectedTicket.user?.name || selectedTicket.user?.email || 'Unknown'}
+                        </p>
                         <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)' }}>{selectedTicket.user?.email}</p>
                       </div>
                     </div>
@@ -788,7 +879,10 @@ export default function AdminDashboard() {
                         <Loader2 size={16} className="adm-spin" style={{ color: 'var(--ink-faint)' }} />
                       </div>
                     )}
-                    {detailErr && <p style={{ fontSize: '0.65rem', color: 'var(--red)', textAlign: 'center' }}>{detailErr}</p>}
+                    {detailErr && (
+                      <p style={{ fontSize: '0.65rem', color: 'var(--red)', textAlign: 'center' }}>{detailErr}</p>
+                    )}
+
                     {grouped.map(({ date, messages: dms }) => (
                       <div key={date}>
                         <div className="adm-divider">
@@ -796,20 +890,31 @@ export default function AdminDashboard() {
                           <span className="adm-divider-label">{fmtDate(dms[0].createdAt)}</span>
                           <div className="adm-divider-line" />
                         </div>
+
                         {dms.map(msg => {
                           const isAdm = msg.sender === 'ADMIN';
                           return (
                             <div key={msg.id} className={`adm-msg-row${isAdm ? ' admin' : ''}`}>
+                              {/* User avatar sits beside the bubble */}
                               {!isAdm && (
-                                <div className="adm-avatar" style={{ width: 26, height: 26, fontSize: '0.52rem', marginRight: 6, alignSelf: 'flex-end' }}>
+                                <div className="adm-avatar" style={{ width: 26, height: 26, fontSize: '0.52rem', flexShrink: 0 }}>
                                   {initials(selectedTicket.user?.name, selectedTicket.user?.email)}
                                 </div>
                               )}
-                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: isAdm ? 'flex-end' : 'flex-start' }}>
+
+                              {/*
+                                FIX 1: .adm-msg-col constrains max-width to 75%.
+                                The bubble inside uses width: fit-content so it only
+                                grows as wide as the text, preventing the narrow-squeeze
+                                that caused "He / llo" wrapping.
+                              */}
+                              <div className={`adm-msg-col ${isAdm ? 'admin' : 'user'}`}>
                                 <div className={`adm-bubble ${isAdm ? 'admin' : 'user'}`}>
-                                  <p style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{msg.body}</p>
+                                  {msg.body}
                                 </div>
-                                <span className="adm-msg-time">{isAdm ? 'You · ' : ''}{fmtTime(msg.createdAt)}</span>
+                                <span className="adm-msg-time">
+                                  {isAdm ? 'You · ' : ''}{fmtTime(msg.createdAt)}
+                                </span>
                               </div>
                             </div>
                           );
