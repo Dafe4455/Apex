@@ -105,8 +105,118 @@ function initials(name?: string | null, email?: string) {
   if (email) return email.slice(0, 2).toUpperCase();
   return '??';
 }
-function fmtMoney(cents: number, currency = 'USD') {
-  return `${currency === 'USD' ? '$' : '€'}${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+
+// ── Parse the pipe-separated note field into structured details ───────────────
+function parseWithdrawalNote(note?: string): { userNote: string | null; details: Record<string, string> } {
+  if (!note) return { userNote: null, details: {} };
+
+  // Format is either "user note — Key: Value | Key: Value" or just "Key: Value | Key: Value"
+  const parts = note.split(' — ');
+  const detailsStr = parts.length > 1 ? parts[1] : parts[0];
+  const userNote   = parts.length > 1 ? parts[0] : null;
+
+  const details: Record<string, string> = {};
+  detailsStr.split(' | ').forEach(pair => {
+    const idx = pair.indexOf(': ');
+    if (idx !== -1) {
+      const key = pair.slice(0, idx).trim();
+      const val = pair.slice(idx + 2).trim();
+      if (key && val) details[key] = val;
+    }
+  });
+
+  return { userNote, details };
+}
+
+function WithdrawalDetails({ note }: { note?: string }) {
+  const { userNote, details } = parseWithdrawalNote(note);
+  const method = details['Coin'] ? 'crypto' : details['Account Name'] ? 'bank' : details['Cardholder Name'] ? 'card' : null;
+
+  if (!Object.keys(details).length && !userNote) return null;
+
+  return (
+    <div style={{
+      marginTop: 12, padding: '12px 14px',
+      background: 'var(--surface)', borderRadius: 10,
+      border: '1px solid var(--line-strong)',
+      display: 'flex', flexDirection: 'column', gap: 8,
+    }}>
+      {method && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+          <span style={{
+            fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em',
+            textTransform: 'uppercase', fontFamily: 'var(--mono)',
+            padding: '2px 8px', borderRadius: 20,
+            background: method === 'crypto' ? 'rgba(247,147,26,0.12)' : 'rgba(99,102,241,0.12)',
+            color: method === 'crypto' ? '#f7931a' : 'var(--accent)',
+          }}>
+            {method === 'crypto' ? '₿ Crypto' : method === 'bank' ? '🏦 Bank' : '💳 Card'}
+          </span>
+        </div>
+      )}
+
+      {/* Crypto fields */}
+      {details['Coin'] && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <DetailRow label="Coin"    value={details['Coin']} />
+          <DetailRow label="Network" value={details['Network']} />
+          <DetailRow label="Wallet"  value={details['Wallet Address']} mono />
+        </div>
+      )}
+
+      {/* Bank fields */}
+      {details['Account Name'] && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <DetailRow label="Account Name" value={details['Account Name']} />
+          <DetailRow label="Bank"         value={details['Bank Name']} />
+          <DetailRow label="Account No."  value={details['Account Number']} mono />
+          <DetailRow label="Routing"      value={details['Routing / Sort Code']} mono />
+        </div>
+      )}
+
+      {/* Card fields */}
+      {details['Cardholder Name'] && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <DetailRow label="Cardholder" value={details['Cardholder Name']} />
+          <DetailRow label="Card"       value={`•••• ${details['Card Number (last 4)']}`} mono />
+          <DetailRow label="Expiry"     value={details['Expiry']} mono />
+        </div>
+      )}
+
+      {userNote && (
+        <p style={{
+          fontSize: '0.65rem', color: 'var(--ink-dim)',
+          fontStyle: 'italic', paddingTop: 4,
+          borderTop: '1px solid var(--line)',
+        }}>
+          "{userNote}"
+        </p>
+      )}
+    </div>
+  );
+}
+
+function DetailRow({ label, value, mono }: { label: string; value?: string; mono?: boolean }) {
+  if (!value) return null;
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+      <span style={{
+        fontSize: '0.55rem', fontWeight: 600, color: 'var(--ink-faint)',
+        textTransform: 'uppercase', letterSpacing: '0.08em',
+        fontFamily: 'var(--mono)', minWidth: 72, paddingTop: 1,
+        flexShrink: 0,
+      }}>
+        {label}
+      </span>
+      <span style={{
+        fontSize: mono ? '0.65rem' : '0.72rem',
+        fontFamily: mono ? 'var(--mono)' : 'var(--sans)',
+        color: 'var(--ink)', wordBreak: 'break-all', lineHeight: 1.5,
+      }}>
+        {value}
+      </span>
+    </div>
+  );
 }
 
 // ── Withdrawal actions ────────────────────────────────────────────────────────
@@ -196,8 +306,9 @@ export default function AdminDashboard() {
   const [detailErr, setDetailErr]   = useState('');
   const [reply, setReply]           = useState('');
   const [replying, setReplying]     = useState(false);
-  const bottomRef   = useRef<HTMLDivElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const bottomRef    = useRef<HTMLDivElement>(null);
+  const textareaRef  = useRef<HTMLTextAreaElement>(null);
+  const prevMsgCount = useRef<number>(0);
 
   // Users
   const [users, setUsers]         = useState<any[]>([]);
@@ -205,8 +316,8 @@ export default function AdminDashboard() {
   const [loadingUsers, setLUsers] = useState(true);
 
   // Deposits
-  const [deposits, setDeposits]   = useState<Deposit[]>([]);
-  const [loadingDep, setLDep]     = useState(true);
+  const [deposits, setDeposits] = useState<Deposit[]>([]);
+  const [loadingDep, setLDep]   = useState(true);
 
   // Withdrawals
   const [pendingV, setPendingV]   = useState<Withdrawal[]>([]);
@@ -214,15 +325,15 @@ export default function AdminDashboard() {
   const [processed, setProcessed] = useState<Withdrawal[]>([]);
   const [loadingWd, setLWd]       = useState(true);
 
-  // Settings — deposit methods
-  const [methods, setMethods]     = useState<DepositMethod[]>([]);
-  const [loadingM, setLM]         = useState(true);
-  const [showForm, setShowForm]   = useState(false);
-  const [editId, setEditId]       = useState<string | null>(null);
-  const [form, setForm]           = useState<FormState>(EMPTY_FORM);
-  const [saving, setSaving]       = useState(false);
-  const [deleting, setDeleting]   = useState<string | null>(null);
-  const [toast, setToast]         = useState<{ msg: string; ok: boolean } | null>(null);
+  // Settings
+  const [methods, setMethods]   = useState<DepositMethod[]>([]);
+  const [loadingM, setLM]       = useState(true);
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId]     = useState<string | null>(null);
+  const [form, setForm]         = useState<FormState>(EMPTY_FORM);
+  const [saving, setSaving]     = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
+  const [toast, setToast]       = useState<{ msg: string; ok: boolean } | null>(null);
 
   const selectedTicket = useMemo(() => tickets.find(t => t.id === selectedId) ?? null, [tickets, selectedId]);
   const unread         = countUnread(tickets);
@@ -231,9 +342,10 @@ export default function AdminDashboard() {
 
   // ── Fetchers ──
   const fetchTickets = useCallback(async (f = statusFilter, silent = false) => {
-    if (!silent) setLoadingTix(true); setTixErr('');
+    if (!silent) setLoadingTix(true);
+    setTixErr('');
     try {
-      const res = await fetch(`/api/admin/support/tickets?status=${f}`, { cache: 'no-store' });
+      const res  = await fetch(`/api/admin/support/tickets?status=${f}`, { cache: 'no-store' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setTixErr(data.error || 'Failed'); return; }
       setTickets(Array.isArray(data?.tickets) ? data.tickets : []);
@@ -242,9 +354,10 @@ export default function AdminDashboard() {
   }, [statusFilter]);
 
   const fetchTicketDetail = useCallback(async (id: string, silent = false) => {
-    if (!silent) setDL(true); setDetailErr('');
+    if (!silent) setDL(true);
+    setDetailErr('');
     try {
-      const res = await fetch(`/api/admin/support/tickets/${id}`, { cache: 'no-store' });
+      const res  = await fetch(`/api/admin/support/tickets/${id}`, { cache: 'no-store' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setDetailErr(data.error || 'Failed'); return; }
       const t = data?.ticket as Ticket | undefined;
@@ -256,7 +369,7 @@ export default function AdminDashboard() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/users', { cache: 'no-store' });
+      const res  = await fetch('/api/admin/users', { cache: 'no-store' });
       const data = await res.json();
       if (Array.isArray(data)) setUsers(data);
     } catch {} finally { setLUsers(false); }
@@ -292,9 +405,28 @@ export default function AdminDashboard() {
   // ── Effects ──
   useEffect(() => { fetchUsers(); fetchDeposits(); fetchWithdrawals(); fetchMethods(); }, []);
   useEffect(() => { fetchTickets(statusFilter); }, [statusFilter]);
-  useEffect(() => { const i = setInterval(() => fetchTickets(statusFilter, true), 10_000); return () => clearInterval(i); }, [fetchTickets, statusFilter]);
-  useEffect(() => { if (!selectedId) return; const i = setInterval(() => fetchTicketDetail(selectedId, true), 5_000); return () => clearInterval(i); }, [fetchTicketDetail, selectedId]);
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [selectedTicket?.messages]);
+  useEffect(() => {
+    const i = setInterval(() => fetchTickets(statusFilter, true), 10_000);
+    return () => clearInterval(i);
+  }, [fetchTickets, statusFilter]);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const i = setInterval(() => fetchTicketDetail(selectedId, true), 5_000);
+    return () => clearInterval(i);
+  }, [fetchTicketDetail, selectedId]);
+
+  // ── Scroll only when message count increases ──
+  useEffect(() => {
+    const msgs = selectedTicket?.messages ?? [];
+    if (msgs.length > prevMsgCount.current) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    prevMsgCount.current = msgs.length;
+  }, [selectedTicket?.messages]);
+
+  // ── Reset prevMsgCount when switching tickets ──
+  useEffect(() => { prevMsgCount.current = 0; }, [selectedId]);
 
   // ── Support handlers ──
   const handleSelect = (id: string) => { setSelectedId(id); fetchTicketDetail(id); };
@@ -315,7 +447,8 @@ export default function AdminDashboard() {
         body: JSON.stringify({ body: reply }),
       });
       if (!res.ok) { setDetailErr((await res.json().catch(() => ({}))).error || 'Failed'); return; }
-      setReply(''); if (textareaRef.current) textareaRef.current.style.height = 'auto';
+      setReply('');
+      if (textareaRef.current) textareaRef.current.style.height = 'auto';
       await fetchTicketDetail(selectedTicket.id);
       await fetchTickets(statusFilter);
     } catch { setDetailErr('Network error'); }
@@ -334,8 +467,12 @@ export default function AdminDashboard() {
   // ── Settings handlers ──
   const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3000); };
   const openNew   = () => { setEditId(null); setForm(EMPTY_FORM); setShowForm(true); };
-  const openEdit  = (m: DepositMethod) => { setEditId(m.id); setForm({ label: m.label, icon: m.icon, address: m.address, network: m.network ?? '', note: m.note ?? '', isActive: m.isActive, sortOrder: m.sortOrder }); setShowForm(true); };
-  const f         = (k: keyof FormState, v: string | boolean | number) => setForm(p => ({ ...p, [k]: v }));
+  const openEdit  = (m: DepositMethod) => {
+    setEditId(m.id);
+    setForm({ label: m.label, icon: m.icon, address: m.address, network: m.network ?? '', note: m.note ?? '', isActive: m.isActive, sortOrder: m.sortOrder });
+    setShowForm(true);
+  };
+  const f = (k: keyof FormState, v: string | boolean | number) => setForm(p => ({ ...p, [k]: v }));
 
   const saveMethods = async () => {
     if (!form.label.trim() || !form.address.trim()) { showToast('Label and address required', false); return; }
@@ -381,59 +518,33 @@ export default function AdminDashboard() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+        .adm { max-width: 900px; margin: 0 auto; padding: 24px 16px 40px; font-family: var(--sans); color: var(--ink); }
 
-       
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); font-family: var(--sans); }
-
-        .adm { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
-
-        /* ── header ── */
         .adm-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
-        .adm-brand { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.18em; color: var(--orange); text-transform: uppercase; margin-bottom: 4px; }
+        .adm-brand { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
         .adm-title { font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
-        .adm-bell { position: relative; width: 38px; height: 38px; border-radius: 50%; background: var(--card); border: 1px solid var(--bg-2); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .adm-bell-badge { position: absolute; top: -3px; right: -3px; width: 18px; height: 18px; background: var(--orange); border-radius: 50%; color: #fff; font-size: 0.52rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .adm-bell { position: relative; width: 38px; height: 38px; border-radius: 50%; background: var(--card); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .adm-bell-badge { position: absolute; top: -3px; right: -3px; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; color: var(--bg); font-size: 0.52rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 
-        /* ── tab grid ── */
         .adm-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
-        .adm-tab {
-          position: relative; display: flex; flex-direction: column; align-items: center;
-          justify-content: center; gap: 6px; padding: 14px 8px; border-radius: var(--r);
-          border: 1px solid var(--bg-2); background: var(--card);
-          font-family: var(--sans); font-size: 0.65rem; font-weight: 600;
-          color: var(--ink-faint); cursor: pointer; transition: all 0.15s;
-        }
-        .adm-tab:hover { border-color: var(--bg-3); color: var(--ink-dim); }
-        .adm-tab.active { border-color: transparent; color: #fff; }
-        .adm-tab-badge {
-          position: absolute; top: 8px; right: 8px;
-          min-width: 16px; height: 16px; padding: 0 4px;
-          border-radius: 8px; font-size: 0.5rem; font-weight: 700;
-          display: flex; align-items: center; justify-content: center;
-        }
-        .adm-tab.active .adm-tab-badge { background: rgba(255,255,255,0.25); color: #fff; }
-        .adm-tab:not(.active) .adm-tab-badge { background: var(--orange); color: #fff; }
+        .adm-tab { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 8px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card); font-family: var(--sans); font-size: 0.65rem; font-weight: 600; color: var(--ink-faint); cursor: pointer; transition: all 0.15s; }
+        .adm-tab:hover { border-color: var(--accent); color: var(--ink-dim); }
+        .adm-tab.active { color: #fff; border-color: transparent; }
+        .adm-tab-badge { position: absolute; top: 8px; right: 8px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; font-size: 0.5rem; font-weight: 700; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.25); color: #fff; }
+        .adm-tab:not(.active) .adm-tab-badge { background: var(--accent); color: var(--bg); }
 
-        /* ── shared card ── */
-        .adm-card {
-          background: var(--card); border: 1px solid var(--bg-2);
-          border-radius: var(--r); padding: 18px 20px; margin-bottom: 10px;
-          position: relative; overflow: hidden;
-        }
+        .adm-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 18px 20px; margin-bottom: 10px; position: relative; overflow: hidden; }
         .adm-card-stripe { position: absolute; top: 0; left: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
 
-        /* ── action components ── */
-        .adm-action-wrap { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--bg-2); margin-top: 14px; }
-        .adm-note-input { width: 100%; padding: 9px 13px; border: 1.5px solid var(--bg-2); border-radius: 10px; background: var(--bg-1); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
-        .adm-note-input:focus { border-color: var(--orange); background: #fff; }
+        .adm-action-wrap { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line-strong); margin-top: 14px; }
+        .adm-note-input { width: 100%; padding: 9px 13px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--surface); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
+        .adm-note-input:focus { border-color: var(--accent); }
         .adm-note-input::placeholder { color: var(--ink-faint); }
         .adm-action-btns { display: flex; gap: 8px; }
-        .adm-btn-approve { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: var(--green); color: #fff; border: none; font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+        .adm-btn-approve { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: var(--green); color: var(--bg); border: none; font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
         .adm-btn-approve:hover { opacity: 0.85; }
         .adm-btn-approve:disabled { opacity: 0.4; cursor: not-allowed; }
-        .adm-btn-reject { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: #fff; color: var(--red); border: 1px solid #e8c8c8; font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+        .adm-btn-reject { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: transparent; color: var(--red); border: 1px solid var(--red); font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
         .adm-btn-reject:hover { background: var(--red-l); }
         .adm-btn-reject:disabled { opacity: 0.4; cursor: not-allowed; }
         .adm-done-ok { font-size: 0.72rem; font-weight: 600; color: var(--green); text-align: center; padding: 8px 0; }
@@ -441,219 +552,114 @@ export default function AdminDashboard() {
         .adm-spin { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── user/tx row ── */
-        .adm-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--orange); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+        .adm-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--bg); font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
         .adm-avatar.green { background: var(--green); }
 
-        /* ── badge ── */
         .adm-status { font-family: var(--mono); font-size: 0.52rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; display: inline-block; }
-        .adm-status.pending  { background: var(--gold-l);  color: var(--gold); }
-        .adm-status.ok       { background: var(--green-l); color: var(--green); }
-        .adm-status.bad      { background: var(--red-l);   color: var(--red); }
-        .adm-status.grey     { background: var(--bg-2);    color: var(--ink-faint); }
+        .adm-status.pending { background: var(--gold-l); color: var(--gold); }
+        .adm-status.ok      { background: var(--green-l); color: var(--green); }
+        .adm-status.bad     { background: var(--red-l); color: var(--red); }
+        .adm-status.grey    { background: var(--surface); color: var(--ink-faint); }
 
-        /* ── section label ── */
         .adm-sec-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
         .adm-sec-label span { font-size: 0.6rem; font-weight: 700; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.1em; }
 
-        /* ── empty ── */
-        .adm-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 8px; background: var(--card); border: 1px solid var(--bg-2); border-radius: var(--r); }
+        .adm-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 8px; background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; }
         .adm-empty p { font-size: 0.72rem; color: var(--ink-faint); font-weight: 300; }
 
-        /* ── search ── */
         .adm-search-wrap { position: relative; }
         .adm-search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); }
-        .adm-search { width: 100%; padding: 8px 12px 8px 34px; border: 1.5px solid var(--bg-2); border-radius: 10px; background: var(--card); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
-        .adm-search:focus { border-color: var(--orange); background: #fff; }
+        .adm-search { width: 100%; padding: 8px 12px 8px 34px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--card); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
+        .adm-search:focus { border-color: var(--accent); }
 
-        /* ── support ── */
-        .adm-chat-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
-        @media (max-width: 640px) { .adm-chat-grid { grid-template-columns: 1fr; } .adm-tabs { grid-template-columns: repeat(3, 1fr); } }
+        /* ── Chat layout ── */
+        .adm-chat-grid { display: grid; grid-template-columns: 280px 1fr; gap: 12px; min-height: 600px; }
+        @media (max-width: 700px) { .adm-chat-grid { grid-template-columns: 1fr; } .adm-tabs { grid-template-columns: repeat(3, 1fr); } }
 
-        .adm-ticket-list { background: var(--card); border: 1px solid var(--bg-2); border-radius: var(--r); overflow: hidden; min-height: 500px; display: flex; flex-direction: column; }
-        .adm-ticket-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--bg-2); }
+        .adm-ticket-list { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+        .adm-ticket-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
         .adm-ticket-head-title { font-size: 0.75rem; font-weight: 700; color: var(--ink); }
-        .adm-filter-toggle { display: flex; gap: 2px; background: var(--bg-1); border: 1px solid var(--bg-2); border-radius: 8px; padding: 2px; }
+        .adm-filter-toggle { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 2px; }
         .adm-filter-btn { padding: 4px 10px; border-radius: 6px; border: none; background: transparent; font-family: var(--sans); font-size: 0.6rem; font-weight: 600; color: var(--ink-faint); cursor: pointer; transition: all 0.12s; }
-        .adm-filter-btn.active-open { background: var(--orange); color: #fff; }
-        .adm-filter-btn.active-closed { background: var(--bg-2); color: var(--ink-dim); }
+        .adm-filter-btn.active-open { background: var(--accent); color: var(--bg); }
+        .adm-filter-btn.active-closed { background: var(--surface-hover); color: var(--ink-dim); }
 
-        .adm-ticket-item { width: 100%; text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--bg-2); background: transparent; border-left: none; border-right: none; cursor: pointer; transition: background 0.12s; display: flex; align-items: flex-start; gap: 10px; }
-        .adm-ticket-item:hover { background: var(--bg-1); }
-        .adm-ticket-item.sel { background: var(--orange-l); }
+        .adm-ticket-scroll { flex: 1; overflow-y: auto; }
+        .adm-ticket-item { width: 100%; text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); background: transparent; border-left: none; border-right: none; cursor: pointer; transition: background 0.12s; display: flex; align-items: flex-start; gap: 10px; }
+        .adm-ticket-item:hover { background: var(--surface); }
+        .adm-ticket-item.sel { background: var(--surface-hover); border-left: 2px solid var(--accent); }
 
-        .adm-thread { background: var(--card); border: 1px solid var(--bg-2); border-radius: var(--r); overflow: hidden; min-height: 500px; display: flex; flex-direction: column; }
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+        /* ── Thread ── */
+        .adm-thread { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 600px; }
+        .adm-thread-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
+        .adm-thread-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+        .adm-thread-input { border-top: 1px solid var(--line-strong); padding: 12px 14px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
+        .adm-textarea { flex: 1; resize: none; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 9px 13px; font-family: var(--sans); font-size: 0.78rem; color: var(--ink); outline: none; transition: all 0.15s; min-height: 40px; max-height: 120px; }
+        .adm-textarea:focus { border-color: var(--accent); background: var(--card); }
+        .adm-send-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); color: var(--bg); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; }
+        .adm-send-btn:hover { opacity: 0.85; }
+        .adm-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); font-family: var(--sans); }
+        .adm-msg-row { display: flex; margin-bottom: 8px; }
+        .adm-msg-row.admin { justify-content: flex-end; }
+        .adm-bubble { max-width: 75%; width: fit-content; padding: 9px 13px; border-radius: 14px; font-size: 0.78rem; line-height: 1.5; word-break: break-word; }
+        .adm-bubble.user  { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); border-bottom-left-radius: 4px; }
+        .adm-bubble.admin { background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
+        .adm-msg-time { font-size: 0.55rem; color: var(--ink-faint); margin-top: 3px; padding: 0 4px; }
 
-.adm { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+        .adm-divider { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+        .adm-divider-line { flex: 1; height: 1px; background: var(--line-strong); }
+        .adm-divider-label { font-size: 0.58rem; color: var(--ink-faint); font-weight: 500; }
 
-/* ── header ── */
-.adm-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
-.adm-brand { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
-.adm-title { font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
-.adm-bell { position: relative; width: 38px; height: 38px; border-radius: 50%; background: var(--card); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-.adm-bell-badge { position: absolute; top: -3px; right: -3px; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; color: var(--bg); font-size: 0.52rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .adm-status-btn { display: flex; align-items: center; gap: 5px; font-size: 0.62rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--line-strong); background: transparent; color: var(--ink-faint); cursor: pointer; transition: all 0.15s; }
+        .adm-status-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-/* ── tab grid ── */
-.adm-tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px; }
-.adm-tab {
-  position: relative; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 6px; padding: 14px 8px; border-radius: 14px;
-  border: 1px solid var(--line-strong); background: var(--card);
-  font-family: var(--sans); font-size: 0.65rem; font-weight: 600;
-  color: var(--ink-faint); cursor: pointer; transition: all 0.15s;
-}
-.adm-tab:hover { border-color: var(--accent); color: var(--ink-dim); }
-.adm-tab.active { border-color: var(--accent); background: var(--surface); color: var(--accent); }
-.adm-tab-badge {
-  position: absolute; top: 8px; right: 8px;
-  min-width: 16px; height: 16px; padding: 0 4px;
-  border-radius: 8px; font-size: 0.5rem; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--accent); color: var(--bg);
-}
+        /* ── Settings ── */
+        .adm-method-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; position: relative; overflow: hidden; }
+        .adm-method-ico { width: 42px; height: 42px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .adm-method-addr { margin-top: 6px; padding: 7px 10px; background: var(--surface); border-radius: 7px; font-family: var(--mono); font-size: 0.6rem; color: var(--ink-dim); word-break: break-all; line-height: 1.6; }
+        .adm-icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; transition: all 0.12s; color: var(--ink-dim); flex-shrink: 0; }
+        .adm-icon-btn:hover { background: var(--surface-hover); color: var(--ink); }
+        .adm-icon-btn.danger:hover { background: var(--red-l); border-color: var(--red); color: var(--red); }
 
-/* ── shared card ── */
-.adm-card {
-  background: var(--card); border: 1px solid var(--line-strong);
-  border-radius: 14px; padding: 18px 20px; margin-bottom: 10px;
-  position: relative; overflow: hidden;
-}
-.adm-card-stripe { position: absolute; top: 0; left: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
+        .adm-toggle { position: relative; width: 36px; height: 20px; cursor: pointer; flex-shrink: 0; }
+        .adm-toggle input { opacity: 0; width: 0; height: 0; }
+        .adm-toggle-track { position: absolute; inset: 0; background: var(--surface-hover); border-radius: 10px; transition: background 0.2s; }
+        .adm-toggle-track::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: var(--ink-faint); border-radius: 50%; transition: transform 0.2s; }
+        .adm-toggle input:checked + .adm-toggle-track { background: var(--green); }
+        .adm-toggle input:checked + .adm-toggle-track::before { transform: translateX(16px); background: var(--bg); }
 
-/* ── action components ── */
-.adm-action-wrap { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line-strong); margin-top: 14px; }
-.adm-note-input { width: 100%; padding: 9px 13px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--surface); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
-.adm-note-input:focus { border-color: var(--accent); background: var(--card); }
-.adm-note-input::placeholder { color: var(--ink-faint); }
-.adm-action-btns { display: flex; gap: 8px; }
-.adm-btn-approve { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: var(--green); color: var(--bg); border: none; font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-.adm-btn-approve:hover { opacity: 0.85; }
-.adm-btn-approve:disabled { opacity: 0.4; cursor: not-allowed; }
-.adm-btn-reject { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: transparent; color: var(--red); border: 1px solid var(--red); font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-.adm-btn-reject:hover { background: var(--red-l); }
-.adm-btn-reject:disabled { opacity: 0.4; cursor: not-allowed; }
-.adm-done-ok { font-size: 0.72rem; font-weight: 600; color: var(--green); text-align: center; padding: 8px 0; }
-.adm-err { font-size: 0.65rem; color: var(--red); }
-.adm-spin { animation: spin 0.7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+        .adm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; backdrop-filter: blur(2px); animation: fadein 0.2s; }
+        @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+        .adm-drawer { position: fixed; bottom: 0; left: 0; right: 0; max-width: 560px; margin: 0 auto; background: var(--card); border-radius: 22px 22px 0 0; border-top: 1px solid var(--line-strong); padding: 0 22px 44px; z-index: 201; max-height: 92vh; overflow-y: auto; animation: slideup 0.3s cubic-bezier(0.32,0.72,0,1); }
+        @keyframes slideup { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .adm-drawer-handle { width: 36px; height: 4px; background: var(--line-strong); border-radius: 2px; margin: 12px auto 20px; }
+        .adm-drawer-title { font-size: 1rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 20px; }
 
-/* ── avatar ── */
-.adm-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--bg); font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
-.adm-avatar.green { background: var(--green); }
+        .adm-field { margin-bottom: 14px; }
+        .adm-field-label { display: block; font-size: 0.58rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+        .adm-input { width: 100%; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 10px 13px; font-family: var(--sans); font-size: 0.8rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
+        .adm-input:focus { border-color: var(--accent); }
+        .adm-input::placeholder { color: var(--ink-faint); }
+        textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-family: var(--mono); font-size: 0.7rem; }
+        .adm-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .adm-icon-row { display: flex; gap: 6px; flex-wrap: wrap; }
+        .adm-icon-pick { width: 36px; height: 36px; border-radius: 8px; background: var(--surface); border: 1.5px solid var(--line-strong); display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; transition: all 0.12s; }
+        .adm-icon-pick.sel { border-color: var(--accent); background: var(--surface-hover); }
+        .adm-checkbox-row { display: flex; align-items: center; gap: 10px; padding: 11px 13px; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; cursor: pointer; }
+        .adm-checkbox-row input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
+        .adm-drawer-footer { display: flex; gap: 10px; margin-top: 20px; }
+        .adm-btn-save { flex: 1; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; padding: 12px; font-family: var(--sans); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+        .adm-btn-save:hover { opacity: 0.88; }
+        .adm-btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
+        .adm-btn-cancel { background: var(--surface); color: var(--ink-dim); border: 1px solid var(--line-strong); border-radius: 10px; padding: 12px 18px; font-family: var(--sans); font-size: 0.78rem; font-weight: 600; cursor: pointer; }
 
-/* ── badge ── */
-.adm-status { font-family: var(--mono); font-size: 0.52rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; display: inline-block; }
-.adm-status.pending  { background: var(--gold-l);  color: var(--gold); }
-.adm-status.ok       { background: var(--green-l); color: var(--green); }
-.adm-status.bad      { background: var(--red-l);   color: var(--red); }
-.adm-status.grey     { background: var(--surface);  color: var(--ink-faint); }
+        .adm-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--line-strong); color: var(--ink); padding: 9px 18px; border-radius: 20px; z-index: 300; font-size: 0.72rem; font-weight: 500; white-space: nowrap; animation: fadein 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .adm-toast.ok  { background: var(--green-l); color: var(--green); border-color: var(--green); }
+        .adm-toast.err { background: var(--red-l); color: var(--red); border-color: var(--red); }
 
-/* ── section label ── */
-.adm-sec-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-.adm-sec-label span { font-size: 0.6rem; font-weight: 700; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.1em; }
-
-/* ── empty ── */
-.adm-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 8px; background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; }
-.adm-empty p { font-size: 0.72rem; color: var(--ink-faint); font-weight: 300; }
-
-/* ── search ── */
-.adm-search-wrap { position: relative; }
-.adm-search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); }
-.adm-search { width: 100%; padding: 8px 12px 8px 34px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--card); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
-.adm-search:focus { border-color: var(--accent); background: var(--surface); }
-
-/* ── support ── */
-.adm-chat-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 12px; }
-@media (max-width: 640px) { .adm-chat-grid { grid-template-columns: 1fr; } .adm-tabs { grid-template-columns: repeat(3, 1fr); } }
-
-.adm-ticket-list { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; min-height: 500px; display: flex; flex-direction: column; }
-.adm-ticket-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); }
-.adm-ticket-head-title { font-size: 0.75rem; font-weight: 700; color: var(--ink); }
-.adm-filter-toggle { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 2px; }
-.adm-filter-btn { padding: 4px 10px; border-radius: 6px; border: none; background: transparent; font-family: var(--sans); font-size: 0.6rem; font-weight: 600; color: var(--ink-faint); cursor: pointer; transition: all 0.12s; }
-.adm-filter-btn.active-open { background: var(--accent); color: var(--bg); }
-.adm-filter-btn.active-closed { background: var(--surface-hover); color: var(--ink-dim); }
-
-.adm-ticket-item { width: 100%; text-align: left; padding: 13px 16px; border-bottom: 1px solid var(--line); background: transparent; border-left: none; border-right: none; cursor: pointer; transition: background 0.12s; display: flex; align-items: flex-start; gap: 10px; }
-.adm-ticket-item:hover { background: var(--surface); }
-.adm-ticket-item.sel { background: var(--surface-hover); border-left: 2px solid var(--accent); }
-
-.adm-thread { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; min-height: 500px; display: flex; flex-direction: column; }
-.adm-thread-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); }
-.adm-thread-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.adm-thread-input { border-top: 1px solid var(--line-strong); padding: 12px 14px; display: flex; gap: 10px; align-items: flex-end; }
-.adm-textarea { flex: 1; resize: none; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 9px 13px; font-family: var(--sans); font-size: 0.78rem; color: var(--ink); outline: none; transition: all 0.15s; min-height: 40px; max-height: 120px; }
-.adm-textarea:focus { border-color: var(--accent); background: var(--card); }
-.adm-send-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); color: var(--bg); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; }
-.adm-send-btn:hover { opacity: 0.85; }
-.adm-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-.adm-msg-row { display: flex; }
-.adm-msg-row.admin { justify-content: flex-end; }
-.adm-bubble { max-width: 72%; width: fit-content; min-width: 48px; padding: 9px 13px; border-radius: 14px; font-size: 0.75rem; line-height: 1.5; word-break: break-word; }
-.adm-bubble.user  { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); border-bottom-left-radius: 4px; }
-.adm-bubble.admin { background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
-.adm-msg-time { font-size: 0.55rem; color: var(--ink-faint); margin-top: 3px; padding: 0 4px; }
-
-.adm-divider { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
-.adm-divider-line { flex: 1; height: 1px; background: var(--line-strong); }
-.adm-divider-label { font-size: 0.58rem; color: var(--ink-faint); font-weight: 500; }
-
-.adm-status-btn { display: flex; align-items: center; gap: 5px; font-size: 0.62rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--line-strong); background: transparent; color: var(--ink-faint); cursor: pointer; transition: all 0.15s; }
-.adm-status-btn:hover { border-color: var(--accent); color: var(--accent); }
-
-/* ── settings ── */
-.adm-method-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; position: relative; overflow: hidden; }
-.adm-method-ico { width: 42px; height: 42px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-.adm-method-addr { margin-top: 6px; padding: 7px 10px; background: var(--surface); border-radius: 7px; font-family: var(--mono); font-size: 0.6rem; color: var(--ink-dim); word-break: break-all; line-height: 1.6; }
-.adm-icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; transition: all 0.12s; color: var(--ink-dim); flex-shrink: 0; }
-.adm-icon-btn:hover { background: var(--surface-hover); color: var(--ink); }
-.adm-icon-btn.danger:hover { background: var(--red-l); border-color: var(--red); color: var(--red); }
-
-.adm-toggle { position: relative; width: 36px; height: 20px; cursor: pointer; flex-shrink: 0; }
-.adm-toggle input { opacity: 0; width: 0; height: 0; }
-.adm-toggle-track { position: absolute; inset: 0; background: var(--surface-hover); border-radius: 10px; transition: background 0.2s; }
-.adm-toggle-track::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: var(--ink-faint); border-radius: 50%; transition: transform 0.2s; }
-.adm-toggle input:checked + .adm-toggle-track { background: var(--green); }
-.adm-toggle input:checked + .adm-toggle-track::before { transform: translateX(16px); background: var(--bg); }
-
-/* ── drawer ── */
-.adm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; backdrop-filter: blur(2px); animation: fadein 0.2s; }
-@keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-.adm-drawer { position: fixed; bottom: 0; left: 0; right: 0; max-width: 560px; margin: 0 auto; background: var(--bg-3); border-radius: 22px 22px 0 0; border-top: 1px solid var(--line-strong); padding: 0 22px 44px; z-index: 201; max-height: 92vh; overflow-y: auto; animation: slideup 0.3s cubic-bezier(0.32,0.72,0,1); }
-@keyframes slideup { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.adm-drawer-handle { width: 36px; height: 4px; background: var(--line-strong); border-radius: 2px; margin: 12px auto 20px; }
-.adm-drawer-title { font-size: 1rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 20px; }
-
-.adm-field { margin-bottom: 14px; }
-.adm-field-label { display: block; font-size: 0.58rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
-.adm-input { width: 100%; background: var(--card); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 10px 13px; font-family: var(--sans); font-size: 0.8rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
-.adm-input:focus { border-color: var(--accent); }
-.adm-input::placeholder { color: var(--ink-faint); }
-textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-family: var(--mono); font-size: 0.7rem; }
-.adm-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.adm-icon-row { display: flex; gap: 6px; flex-wrap: wrap; }
-.adm-icon-pick { width: 36px; height: 36px; border-radius: 8px; background: var(--card); border: 1.5px solid var(--line-strong); display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; transition: all 0.12s; }
-.adm-icon-pick.sel { border-color: var(--accent); background: var(--surface); }
-.adm-checkbox-row { display: flex; align-items: center; gap: 10px; padding: 11px 13px; background: var(--card); border: 1.5px solid var(--line-strong); border-radius: 10px; cursor: pointer; }
-.adm-checkbox-row input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
-.adm-drawer-footer { display: flex; gap: 10px; margin-top: 20px; }
-.adm-btn-save { flex: 1; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; padding: 12px; font-family: var(--sans); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
-.adm-btn-save:hover { opacity: 0.88; }
-.adm-btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
-.adm-btn-cancel { background: var(--surface); color: var(--ink-dim); border: 1px solid var(--line-strong); border-radius: 10px; padding: 12px 18px; font-family: var(--sans); font-size: 0.78rem; font-weight: 600; cursor: pointer; }
-
-/* ── toast ── */
-.adm-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--line-strong); color: var(--ink); padding: 9px 18px; border-radius: 20px; z-index: 300; font-size: 0.72rem; font-weight: 500; white-space: nowrap; animation: fadein 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-.adm-toast.ok  { background: var(--green-l); color: var(--green); border-color: var(--green); }
-.adm-toast.err { background: var(--red-l); color: var(--red); border-color: var(--red); }
-
-.adm-add-btn { display: flex; align-items: center; gap: 6px; padding: 9px 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; font-family: var(--sans); font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
-.adm-add-btn:hover { opacity: 0.88; }
+        .adm-add-btn { display: flex; align-items: center; gap: 6px; padding: 9px 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; font-family: var(--sans); font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+        .adm-add-btn:hover { opacity: 0.88; }
       `}</style>
 
       <div className="adm">
@@ -691,7 +697,6 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
         {/* ══ Support ══ */}
         {tab === 'chat' && (
           <div className="adm-chat-grid">
-            {/* Ticket list */}
             <div className="adm-ticket-list">
               <div className="adm-ticket-head">
                 <span className="adm-ticket-head-title">Conversations</span>
@@ -707,7 +712,7 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                   ))}
                 </div>
               </div>
-              <div style={{ flex: 1, overflowY: 'auto' }}>
+              <div className="adm-ticket-scroll">
                 {tixErr && <p style={{ padding: '12px 16px', fontSize: '0.65rem', color: 'var(--red)' }}>{tixErr}</p>}
                 {loadingTix ? (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', gap: 8, color: 'var(--ink-faint)' }}>
@@ -733,9 +738,9 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                           <span style={{ fontSize: '0.55rem', color: 'var(--ink-faint)', flexShrink: 0 }}>{fmtTime(t.updatedAt)}</span>
                         </div>
                         <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>{t.subject}</p>
-                        {last && <p style={{ fontSize: '0.6rem', color: 'var(--bg-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{last.sender === 'ADMIN' ? 'You: ' : ''}{last.body}</p>}
+                        {last && <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>{last.sender === 'ADMIN' ? 'You: ' : ''}{last.body}</p>}
                       </div>
-                      <Circle size={8} style={{ fill: t.status === 'OPEN' ? 'var(--orange)' : 'var(--bg-3)', color: t.status === 'OPEN' ? 'var(--orange)' : 'var(--bg-3)', flexShrink: 0, marginTop: 4 }} />
+                      <Circle size={8} style={{ fill: t.status === 'OPEN' ? 'var(--accent)' : 'var(--line-strong)', color: t.status === 'OPEN' ? 'var(--accent)' : 'var(--line-strong)', flexShrink: 0, marginTop: 4 }} />
                     </button>
                   );
                 })}
@@ -778,7 +783,11 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                   </div>
 
                   <div className="adm-thread-msgs">
-                    {detailLoading && <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}><Loader2 size={16} className="adm-spin" style={{ color: 'var(--ink-faint)' }} /></div>}
+                    {detailLoading && (
+                      <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}>
+                        <Loader2 size={16} className="adm-spin" style={{ color: 'var(--ink-faint)' }} />
+                      </div>
+                    )}
                     {detailErr && <p style={{ fontSize: '0.65rem', color: 'var(--red)', textAlign: 'center' }}>{detailErr}</p>}
                     {grouped.map(({ date, messages: dms }) => (
                       <div key={date}>
@@ -790,7 +799,7 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                         {dms.map(msg => {
                           const isAdm = msg.sender === 'ADMIN';
                           return (
-                            <div key={msg.id} className={`adm-msg-row${isAdm ? ' admin' : ''}`} style={{ marginBottom: 8 }}>
+                            <div key={msg.id} className={`adm-msg-row${isAdm ? ' admin' : ''}`}>
                               {!isAdm && (
                                 <div className="adm-avatar" style={{ width: 26, height: 26, fontSize: '0.52rem', marginRight: 6, alignSelf: 'flex-end' }}>
                                   {initials(selectedTicket.user?.name, selectedTicket.user?.email)}
@@ -840,17 +849,19 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                 <input className="adm-search" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} />
               </div>
             </div>
-            <div style={{ background: 'var(--card)', border: '1px solid var(--bg-2)', borderRadius: 'var(--r)', overflow: 'hidden' }}>
+            <div style={{ background: 'var(--card)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
               {loadingUsers ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: 32, gap: 8, color: 'var(--ink-faint)' }}>
                   <Loader2 size={16} className="adm-spin" /> Loading…
                 </div>
-              ) : users.filter(u => u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
+              ) : users
+                .filter(u => u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase()))
+                .length === 0 ? (
                 <p style={{ padding: '32px', textAlign: 'center', fontSize: '0.72rem', color: 'var(--ink-faint)' }}>No users found</p>
               ) : users
                 .filter(u => u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase()))
                 .map((u: any) => (
-                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px', borderBottom: '1px solid var(--bg-2)' }}>
+                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px', borderBottom: '1px solid var(--line-strong)' }}>
                     <div className="adm-avatar">{u.name ? u.name[0].toUpperCase() : 'U'}</div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || 'Unnamed'}</p>
@@ -861,7 +872,7 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                         ${(u.portfolioBalance || 0).toLocaleString()}
                       </p>
                       <Link href={`/dashboard/admin/users/${u.id}`}
-                        style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', background: 'var(--ink-dim)', color: 'var(--card)', borderRadius: 6, fontSize: '0.6rem', fontWeight: 600, textDecoration: 'none', border: '1px solid var(--orange-m)' }}>
+                        style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', background: 'var(--surface)', color: 'var(--ink-dim)', borderRadius: 6, fontSize: '0.6rem', fontWeight: 600, textDecoration: 'none', border: '1px solid var(--line-strong)' }}>
                         <Edit size={10} /> Edit
                       </Link>
                     </div>
@@ -886,13 +897,13 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                 {pendingDeps.length > 0 && (
                   <div>
                     <div className="adm-sec-label">
-                      <Clock size={13} style={{ color: 'var(--orange)' }} />
+                      <Clock size={13} style={{ color: 'var(--gold)' }} />
                       <span>Awaiting Confirmation</span>
                       <span className="adm-status pending">{pendingDeps.length}</span>
                     </div>
                     {pendingDeps.map(d => (
                       <div key={d.id} className="adm-card">
-                        <div className="adm-card-stripe" style={{ background: 'var(--orange)' }} />
+                        <div className="adm-card-stripe" style={{ background: 'var(--gold)' }} />
                         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                             <div className="adm-avatar">{(d.user?.name || d.user?.email || '?')[0].toUpperCase()}</div>
@@ -906,7 +917,7 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                             </div>
                           </div>
                           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ink)' }}>${(d.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                            <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ink)' }}>${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                             <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)' }}>{d.currency || 'USD'}</p>
                           </div>
                         </div>
@@ -918,13 +929,12 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                     ))}
                   </div>
                 )}
-
                 {deposits.filter(d => d.status !== 'PENDING').length > 0 && (
                   <div>
                     <div className="adm-sec-label"><span>Processed</span></div>
-                    <div style={{ background: 'var(--card)', border: '1px solid var(--bg-2)', borderRadius: 'var(--r)', overflow: 'hidden' }}>
+                    <div style={{ background: 'var(--card)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
                       {deposits.filter(d => d.status !== 'PENDING').slice(0, 20).map(d => (
-                        <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--bg-2)' }}>
+                        <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line-strong)' }}>
                           <div className={`adm-avatar${d.status === 'COMPLETED' ? ' green' : ''}`} style={{ width: 32, height: 32, fontSize: '0.6rem' }}>
                             {d.status === 'COMPLETED' ? <CheckCircle size={14} /> : <XCircle size={14} />}
                           </div>
@@ -933,7 +943,7 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                             <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)' }}>{new Date(d.updatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                           </div>
                           <div style={{ textAlign: 'right' }}>
-                            <p style={{ fontFamily: 'var(--mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink)' }}>${(d.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
+                            <p style={{ fontFamily: 'var(--mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink)' }}>${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                             <span className={`adm-status ${d.status === 'COMPLETED' ? 'ok' : 'bad'}`}>{d.status}</span>
                           </div>
                         </div>
@@ -968,9 +978,12 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                           <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', marginTop: 2 }}>{new Date(w.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                         </div>
                       </div>
-                      <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ink)', flexShrink: 0 }}>{fmtMoney(w.amount, w.currency)}</p>
+                      <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ink)', flexShrink: 0 }}>${w.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                     </div>
-                    {w.note && <p style={{ marginTop: 10, padding: '7px 12px', background: 'var(--bg-1)', borderRadius: 8, fontSize: '0.65rem', color: 'var(--ink-dim)', fontStyle: 'italic' }}>"{w.note}"</p>}
+                    <WithdrawalDetails note={w.note} />
+                    {w.adminNote && (
+                      <p style={{ marginTop: 8, fontSize: '0.65rem', color: 'var(--ink-faint)', fontStyle: 'italic' }}>Admin note: "{w.adminNote}"</p>
+                    )}
                     <WithdrawalActions id={w.id} onDone={fetchWithdrawals} />
                   </div>
                 ))}
@@ -998,8 +1011,9 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                         <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)' }}>{w.user?.email}</p>
                       </div>
                     </div>
-                    <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ink)', flexShrink: 0 }}>{fmtMoney(w.amount, w.currency)}</p>
+                    <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ink)', flexShrink: 0 }}>${w.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                   </div>
+                  <WithdrawalDetails note={w.note} />
                   <WithdrawalActions id={w.id} onDone={fetchWithdrawals} />
                 </div>
               ))}
@@ -1008,10 +1022,10 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
             {processed.length > 0 && (
               <div>
                 <div className="adm-sec-label"><span>Recently Processed</span></div>
-                <div style={{ background: 'var(--card)', border: '1px solid var(--bg-2)', borderRadius: 'var(--r)', overflow: 'hidden' }}>
+                <div style={{ background: 'var(--card)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
                   {processed.slice(0, 20).map(w => (
-                    <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--bg-2)' }}>
-                      <div className={`adm-avatar${w.status === 'APPROVED' ? ' green' : ''}`} style={{ width: 32, height: 32, fontSize: '0.6rem', background: w.status === 'APPROVED' ? 'var(--green)' : 'var(--red)' }}>
+                    <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line-strong)' }}>
+                      <div className="adm-avatar" style={{ width: 32, height: 32, fontSize: '0.6rem', background: w.status === 'APPROVED' ? 'var(--green)' : 'var(--red)' }}>
                         {w.status === 'APPROVED' ? <CheckCircle size={14} /> : <XCircle size={14} />}
                       </div>
                       <div style={{ flex: 1 }}>
@@ -1020,7 +1034,7 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                         {w.adminNote && <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', fontStyle: 'italic' }}>"{w.adminNote}"</p>}
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <p style={{ fontFamily: 'var(--mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink)' }}>{fmtMoney(w.amount, w.currency)}</p>
+                        <p style={{ fontFamily: 'var(--mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink)' }}>${w.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
                         <span className={`adm-status ${w.status === 'APPROVED' ? 'ok' : 'bad'}`}>{w.status}</span>
                       </div>
                     </div>
@@ -1039,21 +1053,19 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
                 <p style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--ink)' }}>Deposit Methods</p>
                 <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)', marginTop: 2 }}>Addresses shown to users on the deposit sheet</p>
               </div>
-              <button className="adm-add-btn" onClick={openNew}>
-                <Plus size={12} /> Add Method
-              </button>
+              <button className="adm-add-btn" onClick={openNew}><Plus size={12} /> Add Method</button>
             </div>
 
             {loadingM ? (
               <div className="adm-empty"><Loader2 size={18} className="adm-spin" style={{ color: 'var(--ink-faint)' }} /></div>
             ) : methods.length === 0 ? (
-              <div className="adm-empty" style={{ border: '1.5px dashed var(--bg-3)' }}>
+              <div className="adm-empty" style={{ border: '1.5px dashed var(--line-strong)' }}>
                 <Settings size={24} style={{ opacity: 0.2 }} />
                 <p>No deposit methods yet — add one above</p>
               </div>
             ) : methods.map(m => (
               <div key={m.id} className="adm-method-card">
-                <div className="adm-card-stripe" style={{ background: m.isActive ? 'var(--orange)' : 'var(--bg-3)' }} />
+                <div className="adm-card-stripe" style={{ background: m.isActive ? 'var(--accent)' : 'var(--line-strong)' }} />
                 <div className="adm-method-ico">{m.icon}</div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
@@ -1078,7 +1090,6 @@ textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-
             ))}
           </div>
         )}
-
       </div>
 
       {/* ── Add/Edit Drawer ── */}
