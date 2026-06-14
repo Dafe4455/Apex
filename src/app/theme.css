@@ -42,42 +42,39 @@
   --sans: 'DM Sans', system-ui, sans-serif;
   --mono: 'DM Mono', 'SF Mono', monospace;
 }
-
 [data-theme="light"] {
-  /* Background system */
-  --bg: #f0f7f7;        
-  --bg-2: #e5eff0;      
-  --bg-3: #d6e5e6;      
+  /* 
+    CRITICAL FIX: The lighter variation of your card hue for the background.
+    This creates the subtle contrast needed to let cards stand out.
+  */
+  --bg: #f0f7f7;        /* Ultra-light, misty ice-blue background */
+  --bg-2: #e5eff0;      /* Slightly deeper mist for structural sections */
+  --bg-3: #d6e5e6;      /* Accent backgrounds */
   
-  /* Cards */
-  --card: #f9fdfd;      
+  /* The Cards: A bright, clean ice-white variant that pops over --bg */
+  --card: #f9fdfd;      /* Crisp, glowing near-white with a hint of your mint/blue */
   
-  /* Typography */
-  --ink: #0b1e29;       
-  --ink-2: #1e3542;     
-  --ink-dim: #485f6c;   
-  --ink-faint: #678190; 
+  /* High contrast text hierarchy optimized for this icy palette */
+  --ink: #0b1e29;       /* Deep obsidian blue-black for sharp text readability */
+  --ink-2: #1e3542;     /* Primary labels (BTC, SOL, TSLA) */
+  --ink-dim: #485f6c;   /* Darkened subtext (Qty:, Entry:) so it doesn't wash out */
+  --ink-faint: #678190; /* Secondary text, percentages, and labels */
   
   /* Brand accents */
   --accent: #0ea5e9;
   --accent-l: var(--card);
   
-  /* Semantic tokens */
-  --green: #116631;     
-  --green-l: #dffbe7;   
-  --red: #9f1239;       
-  --red-l: #ffe4e6;     
+  /* Semantic UI Colors optimized to pop clearly on the light ice background */
+  --green: #116631;     /* Rich emerald green for profit values */
+  --green-l: #dffbe7;   /* Soft background for green pill badges */
+  --red: #9f1239;       /* Rich crimson red for negative metrics */
+  --red-l: #ffe4e6;     /* Soft background for red pill badges */
   --gold: #9a3412;
   --gold-l: #fef3c7;
-
-  /* CRITICAL FIX: Light mode text channel identifier (0b1e29 -> 11, 30, 41)
-     to allow natural dynamic opacity overlays for light theme surfaces.
-  */
-  --dark-rgb: 11, 30, 41;
 
   /* Borders and overlays that match the cool palette tone */
   --line: #FEFFFB;
   --line-strong: #D1E7EF;
-  --surface: rgba(var(--dark-rgb), 0.04);       /* 4% alpha overlay using the core dark ink channels */
+  --surface: rgba(11, 30, 41, 0.04);
   --surface-hover: #f0f7f7;
 }
