@@ -12,15 +12,16 @@
   --bg-3: #0f2535;
   --card: #050505;
   --ink: #f0f8ff;
-  --ink: #e4e4e7;       /* Primary text: A soft, matte platinum grey. Sharp but zero glare. */
-  --ink-2: #a1a1aa;     /* Labels & secondary text: A balanced, sleek silver-grey. */
-  --ink-dim: #71717a;   /* Input headers (ACCOUNT NAME): Muted zinc that sits back quietly. */
-  --ink-faint: #52525b; /* Placeholders/Subtext: Low-contrast dark silver. No shining effect. */
-  
-  /* Retain your brand accent and semantic elements */
+  --ink-2: #d6ecf8;
+  --ink-dim: #8dbdd8;
+  --ink-faint: #a4c5db;
   --accent: #38bdf8;
+  --accent-l: var(--card);
   --green: #4ade80;
+  --green-l: #0d3320;
   --red: #f87171;
+  --red-l: #2a0d0d;
+  --gold-l: #2a2200;
   --gold: #fbbf24;
 
   /* CRITICAL FIX: Raw RGB channels for pure white (255, 255, 255).
