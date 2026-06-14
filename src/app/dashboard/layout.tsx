@@ -85,7 +85,6 @@ const ChevronRight = () => (
   </svg>
 );
 
-// Sun icon for light mode
 const SunIcon = () => (
   <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
     <circle cx="10" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.4" />
@@ -93,7 +92,6 @@ const SunIcon = () => (
   </svg>
 );
 
-// Moon icon for dark mode
 const MoonIcon = () => (
   <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
     <path d="M17 12.3A7 7 0 0 1 7.7 3a7 7 0 1 0 9.3 9.3z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -105,7 +103,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [moreOpen, setMoreOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
-  // On mount: read saved preference or system preference
   useEffect(() => {
     const saved = localStorage.getItem('apex-theme') as 'dark' | 'light' | null;
     if (saved) {
@@ -115,7 +112,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setTheme('light');
       document.documentElement.setAttribute('data-theme', 'light');
     }
-    // dark is already default in :root, no attribute needed
   }, []);
 
   const toggleTheme = () => {
@@ -131,6 +127,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const walletActive = pathname === '/dashboard/assets';
   const moreActive = ['/dashboard/support', '/dashboard/settings', '/dashboard/notifications', '/dashboard/kyc'].includes(pathname);
+  const isAdmin = pathname.startsWith('/dashboard/admin');
 
   return (
     <>
@@ -138,14 +135,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Manrope:wght@300;400;500;600&display=swap');
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        /*
-          NO :root block here — all tokens come from the shared theme file.
-          This layout only consumes: --bg, --bg-2, --bg-3, --card,
-          --ink, --ink-2, --ink-dim, --ink-faint, --accent, --accent-l,
-          --red, --line, --line-strong, --surface, --surface-hover,
-          --sans, --mono
-        */
 
         html, body {
           background: var(--bg) !important;
@@ -317,7 +306,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         .db-topbar-sep { color: var(--ink-faint); }
 
-        /* Topbar theme toggle (desktop) */
         .db-topbar-theme {
           display: flex;
           align-items: center;
@@ -335,7 +323,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           color: var(--ink);
         }
 
-        /* ── CONTENT (desktop) ── */
+        /* ── CONTENT ── */
         .db-content {
           flex: 1;
           padding: 28px 32px;
@@ -372,7 +360,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         .db-mobile-logo span { color: var(--accent); }
 
-        /* Mobile theme toggle */
         .db-mobile-theme {
           display: flex;
           align-items: center;
@@ -486,7 +473,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           border-bottom: 1px solid var(--line);
         }
 
-        /* ── SHEET ROWS ── */
         .db-sheet-rows { padding: 4px 0; }
         .db-sheet-row {
           display: flex;
@@ -594,7 +580,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </nav>
           <GoogleTranslate />
           <div className="db-sidebar-footer">
-            {/* Theme toggle in sidebar */}
             <button className="db-theme-toggle" onClick={toggleTheme}>
               {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
               {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
@@ -614,7 +599,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span className="db-mobile-logo">APEX<span>•</span>MARKETS</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Theme toggle on mobile topbar */}
             <button className="db-mobile-theme" onClick={toggleTheme} aria-label="Toggle theme">
               {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
             </button>
@@ -629,7 +613,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {navItems.find((n) => n.href === pathname)?.label ?? 'Dashboard'}
             </span>
             <div className="db-topbar-right">
-              {/* Theme toggle in desktop topbar */}
               <button className="db-topbar-theme" onClick={toggleTheme} aria-label="Toggle theme">
                 {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
               </button>
@@ -642,138 +625,142 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="db-content">{children}</div>
         </main>
 
-        {/* BOTTOM NAV */}
-{!pathname.startsWith('/dashboard/admin') && (
-  <nav className="db-bottom-nav">
-    <div className="db-bottom-nav-inner">
+        {/* BOTTOM NAV + MORE SHEET — both guarded by the same !isAdmin condition */}
+        {!isAdmin && (
+          <>
+            <nav className="db-bottom-nav">
+              <div className="db-bottom-nav-inner">
 
-            <Link href="/dashboard" className={`db-bn-item ${pathname === '/dashboard' ? 'active' : ''}`}>
-              <svg width="18" height="18" viewBox="0 0 13 13" fill="none">
-                <rect x="1" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                <rect x="7" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                <rect x="1" y="7" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-                <rect x="7" y="7" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
-              </svg>
-              <span className="db-bn-label">Home</span>
-            </Link>
-
-            <Link href="/dashboard/markets" className={`db-bn-item ${pathname === '/dashboard/markets' ? 'active' : ''}`}>
-              <svg width="18" height="18" viewBox="0 0 13 13" fill="none">
-                <path d="M1 10l3-4 2.5 2 3.5-5 2 2.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" strokeLinejoin="miter" />
-              </svg>
-              <span className="db-bn-label">Markets</span>
-            </Link>
-
-            <Link href="/dashboard/trade" className={`db-bn-item ${pathname === '/dashboard/trade' ? 'active' : ''}`}>
-              <svg width="18" height="18" viewBox="0 0 13 13" fill="none">
-                <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
-                <path d="M6.5 4v3l2 1.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
-              </svg>
-              <span className="db-bn-label">Trade</span>
-            </Link>
-
-            <Link href="/dashboard/assets" className={`db-bn-item ${walletActive ? 'active' : ''}`}>
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                <rect x="2" y="5" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
-                <path d="M2 8h16" stroke="currentColor" strokeWidth="1.3" />
-                <circle cx="14.5" cy="12" r="1.2" fill="currentColor" />
-                <path d="M6 3l8 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-              </svg>
-              <span className="db-bn-label">Wallet</span>
-            </Link>
-
-            <button
-              className={`db-bn-item ${moreActive ? 'active' : ''}`}
-              onClick={() => setMoreOpen(true)}
-            >
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
-                <circle cx="4" cy="10" r="1.5" fill="currentColor" />
-                <circle cx="10" cy="10" r="1.5" fill="currentColor" />
-                <circle cx="16" cy="10" r="1.5" fill="currentColor" />
-              </svg>
-              <span className="db-bn-label">More</span>
-            </button>
-
-          </div>
-        </nav>
-{/* MORE SHEET */}
-{moreOpen && !pathname.startsWith('/dashboard/admin') && (
-  <>
-    <div className="db-sheet-overlay" onClick={() => setMoreOpen(false)} />
-    <div className="db-sheet">
-              <div className="db-sheet-handle" />
-              <div className="db-sheet-title">More</div>
-              <div className="db-sheet-rows">
-                <Link href="/dashboard/support" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
-                    <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
-                      <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
-                      <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
-                      <circle cx="6.5" cy="9.5" r="0.6" fill="currentColor" />
-                    </svg>
-                  </div>
-                  <div className="db-sheet-row-text">
-                    <span className="db-sheet-row-label">Support</span>
-                    <span className="db-sheet-row-sub">Get help or contact us</span>
-                  </div>
-                  <div className="db-sheet-row-arrow"><ChevronRight /></div>
-                </Link>
-                <div className="db-sheet-row-divider" />
-                <Link href="/dashboard/settings" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
-                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                      <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-                      <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <div className="db-sheet-row-text">
-                    <span className="db-sheet-row-label">Settings</span>
-                    <span className="db-sheet-row-sub">Account preferences</span>
-                  </div>
-                  <div className="db-sheet-row-arrow"><ChevronRight /></div>
-                </Link>
-                <div className="db-sheet-row-divider" />
-                <Link href="/dashboard/notifications" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
-                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                      <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.3" />
-                      <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <div className="db-sheet-row-text">
-                    <span className="db-sheet-row-label">Alerts</span>
-                    <span className="db-sheet-row-sub">Notifications &amp; price alerts</span>
-                  </div>
-                  <div className="db-sheet-row-arrow"><ChevronRight /></div>
-                </Link>
-                <div className="db-sheet-row-divider" />
-                <Link href="/dashboard/kyc" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
-                  <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
-                    <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                      <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
-                      <circle cx="7.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
-                      <path d="M11 8h4M11 11h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <div className="db-sheet-row-text">
-                    <span className="db-sheet-row-label">KYC</span>
-                    <span className="db-sheet-row-sub">Identity verification</span>
-                  </div>
-                  <div className="db-sheet-row-arrow"><ChevronRight /></div>
-                </Link>
-              </div>
-              <button
-                className="db-sheet-signout-row"
-                onClick={() => { setMoreOpen(false); signOut({ callbackUrl: '/login' }); }}
-              >
-                <div className="db-sheet-row-icon" style={{ color: 'var(--red)' }}>
-                  <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
-                    <path d="M5 2H2v9h3M8 9l3-2.5L8 4M11 6.5H5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+                <Link href="/dashboard" className={`db-bn-item ${pathname === '/dashboard' ? 'active' : ''}`}>
+                  <svg width="18" height="18" viewBox="0 0 13 13" fill="none">
+                    <rect x="1" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
+                    <rect x="7" y="1" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
+                    <rect x="1" y="7" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
+                    <rect x="7" y="7" width="5" height="5" stroke="currentColor" strokeWidth="1.1" />
                   </svg>
+                  <span className="db-bn-label">Home</span>
+                </Link>
+
+                <Link href="/dashboard/markets" className={`db-bn-item ${pathname === '/dashboard/markets' ? 'active' : ''}`}>
+                  <svg width="18" height="18" viewBox="0 0 13 13" fill="none">
+                    <path d="M1 10l3-4 2.5 2 3.5-5 2 2.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" strokeLinejoin="miter" />
+                  </svg>
+                  <span className="db-bn-label">Markets</span>
+                </Link>
+
+                <Link href="/dashboard/trade" className={`db-bn-item ${pathname === '/dashboard/trade' ? 'active' : ''}`}>
+                  <svg width="18" height="18" viewBox="0 0 13 13" fill="none">
+                    <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
+                    <path d="M6.5 4v3l2 1.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+                  </svg>
+                  <span className="db-bn-label">Trade</span>
+                </Link>
+
+                <Link href="/dashboard/assets" className={`db-bn-item ${walletActive ? 'active' : ''}`}>
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <rect x="2" y="5" width="16" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                    <path d="M2 8h16" stroke="currentColor" strokeWidth="1.3" />
+                    <circle cx="14.5" cy="12" r="1.2" fill="currentColor" />
+                    <path d="M6 3l8 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                  </svg>
+                  <span className="db-bn-label">Wallet</span>
+                </Link>
+
+                <button
+                  className={`db-bn-item ${moreActive ? 'active' : ''}`}
+                  onClick={() => setMoreOpen(true)}
+                >
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none">
+                    <circle cx="4" cy="10" r="1.5" fill="currentColor" />
+                    <circle cx="10" cy="10" r="1.5" fill="currentColor" />
+                    <circle cx="16" cy="10" r="1.5" fill="currentColor" />
+                  </svg>
+                  <span className="db-bn-label">More</span>
+                </button>
+
+              </div>
+            </nav>
+
+            {/* MORE SHEET */}
+            {moreOpen && (
+              <>
+                <div className="db-sheet-overlay" onClick={() => setMoreOpen(false)} />
+                <div className="db-sheet">
+                  <div className="db-sheet-handle" />
+                  <div className="db-sheet-title">More</div>
+                  <div className="db-sheet-rows">
+                    <Link href="/dashboard/support" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
+                      <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
+                        <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
+                          <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
+                          <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+                          <circle cx="6.5" cy="9.5" r="0.6" fill="currentColor" />
+                        </svg>
+                      </div>
+                      <div className="db-sheet-row-text">
+                        <span className="db-sheet-row-label">Support</span>
+                        <span className="db-sheet-row-sub">Get help or contact us</span>
+                      </div>
+                      <div className="db-sheet-row-arrow"><ChevronRight /></div>
+                    </Link>
+                    <div className="db-sheet-row-divider" />
+                    <Link href="/dashboard/settings" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
+                      <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                          <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+                          <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <div className="db-sheet-row-text">
+                        <span className="db-sheet-row-label">Settings</span>
+                        <span className="db-sheet-row-sub">Account preferences</span>
+                      </div>
+                      <div className="db-sheet-row-arrow"><ChevronRight /></div>
+                    </Link>
+                    <div className="db-sheet-row-divider" />
+                    <Link href="/dashboard/notifications" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
+                      <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                          <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.3" />
+                          <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <div className="db-sheet-row-text">
+                        <span className="db-sheet-row-label">Alerts</span>
+                        <span className="db-sheet-row-sub">Notifications &amp; price alerts</span>
+                      </div>
+                      <div className="db-sheet-row-arrow"><ChevronRight /></div>
+                    </Link>
+                    <div className="db-sheet-row-divider" />
+                    <Link href="/dashboard/kyc" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
+                      <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                          <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                          <circle cx="7.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
+                          <path d="M11 8h4M11 11h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <div className="db-sheet-row-text">
+                        <span className="db-sheet-row-label">KYC</span>
+                        <span className="db-sheet-row-sub">Identity verification</span>
+                      </div>
+                      <div className="db-sheet-row-arrow"><ChevronRight /></div>
+                    </Link>
+                  </div>
+                  <button
+                    className="db-sheet-signout-row"
+                    onClick={() => { setMoreOpen(false); signOut({ callbackUrl: '/login' }); }}
+                  >
+                    <div className="db-sheet-row-icon" style={{ color: 'var(--red)' }}>
+                      <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
+                        <path d="M5 2H2v9h3M8 9l3-2.5L8 4M11 6.5H5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+                      </svg>
+                    </div>
+                    <span className="db-sheet-signout-label">Sign Out</span>
+                  </button>
                 </div>
-                <span className="db-sheet-signout-label">Sign Out</span>
-              </button>
-            </div>
+              </>
+            )}
           </>
         )}
 
