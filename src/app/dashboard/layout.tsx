@@ -645,6 +645,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* BOTTOM NAV */}
 {!pathname.startsWith('/dashboard/admin') && (
   <nav className="db-bottom-nav">
+    <div className="db-bottom-nav-inner">
 
             <Link href="/dashboard" className={`db-bn-item ${pathname === '/dashboard' ? 'active' : ''}`}>
               <svg width="18" height="18" viewBox="0 0 13 13" fill="none">
