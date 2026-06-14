@@ -30,20 +30,23 @@ jobs:
       - name: Install Capacitor packages
         run: npm install @capacitor/core @capacitor/cli @capacitor/android
 
-      - name: Init Capacitor
-        run: npx cap init "Apex Markets" "com.apexmarkets.app" --web-dir=out
+      - name: Write capacitor config
+        run: |
+          echo '{
+            "appId": "com.apexmarkets.app",
+            "appName": "Apex Markets",
+            "webDir": "out",
+            "server": {
+              "url": "https://stock-broker-liart.vercel.app",
+              "cleartext": false
+            }
+          }' > capacitor.config.json
+
+      - name: Verify config exists
+        run: cat capacitor.config.json
 
       - name: Add Android platform
         run: npx cap add android
-
-      - name: Set server URL in config
-        run: |
-          node -e "
-            const fs = require('fs');
-            const config = JSON.parse(fs.readFileSync('capacitor.config.json', 'utf8'));
-            config.server = { url: 'https://your-actual-vercel-url.vercel.app', cleartext: false };
-            fs.writeFileSync('capacitor.config.json', JSON.stringify(config, null, 2));
-          "
 
       - name: Sync Capacitor
         run: npx cap sync android
