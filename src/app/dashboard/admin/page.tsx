@@ -7,7 +7,7 @@ import {
   Edit, Loader2, Bell, ShieldAlert,
   Clock, KeyRound, InboxIcon, CheckCircle2,
   RefreshCw, Circle, MessageCircle, Settings,
-  TrendingUp, Plus, Trash2, ToggleLeft, ToggleRight,
+  TrendingUp, Plus, Trash2, ToggleLeft, ToggleRight, ChevronLeft,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -106,7 +106,6 @@ function initials(name?: string | null, email?: string) {
   return '??';
 }
 
-// ── Parse the pipe-separated note field into structured details ───────────────
 function parseWithdrawalNote(note?: string): { userNote: string | null; details: Record<string, string> } {
   if (!note) return { userNote: null, details: {} };
   const parts = note.split(' — ');
@@ -208,7 +207,6 @@ function DetailRow({ label, value, mono }: { label: string; value?: string; mono
   );
 }
 
-// ── Withdrawal actions ────────────────────────────────────────────────────────
 function WithdrawalActions({ id, onDone }: { id: string; onDone: () => void }) {
   const [note, setNote]   = useState('');
   const [loading, setL]   = useState<'APPROVED' | 'REJECTED' | null>(null);
@@ -244,7 +242,6 @@ function WithdrawalActions({ id, onDone }: { id: string; onDone: () => void }) {
   );
 }
 
-// ── Deposit actions ───────────────────────────────────────────────────────────
 function DepositActions({ id, onDone }: { id: string; onDone: () => void }) {
   const [note, setNote]   = useState('');
   const [loading, setL]   = useState<'COMPLETED' | 'REJECTED' | null>(null);
@@ -417,6 +414,7 @@ export default function AdminDashboard() {
 
   // ── Support handlers ──
   const handleSelect = (id: string) => { setSelectedId(id); fetchTicketDetail(id); };
+  const handleBack   = () => setSelectedId(null);
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setReply(e.target.value);
     const el = textareaRef.current;
@@ -561,7 +559,6 @@ export default function AdminDashboard() {
 
         /* ── Chat layout ── */
         .adm-chat-grid { display: grid; grid-template-columns: 280px 1fr; gap: 12px; min-height: 600px; }
-        @media (max-width: 700px) { .adm-chat-grid { grid-template-columns: 1fr; } .adm-tabs { grid-template-columns: repeat(3, 1fr); } }
 
         .adm-ticket-list { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
         .adm-ticket-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
@@ -573,50 +570,17 @@ export default function AdminDashboard() {
 
         .adm-ticket-scroll { flex: 1; overflow-y: auto; }
 
-        /*
-          FIX 1 — ticket list items: give each row a proper min-height and
-          ensure the text column never collapses below its content.
-        */
         .adm-ticket-item {
-          width: 100%;
-          text-align: left;
-          padding: 12px 14px;
-          border-bottom: 1px solid var(--line);
-          background: transparent;
-          border-left: 3px solid transparent;
-          border-right: none;
-          border-top: none;
-          cursor: pointer;
-          transition: background 0.12s, border-left-color 0.12s;
-          display: flex;
-          align-items: flex-start;
-          gap: 10px;
-          min-height: 68px;
+          width: 100%; text-align: left; padding: 12px 14px;
+          border-bottom: 1px solid var(--line); background: transparent;
+          border-left: 3px solid transparent; border-right: none; border-top: none;
+          cursor: pointer; transition: background 0.12s, border-left-color 0.12s;
+          display: flex; align-items: flex-start; gap: 10px; min-height: 68px;
         }
         .adm-ticket-item:hover { background: var(--surface); }
-
-        /*
-          FIX 3 — active item: solid sky-blue tint + strong left accent bar.
-          #38bdf8 is hardcoded as requested — works well in both light & dark.
-        */
-        .adm-ticket-item.sel {
-          background: rgba(56, 189, 248, 0.12);
-          border-left-color: #38bdf8;
-        }
-
-        .adm-ticket-item-body {
-          flex: 1;
-          min-width: 0;
-          display: flex;
-          flex-direction: column;
-          gap: 3px;
-        }
-        .adm-ticket-item-row1 {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          gap: 4px;
-        }
+        .adm-ticket-item.sel { background: rgba(56, 189, 248, 0.12); border-left-color: #38bdf8; }
+        .adm-ticket-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+        .adm-ticket-item-row1 { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
 
         /* ── Thread ── */
         .adm-thread { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 600px; }
@@ -629,32 +593,12 @@ export default function AdminDashboard() {
         .adm-send-btn:hover { opacity: 0.85; }
         .adm-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        /*
-          FIX 2 — message bubbles: the outer column wrapper gets max-width: 75%
-          so the bubble never stretches full width. The bubble itself uses
-          width: fit-content so it only grows as wide as its text needs.
-          Removed any property that could cause mid-word wrapping.
-        */
         .adm-msg-row { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 6px; }
         .adm-msg-row.admin { justify-content: flex-end; }
-        .adm-msg-col {
-          display: flex;
-          flex-direction: column;
-          max-width: 75%;
-        }
+        .adm-msg-col { display: flex; flex-direction: column; max-width: 75%; }
         .adm-msg-col.admin { align-items: flex-end; }
         .adm-msg-col.user  { align-items: flex-start; }
-        .adm-bubble {
-          width: fit-content;
-          max-width: 100%;
-          padding: 9px 13px;
-          border-radius: 14px;
-          font-size: 0.78rem;
-          line-height: 1.5;
-          word-break: break-word;
-          overflow-wrap: break-word;
-          white-space: pre-wrap;
-        }
+        .adm-bubble { width: fit-content; max-width: 100%; padding: 9px 13px; border-radius: 14px; font-size: 0.78rem; line-height: 1.5; word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
         .adm-bubble.user  { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); border-bottom-left-radius: 4px; }
         .adm-bubble.admin { background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
         .adm-msg-time { font-size: 0.55rem; color: var(--ink-faint); margin-top: 3px; padding: 0 2px; }
@@ -665,6 +609,25 @@ export default function AdminDashboard() {
 
         .adm-status-btn { display: flex; align-items: center; gap: 5px; font-size: 0.62rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--line-strong); background: transparent; color: var(--ink-faint); cursor: pointer; transition: all 0.15s; }
         .adm-status-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ── Back button (mobile only) ── */
+        .adm-back-btn { display: none; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-dim); cursor: pointer; flex-shrink: 0; transition: all 0.12s; }
+        .adm-back-btn:hover { background: var(--surface-hover); color: var(--ink); }
+
+        /* ── Mobile overrides ── */
+        @media (max-width: 700px) {
+          .adm-chat-grid { grid-template-columns: 1fr; }
+          .adm-tabs { grid-template-columns: repeat(3, 1fr); }
+
+          /* Hide list when a conversation is open */
+          .adm-ticket-list.has-selection { display: none; }
+
+          /* Hide thread panel when nothing is selected */
+          .adm-thread.no-selection { display: none; }
+
+          /* Show back button on mobile */
+          .adm-back-btn { display: flex; }
+        }
 
         /* ── Settings ── */
         .adm-method-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; position: relative; overflow: hidden; }
@@ -696,7 +659,7 @@ export default function AdminDashboard() {
         textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-family: var(--mono); font-size: 0.7rem; }
         .adm-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .adm-icon-row { display: flex; gap: 6px; flex-wrap: wrap; }
-        .adm-icon-pick { width: 36px; height: 36px; border-radius: 8px; background: var(--surface); border: 1.5px solid var(--line-strong); display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; transition: all 0.12s; }
+        .adm-icon-pick { width: 36px; height: 36px; border-radius: 8px; background: var(--surface); border: 1.5px solid var(--line-strong); display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; transition: all 0.12px; }
         .adm-icon-pick.sel { border-color: var(--accent); background: var(--surface-hover); }
         .adm-checkbox-row { display: flex; align-items: center; gap: 10px; padding: 11px 13px; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; cursor: pointer; }
         .adm-checkbox-row input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
@@ -750,8 +713,8 @@ export default function AdminDashboard() {
         {tab === 'chat' && (
           <div className="adm-chat-grid">
 
-            {/* Conversation list */}
-            <div className="adm-ticket-list">
+            {/* Conversation list — hidden on mobile when a chat is open */}
+            <div className={`adm-ticket-list${selectedId ? ' has-selection' : ''}`}>
               <div className="adm-ticket-head">
                 <span className="adm-ticket-head-title">Conversations</span>
                 <div className="adm-filter-toggle">
@@ -790,8 +753,6 @@ export default function AdminDashboard() {
                       <div className="adm-avatar" style={{ width: 34, height: 34, fontSize: '0.62rem', flexShrink: 0 }}>
                         {initials(t.user?.name, t.user?.email)}
                       </div>
-
-                      {/* FIX 2: structured body div prevents name/lines from colliding */}
                       <div className="adm-ticket-item-body">
                         <div className="adm-ticket-item-row1">
                           <p style={{
@@ -821,7 +782,6 @@ export default function AdminDashboard() {
                           </p>
                         )}
                       </div>
-
                       <Circle
                         size={8}
                         style={{
@@ -836,8 +796,8 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Thread */}
-            <div className="adm-thread">
+            {/* Thread — hidden on mobile when nothing is selected */}
+            <div className={`adm-thread${!selectedTicket ? ' no-selection' : ''}`}>
               {!selectedTicket ? (
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '40px', color: 'var(--ink-faint)' }}>
                   <MessageCircle size={28} style={{ opacity: 0.25 }} />
@@ -847,6 +807,10 @@ export default function AdminDashboard() {
                 <>
                   <div className="adm-thread-head">
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      {/* Back button — visible on mobile only via CSS */}
+                      <button className="adm-back-btn" onClick={handleBack} aria-label="Back to conversations">
+                        <ChevronLeft size={16} />
+                      </button>
                       <div className="adm-avatar" style={{ width: 34, height: 34, fontSize: '0.62rem' }}>
                         {initials(selectedTicket.user?.name, selectedTicket.user?.email)}
                       </div>
@@ -895,19 +859,11 @@ export default function AdminDashboard() {
                           const isAdm = msg.sender === 'ADMIN';
                           return (
                             <div key={msg.id} className={`adm-msg-row${isAdm ? ' admin' : ''}`}>
-                              {/* User avatar sits beside the bubble */}
                               {!isAdm && (
                                 <div className="adm-avatar" style={{ width: 26, height: 26, fontSize: '0.52rem', flexShrink: 0 }}>
                                   {initials(selectedTicket.user?.name, selectedTicket.user?.email)}
                                 </div>
                               )}
-
-                              {/*
-                                FIX 1: .adm-msg-col constrains max-width to 75%.
-                                The bubble inside uses width: fit-content so it only
-                                grows as wide as the text, preventing the narrow-squeeze
-                                that caused "He / llo" wrapping.
-                              */}
                               <div className={`adm-msg-col ${isAdm ? 'admin' : 'user'}`}>
                                 <div className={`adm-bubble ${isAdm ? 'admin' : 'user'}`}>
                                   {msg.body}
