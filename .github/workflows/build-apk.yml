@@ -37,7 +37,7 @@ jobs:
             "appName": "Apex Markets",
             "webDir": "out",
             "server": {
-              "url": "https://your-actual-vercel-url.vercel.app",
+              "url": "https://stock-broker-liart.vercel.app",
               "cleartext": false
             }
           }' > capacitor.config.json
