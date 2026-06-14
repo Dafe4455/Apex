@@ -695,12 +695,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           </div>
         </nav>
-
-        {/* MORE SHEET */}
-        {moreOpen && (
-          <>
-            <div className="db-sheet-overlay" onClick={() => setMoreOpen(false)} />
-            <div className="db-sheet">
+{/* MORE SHEET */}
+{moreOpen && !pathname.startsWith('/dashboard/admin') && (
+  <>
+    <div className="db-sheet-overlay" onClick={() => setMoreOpen(false)} />
+    <div className="db-sheet">
               <div className="db-sheet-handle" />
               <div className="db-sheet-title">More</div>
               <div className="db-sheet-rows">
