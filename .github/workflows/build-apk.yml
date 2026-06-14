@@ -18,20 +18,38 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Install Capacitor
-        run: |
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap add android || true
-          npx cap sync android
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Capacitor packages
+        run: npm install @capacitor/core @capacitor/cli @capacitor/android
+
+      - name: Create capacitor config
+        run: |
+          cat > capacitor.config.json << 'EOF'
+          {
+            "appId": "com.apexmarkets.app",
+            "appName": "Apex Markets",
+            "webDir": "out",
+            "server": {
+              "url": "https://stock-broker-liart.vercel.app",
+              "cleartext": false
+            }
+          }
+          EOF
+
+      - name: Init and add Android platform
+        run: |
+          npx cap add android
+
+      - name: Sync Capacitor
+        run: npx cap sync android
 
       - name: Build APK
         run: |
