@@ -353,7 +353,7 @@ export default function SupportPage() {
             </div>
             <div>
               <p className="sp-chat-name">Apex Markets Support</p>
-              <p className="sp-chat-tagline">Replies go to this thread</p>
+              <p className="sp-chat-tagline">°live</p>
             </div>
             <div className="sp-online-dot" />
             <span className="sp-online-label">Online</span>
