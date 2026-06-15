@@ -1,21 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
 import {
   ShieldCheck, Upload, CheckCircle2, AlertTriangle,
   Clock, XCircle, Loader2, FileText, Camera,
 } from "lucide-react";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 const DOC_TYPES = [
-  { value: "PASSPORT",         label: "Passport",         needsBack: false },
-  { value: "NATIONAL_ID",      label: "National ID",      needsBack: true  },
-  { value: "DRIVERS_LICENSE",  label: "Driver's License", needsBack: true  },
+  { value: "PASSPORT",        label: "Passport",         needsBack: false },
+  { value: "NATIONAL_ID",     label: "National ID",      needsBack: true  },
+  { value: "DRIVERS_LICENSE", label: "Driver's License", needsBack: true  },
 ];
 
 type KYCSubmission = {
@@ -25,22 +19,26 @@ type KYCSubmission = {
   notes?: string | null;
 };
 
-async function uploadFile(file: File, userId: string, slot: string): Promise<string> {
-  const ext  = file.name.split(".").pop();
-  const path = `${userId}/${slot}-${Date.now()}.${ext}`;
-  const { error } = await supabase.storage
-    .from("kyc-documents")
-    .upload(path, file, { upsert: true });
-  if (error) throw new Error(error.message);
-  const { data } = supabase.storage.from("kyc-documents").getPublicUrl(path);
-  return data.publicUrl;
+async function uploadFile(file: File, slot: string): Promise<string> {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("slot", slot);
+
+  const res = await fetch("/api/kyc/upload", {
+    method: "POST",
+    body: form,
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Upload failed");
+  return data.url;
 }
 
 function StatusBanner({ submission }: { submission: KYCSubmission }) {
   const map = {
-    PENDING:  { icon: Clock,        color: "var(--gold)",  bg: "var(--gold-l)",  label: "Under Review",  desc: "We're reviewing your documents. This usually takes 1–2 business days." },
-    APPROVED: { icon: CheckCircle2, color: "var(--green)", bg: "var(--green-l)", label: "Verified",      desc: "Your identity has been verified. You have full access to all features." },
-    REJECTED: { icon: XCircle,      color: "var(--red)",   bg: "var(--red-l)",   label: "Rejected",      desc: submission.notes ?? "Your submission was rejected. Please resubmit with valid documents." },
+    PENDING:  { icon: Clock,        color: "var(--gold)",  bg: "var(--gold-l)",  label: "Under Review", desc: "We're reviewing your documents. This usually takes 1–2 business days." },
+    APPROVED: { icon: CheckCircle2, color: "var(--green)", bg: "var(--green-l)", label: "Verified",     desc: "Your identity has been verified. You have full access to all features." },
+    REJECTED: { icon: XCircle,      color: "var(--red)",   bg: "var(--red-l)",   label: "Rejected",     desc: submission.notes ?? "Your submission was rejected. Please resubmit with valid documents." },
   }[submission.status] ?? null;
 
   if (!map) return null;
@@ -84,9 +82,7 @@ function FileSlot({
           <span className="kyc-slot-hint">{hint}</span>
         </div>
       )}
-      {file && (
-        <div className="kyc-slot-name">{file.name}</div>
-      )}
+      {file && <div className="kyc-slot-name">{file.name}</div>}
     </div>
   );
 }
@@ -106,7 +102,6 @@ export default function KYCPage() {
   const [success, setSuccess]       = useState(false);
 
   const selectedDoc = DOC_TYPES.find((d) => d.value === docType)!;
-  const canResubmit = submission?.status === "REJECTED" || !submission;
   const isLocked    = submission?.status === "PENDING" || submission?.status === "APPROVED";
 
   useEffect(() => {
@@ -129,18 +124,11 @@ export default function KYCPage() {
 
     setSubmitting(true);
     try {
-      // Get userId from session — we'll pull it from the API response implicitly
-      // by using the server-side session in the API route
-      const sessionRes = await fetch("/api/auth/session");
-      const sessionData = await sessionRes.json();
-      const userId = sessionData?.user?.id;
-      if (!userId) throw new Error("Not authenticated");
-
       const [frontUrl, selfieUrl] = await Promise.all([
-        uploadFile(frontFile, userId, "front"),
-        uploadFile(selfieFile, userId, "selfie"),
+        uploadFile(frontFile, "front"),
+        uploadFile(selfieFile, "selfie"),
       ]);
-      const backUrl = backFile ? await uploadFile(backFile, userId, "back") : undefined;
+      const backUrl = backFile ? await uploadFile(backFile, "back") : undefined;
 
       const res  = await fetch("/api/kyc", {
         method: "POST",
@@ -180,26 +168,19 @@ export default function KYCPage() {
           font-size: 0.7rem; color: var(--ink-faint);
           font-weight: 300; margin-bottom: 24px;
         }
-
-        /* Status banner */
         .kyc-status-banner {
           display: flex; align-items: flex-start; gap: 14px;
           border: 1px solid; border-radius: 12px;
           padding: 16px 18px; margin-bottom: 24px;
         }
         .kyc-status-icon { flex-shrink: 0; margin-top: 1px; }
-        .kyc-status-label {
-          font-size: 0.82rem; font-weight: 700; margin-bottom: 3px;
-        }
-        .kyc-status-desc {
-          font-size: 0.72rem; color: var(--ink-dim); line-height: 1.6;
-        }
-
-        /* Steps */
+        .kyc-status-label { font-size: 0.82rem; font-weight: 700; margin-bottom: 3px; }
+        .kyc-status-desc { font-size: 0.72rem; color: var(--ink-dim); line-height: 1.6; }
         .kyc-steps {
           display: flex; gap: 8px; margin-bottom: 24px;
           font-family: var(--mono); font-size: 0.6rem;
           letter-spacing: 0.08em; color: var(--ink-faint);
+          flex-wrap: wrap;
         }
         .kyc-step {
           display: flex; align-items: center; gap: 6px;
@@ -210,8 +191,6 @@ export default function KYCPage() {
           background: rgba(56,189,248,0.1);
           border-color: var(--accent); color: var(--accent);
         }
-
-        /* Card */
         .kyc-card {
           background: var(--card); border: 1px solid var(--line-strong);
           border-radius: 14px; padding: 22px; margin-bottom: 12px;
@@ -220,14 +199,8 @@ export default function KYCPage() {
           font-size: 0.8rem; font-weight: 700; color: var(--ink);
           margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
         }
-        .kyc-card-sub {
-          font-size: 0.68rem; color: var(--ink-faint); margin-bottom: 18px;
-        }
-
-        /* Doc type selector */
-        .kyc-doc-types {
-          display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;
-        }
+        .kyc-card-sub { font-size: 0.68rem; color: var(--ink-faint); margin-bottom: 18px; }
+        .kyc-doc-types { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
         .kyc-doc-type {
           padding: 8px 16px; border-radius: 8px;
           border: 1px solid var(--line-strong);
@@ -240,11 +213,8 @@ export default function KYCPage() {
           background: rgba(56,189,248,0.08);
         }
         .kyc-doc-type:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        /* Upload slots */
         .kyc-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .kyc-slots.single { grid-template-columns: 1fr; max-width: 300px; }
-
         .kyc-slot {
           border: 1.5px dashed var(--line-strong);
           border-radius: 12px; min-height: 140px;
@@ -255,29 +225,19 @@ export default function KYCPage() {
           position: relative;
         }
         .kyc-slot:hover { border-color: var(--accent); background: var(--surface); }
-
         .kyc-slot-empty {
           display: flex; flex-direction: column;
-          align-items: center; gap: 8px; padding: 20px;
-          text-align: center;
+          align-items: center; gap: 8px; padding: 20px; text-align: center;
         }
-        .kyc-slot-label {
-          font-size: 0.75rem; font-weight: 600; color: var(--ink-dim);
-        }
-        .kyc-slot-hint {
-          font-size: 0.62rem; color: var(--ink-faint);
-        }
-        .kyc-slot-preview {
-          width: 100%; height: 140px; object-fit: cover;
-        }
+        .kyc-slot-label { font-size: 0.75rem; font-weight: 600; color: var(--ink-dim); }
+        .kyc-slot-hint { font-size: 0.62rem; color: var(--ink-faint); }
+        .kyc-slot-preview { width: 100%; height: 140px; object-fit: cover; }
         .kyc-slot-name {
           position: absolute; bottom: 0; left: 0; right: 0;
           background: rgba(0,0,0,0.6); padding: 4px 8px;
           font-size: 0.6rem; color: white; font-family: var(--mono);
           white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-
-        /* Error / success */
         .kyc-error {
           display: flex; align-items: center; gap: 8px;
           padding: 11px 14px; border-radius: 10px; margin-bottom: 14px;
@@ -290,24 +250,17 @@ export default function KYCPage() {
           background: var(--green-l); border: 1px solid var(--green);
           font-family: var(--mono); font-size: 0.7rem; color: var(--green);
         }
-
-        /* Submit */
         .kyc-submit {
           width: 100%; background: var(--accent); color: var(--bg);
           border: none; border-radius: 10px; padding: 14px;
           font-family: var(--mono); font-size: 0.78rem;
           letter-spacing: 0.1em; text-transform: uppercase;
           cursor: pointer; display: flex; align-items: center;
-          justify-content: center; gap: 10px;
-          transition: opacity 0.15s;
+          justify-content: center; gap: 10px; transition: opacity 0.15s;
         }
         .kyc-submit:hover:not(:disabled) { opacity: 0.85; }
         .kyc-submit:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        /* Info list */
-        .kyc-info {
-          display: flex; flex-direction: column; gap: 8px; margin-top: 4px;
-        }
+        .kyc-info { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
         .kyc-info-item {
           display: flex; align-items: center; gap: 10px;
           font-size: 0.72rem; color: var(--ink-dim);
@@ -316,7 +269,6 @@ export default function KYCPage() {
           width: 5px; height: 5px; border-radius: 50%;
           background: var(--accent); flex-shrink: 0;
         }
-
         @media (max-width: 480px) {
           .kyc-slots { grid-template-columns: 1fr; }
         }
@@ -337,20 +289,12 @@ export default function KYCPage() {
 
             {!isLocked && (
               <>
-                {/* Steps indicator */}
                 <div className="kyc-steps">
-                  <div className="kyc-step active">
-                    <ShieldCheck size={10} /> 1. Choose document
-                  </div>
-                  <div className="kyc-step active">
-                    <Upload size={10} /> 2. Upload photos
-                  </div>
-                  <div className="kyc-step active">
-                    <Camera size={10} /> 3. Selfie
-                  </div>
+                  <div className="kyc-step active"><ShieldCheck size={10} /> 1. Choose document</div>
+                  <div className="kyc-step active"><Upload size={10} /> 2. Upload photos</div>
+                  <div className="kyc-step active"><Camera size={10} /> 3. Selfie</div>
                 </div>
 
-                {/* Doc type */}
                 <div className="kyc-card">
                   <p className="kyc-card-title">
                     <FileText size={15} strokeWidth={1.8} style={{ color: "var(--accent)" }} />
@@ -371,40 +315,30 @@ export default function KYCPage() {
                   </div>
                 </div>
 
-                {/* Document upload */}
                 <div className="kyc-card">
                   <p className="kyc-card-title">
                     <Upload size={15} strokeWidth={1.8} style={{ color: "var(--accent)" }} />
                     Upload Document
                   </p>
                   <p className="kyc-card-sub">
-                    {selectedDoc.needsBack
-                      ? "Upload clear photos of both sides."
-                      : "Upload a clear photo of your document."}
+                    {selectedDoc.needsBack ? "Upload clear photos of both sides." : "Upload a clear photo of your document."}
                   </p>
                   <div className={`kyc-slots ${!selectedDoc.needsBack ? "single" : ""}`}>
                     <FileSlot
-                      label="Front"
-                      hint="Clear, unobstructed photo"
-                      file={frontFile}
-                      preview={frontPrev}
-                      onChange={setFile("front")}
-                      disabled={submitting}
+                      label="Front" hint="Clear, unobstructed photo"
+                      file={frontFile} preview={frontPrev}
+                      onChange={setFile("front")} disabled={submitting}
                     />
                     {selectedDoc.needsBack && (
                       <FileSlot
-                        label="Back"
-                        hint="Include all four corners"
-                        file={backFile}
-                        preview={backPrev}
-                        onChange={setFile("back")}
-                        disabled={submitting}
+                        label="Back" hint="Include all four corners"
+                        file={backFile} preview={backPrev}
+                        onChange={setFile("back")} disabled={submitting}
                       />
                     )}
                   </div>
                 </div>
 
-                {/* Selfie */}
                 <div className="kyc-card">
                   <p className="kyc-card-title">
                     <Camera size={15} strokeWidth={1.8} style={{ color: "var(--accent)" }} />
@@ -415,17 +349,13 @@ export default function KYCPage() {
                   </p>
                   <div className="kyc-slots single">
                     <FileSlot
-                      label="Selfie photo"
-                      hint="Face clearly visible, good lighting"
-                      file={selfieFile}
-                      preview={selfiePrev}
-                      onChange={setFile("selfie")}
-                      disabled={submitting}
+                      label="Selfie photo" hint="Face clearly visible, good lighting"
+                      file={selfieFile} preview={selfiePrev}
+                      onChange={setFile("selfie")} disabled={submitting}
                     />
                   </div>
                 </div>
 
-                {/* Requirements */}
                 <div className="kyc-card">
                   <p className="kyc-card-title">Requirements</p>
                   <div className="kyc-info">
@@ -451,7 +381,7 @@ export default function KYCPage() {
                 )}
                 {success && (
                   <div className="kyc-success">
-                    <CheckCircle2 size={13} /> Documents submitted successfully. We'll review within 1–2 business days.
+                    <CheckCircle2 size={13} /> Documents submitted. We'll review within 1–2 business days.
                   </div>
                 )}
 
@@ -460,11 +390,10 @@ export default function KYCPage() {
                   onClick={handleSubmit}
                   disabled={submitting || !frontFile || !selfieFile}
                 >
-                  {submitting ? (
-                    <><Loader2 size={14} style={{ animation: "spin 0.8s linear infinite" }} /> Uploading...</>
-                  ) : (
-                    <><ShieldCheck size={14} /> Submit for Verification</>
-                  )}
+                  {submitting
+                    ? <><Loader2 size={14} style={{ animation: "spin 0.8s linear infinite" }} /> Uploading...</>
+                    : <><ShieldCheck size={14} /> Submit for Verification</>
+                  }
                 </button>
               </>
             )}
