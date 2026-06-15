@@ -675,7 +675,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <circle cx="10" cy="10" r="1.5" fill="currentColor" />
                     <circle cx="16" cy="10" r="1.5" fill="currentColor" />
                   </svg>
-                  <span className="db-bn-label">More</span>
+                  <span className="db-bn-label">Account</span>
                 </button>
 
               </div>
