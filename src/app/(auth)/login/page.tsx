@@ -23,33 +23,11 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap');
-
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        :root {
-          --navy:        #0b1929;
-          --navy-mid:    #0f2235;
-          --navy-card:   #132840;
-          --navy-border: #1e3a55;
-          --navy-hover:  #1a3350;
-          --white:       #e8f4f8;
-          --white-dim:   #8aafc4;
-          --white-faint: #4a6a80;
-          --cyan:        #00d4aa;
-          --cyan-dim:    rgba(0,212,170,0.12);
-          --cyan-glow:   rgba(0,212,170,0.25);
-          --green:       #4ade80;
-          --red:         #f87171;
-          --sans:        'Syne', sans-serif;
-          --mono:        'DM Mono', monospace;
-        }
-
-        html, body { height: 100%; }
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
 
         .login-shell {
           min-height: 100vh;
-          background: var(--navy);
+          background: var(--bg);
           font-family: var(--sans);
           display: flex;
           flex-direction: column;
@@ -60,36 +38,35 @@ export default function LoginPage() {
           overflow: hidden;
         }
 
-        /* Background grid lines like the dashboard's subtle depth */
+        /* Subtle grid — kept as a login page signature touch */
         .login-shell::before {
           content: '';
           position: absolute;
           inset: 0;
           background-image:
-            linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
+            linear-gradient(var(--line) 1px, transparent 1px),
+            linear-gradient(90deg, var(--line) 1px, transparent 1px);
           background-size: 48px 48px;
           pointer-events: none;
         }
 
-        /* Ambient glow top-left */
+        /* Ambient glow — kept for depth */
         .login-shell::after {
           content: '';
           position: absolute;
           top: -120px; left: -120px;
           width: 480px; height: 480px;
-          background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 65%);
+          background: radial-gradient(circle, rgba(56,189,248,0.06) 0%, transparent 65%);
           pointer-events: none;
         }
 
-        /* ── HEADER / BRAND ── */
         .login-brand {
-          font-family: var(--sans);
+          font-family: var(--mono);
           font-size: 0.8rem;
           font-weight: 700;
           letter-spacing: 0.22em;
           text-transform: uppercase;
-          color: var(--white);
+          color: var(--ink);
           display: flex;
           align-items: center;
           gap: 6px;
@@ -100,52 +77,41 @@ export default function LoginPage() {
         .login-brand-dot {
           width: 7px; height: 7px;
           border-radius: 50%;
-          background: var(--cyan);
-          box-shadow: 0 0 8px var(--cyan);
+          background: var(--accent);
+          box-shadow: 0 0 8px var(--accent);
         }
 
-        /* ── CARD ── */
         .login-card {
           width: 100%;
           max-width: 400px;
-          background: var(--navy-mid);
-          border: 1px solid var(--navy-border);
+          background: var(--card);
+          border: 1px solid var(--line-strong);
           border-radius: 20px;
           padding: 36px 32px;
           position: relative;
           z-index: 1;
-          box-shadow: 0 24px 64px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,212,170,0.04);
-        }
-
-        
-        @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
+          box-shadow: 0 24px 64px rgba(0,0,0,0.4);
         }
 
         .login-welcome {
           font-size: 0.55rem;
-          font-weight: 100;
-          color: var(--white-dim);
+          font-weight: 300;
+          color: var(--ink-dim);
           letter-spacing: 0.04em;
           margin-bottom: 4px;
         }
 
         .login-title {
-        font-family: var(--mono);
+          font-family: var(--mono);
           font-size: 1.5rem;
           font-weight: 400;
-          color: var(--white);
+          color: var(--ink);
           letter-spacing: -0.01em;
           margin-bottom: 28px;
           line-height: 1;
         }
 
-       
-        /* ── FORM ── */
-        .field {
-          margin-bottom: 16px;
-        }
+        .field { margin-bottom: 16px; }
         .field-header {
           display: flex;
           justify-content: space-between;
@@ -157,35 +123,35 @@ export default function LoginPage() {
           font-size: 0.62rem;
           letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: var(--white-dim);
+          color: var(--ink-dim);
         }
         .forgot-link {
           font-family: var(--mono);
           font-size: 0.6rem;
           letter-spacing: 0.06em;
-          color: var(--white-faint);
+          color: var(--ink-faint);
           text-decoration: none;
           transition: color 0.2s;
         }
-        .forgot-link:hover { color: var(--cyan); }
+        .forgot-link:hover { color: var(--accent); }
 
         .field input {
           width: 100%;
-          background: var(--navy-card);
-          border: 1px solid var(--navy-border);
+          background: var(--surface);
+          border: 1px solid var(--line-strong);
           border-radius: 10px;
           padding: 13px 16px;
           font-family: var(--mono);
           font-size: 0.85rem;
-          color: var(--white);
+          color: var(--ink);
           outline: none;
           transition: border-color 0.2s, box-shadow 0.2s;
           appearance: none;
         }
-        .field input::placeholder { color: var(--white-faint); }
+        .field input::placeholder { color: var(--ink-faint); }
         .field input:focus {
-          border-color: var(--cyan);
-          box-shadow: 0 0 0 3px var(--cyan-dim);
+          border-color: var(--accent);
+          box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
         }
         .field input.error-input {
           border-color: var(--red);
@@ -193,8 +159,8 @@ export default function LoginPage() {
         }
 
         .error-msg {
-          background: rgba(248,113,113,0.08);
-          border: 1px solid rgba(248,113,113,0.2);
+          background: var(--red-l);
+          border: 1px solid var(--red);
           border-radius: 10px;
           padding: 11px 14px;
           font-family: var(--mono);
@@ -206,8 +172,8 @@ export default function LoginPage() {
 
         .submit-btn {
           width: 100%;
-          background: var(--cyan);
-          color: var(--navy);
+          background: var(--accent);
+          color: var(--bg);
           border: none;
           border-radius: 10px;
           padding: 15px;
@@ -222,24 +188,23 @@ export default function LoginPage() {
           justify-content: center;
           gap: 10px;
           margin-top: 8px;
-          box-shadow: 0 4px 24px var(--cyan-glow);
+          box-shadow: 0 4px 24px rgba(56,189,248,0.2);
         }
         .submit-btn:hover:not(:disabled) {
           opacity: 0.9;
-          box-shadow: 0 6px 32px var(--cyan-glow);
+          box-shadow: 0 6px 32px rgba(56,189,248,0.3);
         }
         .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .spinner {
           width: 14px; height: 14px;
-          border: 2px solid rgba(11,25,41,0.3);
-          border-top-color: var(--navy);
+          border: 2px solid rgba(0,0,0,0.2);
+          border-top-color: var(--bg);
           border-radius: 50%;
           animation: spin 0.7s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── FOOTER ── */
         .login-footer {
           margin-top: 24px;
           display: flex;
@@ -249,24 +214,15 @@ export default function LoginPage() {
         }
         .login-signup {
           font-size: 0.8rem;
-          color: var(--white-dim);
-          font-weight: 400;
+          color: var(--ink-dim);
         }
         .login-signup a {
-          color: var(--cyan);
+          color: var(--accent);
           text-decoration: none;
           font-weight: 600;
         }
         .login-signup a:hover { text-decoration: underline; }
 
-        .login-trust {
-          font-family: var(--mono);
-          font-size: 0.6rem;
-          letter-spacing: 0.08em;
-          color: var(--white-faint);
-          text-align: center;
-          line-height: 1.7;
-        }
         .trust-pills {
           display: flex;
           gap: 8px;
@@ -275,33 +231,27 @@ export default function LoginPage() {
           margin-top: 4px;
         }
         .trust-pill {
-          background: var(--navy-card);
-          border: 1px solid var(--navy-border);
+          background: var(--surface);
+          border: 1px solid var(--line-strong);
           border-radius: 999px;
           padding: 3px 10px;
           font-family: var(--mono);
           font-size: 0.58rem;
           letter-spacing: 0.08em;
-          color: var(--white-faint);
+          color: var(--ink-faint);
         }
       `}</style>
 
       <div className="login-shell">
-        {/* Brand */}
         <div className="login-brand">
           APEX
           <span className="login-brand-dot" />
           MARKETS
         </div>
 
-        {/* Card */}
         <div className="login-card">
-          
-
           <p className="login-welcome">Welcome back,</p>
           <h3 className="login-title">Sign in</h3>
-
-         
 
           <form onSubmit={handleSubmit}>
             {error && <div className="error-msg">{error}</div>}
@@ -339,10 +289,7 @@ export default function LoginPage() {
 
             <button type="submit" className="submit-btn" disabled={loading}>
               {loading ? (
-                <>
-                  <span className="spinner" />
-                  Signing in...
-                </>
+                <><span className="spinner" />Signing in...</>
               ) : (
                 <>
                   Sign In
