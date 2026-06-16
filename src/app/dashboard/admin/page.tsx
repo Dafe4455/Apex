@@ -562,6 +562,12 @@ export default function AdminDashboard() {
       <style>{`
         .adm { max-width: 900px; margin: 0 auto; padding: 24px 16px 40px; font-family: var(--sans); color: var(--ink); }
         .adm { max-width: 900px; margin: 0 auto; padding: 24px 16px 40px; font-family: var(--sans); color: var(--ink); background: var(--bg-adm); min-height: 100vh; }
+        .adm-card          { background: var(--bg-adm); ... }
+.adm-ticket-list   { background: var(--bg-adm); }
+.adm-ticket-scroll { background: var(--bg-adm); }
+.adm-thread        { background: var(--bg-adm); }
+.adm-method-card   { background: var(--bg-adm); }
+.adm-empty         { background: var(--bg-adm); }
         .adm-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
         .adm-brand { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
         .adm-title { font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
