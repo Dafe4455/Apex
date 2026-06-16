@@ -1,56 +1,37 @@
 import { NextResponse } from "next/server";
 import { auth } from "@root/auth";
-import { createClient } from "@supabase/supabase-js";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key:    process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    console.log("[kyc/upload] url:", supabaseUrl);
-    console.log("[kyc/upload] key set:", !!serviceKey);
-
-    if (!supabaseUrl || !serviceKey) {
-      return NextResponse.json({ error: "Missing Supabase config" }, { status: 500 });
-    }
-
-    const supabaseAdmin = createClient(supabaseUrl, serviceKey);
-
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const slot = formData.get("slot") as string | null;
 
     if (!file || !slot) return NextResponse.json({ error: "Missing file or slot." }, { status: 400 });
 
-    const ext    = file.name.split(".").pop();
-    const path   = `${session.user.id}/${slot}-${Date.now()}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());
+    const base64 = `data:${file.type};base64,${buffer.toString("base64")}`;
 
-    console.log("[kyc/upload] uploading:", path, "size:", buffer.length);
+    const result = await cloudinary.uploader.upload(base64, {
+      folder: `kyc-documents/${session.user.id}`,
+      public_id: `${slot}-${Date.now()}`,
+      resource_type: "auto",
+    });
 
-    const { error } = await supabaseAdmin.storage
-      .from("kyc-documents")
-      .upload(path, buffer, { contentType: file.type, upsert: true });
-
-    if (error) {
-      console.log("[kyc/upload] supabase error:", error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    const { data } = supabaseAdmin.storage
-      .from("kyc-documents")
-      .getPublicUrl(path);
-
-    return NextResponse.json({ url: data.publicUrl });
+    return NextResponse.json({ url: result.secure_url });
 
   } catch (e: any) {
-    console.log("[kyc/upload] caught:", e.message, "cause:", String(e?.cause));
-    return NextResponse.json({ 
-      error: e.message, 
-      cause: String(e?.cause) 
-    }, { status: 500 });
+    console.log("[kyc/upload] error:", e.message);
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
