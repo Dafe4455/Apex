@@ -310,7 +310,7 @@ function KYCActions({ submission, onDone }: { submission: KYCSubmission; onDone:
           <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
             <div style={{ position: 'relative', maxWidth: 600, width: '100%' }}>
               <img src={preview} alt="Document" style={{ width: '100%', borderRadius: 14, maxHeight: '80vh', objectFit: 'contain' }} />
-              <button onClick={() => setPreview(null)} style={{ position: 'absolute', top: -12, right: -12, width: 32, height: 32, borderRadius: '50%', background: 'var(--card)', border: '1px solid var(--line-strong)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+              <button onClick={() => setPreview(null)} style={{ position: 'absolute', top: -12, right: -12, width: 32, height: 32, borderRadius: '50%', background: 'var(--card-adm)', border: '1px solid var(--line-strong)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
                 <X size={14} />
               </button>
             </div>
@@ -549,36 +549,29 @@ export default function AdminDashboard() {
   const filteredKyc = kycList.filter(k => k.status === kycFilter);
 
   const tabs = [
-    { id: 'chat',        label: 'Support',     icon: MessageSquare, badge: unread,         color: '#e85c0d' },
-    { id: 'users',       label: 'Users',       icon: Users,         badge: users.length,   color: '#6b5ce7' },
+    { id: 'chat',        label: 'Support',     icon: MessageSquare, badge: unread,             color: '#e85c0d' },
+    { id: 'users',       label: 'Users',       icon: Users,         badge: users.length,       color: '#6b5ce7' },
     { id: 'deposits',    label: 'Deposits',    icon: TrendingUp,    badge: pendingDeps.length, color: '#2e7d4f' },
-    { id: 'withdrawals', label: 'Withdrawals', icon: ArrowUpToLine, badge: actionableWd,   color: '#b85c0d' },
-    { id: 'kyc',         label: 'KYC',         icon: ShieldCheck,   badge: pendingKyc,     color: '#0369a1' },
-    { id: 'settings',    label: 'Settings',    icon: Settings,      badge: 0,              color: '#6b6457' },
+    { id: 'withdrawals', label: 'Withdrawals', icon: ArrowUpToLine, badge: actionableWd,       color: '#b85c0d' },
+    { id: 'kyc',         label: 'KYC',         icon: ShieldCheck,   badge: pendingKyc,         color: '#0369a1' },
+    { id: 'settings',    label: 'Settings',    icon: Settings,      badge: 0,                  color: '#6b6457' },
   ];
 
   return (
     <>
       <style>{`
-        .adm { max-width: 900px; margin: 0 auto; padding: 24px 16px 40px; font-family: var(--sans); color: var(--ink); }
         .adm { max-width: 900px; margin: 0 auto; padding: 24px 16px 40px; font-family: var(--sans); color: var(--ink); background: var(--bg-adm); min-height: 100vh; }
-        .adm-card          { background: var(--bg-adm); ... }
-.adm-ticket-list   { background: var(--bg-adm); }
-.adm-ticket-scroll { background: var(--bg-adm); }
-.adm-thread        { background: var(--bg-adm); }
-.adm-method-card   { background: var(--bg-adm); }
-.adm-empty         { background: var(--bg-adm); }
         .adm-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
         .adm-brand { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
         .adm-title { font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
-        .adm-bell { position: relative; width: 38px; height: 38px; border-radius: 50%; background: var(--card); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .adm-bell-badge { position: absolute; top: -3px; right: -3px; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; color: var(--bg); font-size: 0.52rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .adm-bell { position: relative; width: 38px; height: 38px; border-radius: 50%; background: var(--card-adm); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .adm-bell-badge { position: absolute; top: -3px; right: -3px; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; color: var(--bg-adm); font-size: 0.52rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
         .adm-tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
-        .adm-tab { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 8px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card); font-family: var(--sans); font-size: 0.65rem; font-weight: 600; color: var(--ink-faint); cursor: pointer; transition: all 0.15s; }
+        .adm-tab { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 8px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card-adm); font-family: var(--sans); font-size: 0.65rem; font-weight: 600; color: var(--ink-faint); cursor: pointer; transition: all 0.15s; }
         .adm-tab:hover { border-color: var(--accent); color: var(--ink-dim); }
         .adm-tab.active { color: #fff; border-color: transparent; }
         .adm-tab-badge { position: absolute; top: 8px; right: 8px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; font-size: 0.5rem; font-weight: 700; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.25); color: #fff; }
-        .adm-tab:not(.active) .adm-tab-badge { background: var(--accent); color: var(--bg); }
+        .adm-tab:not(.active) .adm-tab-badge { background: var(--accent); color: var(--bg-adm); }
         .adm-card { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; padding: 18px 20px; margin-bottom: 10px; position: relative; overflow: hidden; }
         .adm-card-stripe { position: absolute; top: 0; left: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
         .adm-action-wrap { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line-strong); margin-top: 14px; }
@@ -586,7 +579,7 @@ export default function AdminDashboard() {
         .adm-note-input:focus { border-color: var(--accent); }
         .adm-note-input::placeholder { color: var(--ink-faint); }
         .adm-action-btns { display: flex; gap: 8px; }
-        .adm-btn-approve { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: var(--green); color: var(--bg); border: none; font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+        .adm-btn-approve { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: var(--green); color: var(--bg-adm); border: none; font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
         .adm-btn-approve:hover { opacity: 0.85; }
         .adm-btn-approve:disabled { opacity: 0.4; cursor: not-allowed; }
         .adm-btn-reject { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: transparent; color: var(--red); border: 1px solid var(--red); font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
@@ -596,7 +589,7 @@ export default function AdminDashboard() {
         .adm-err { font-size: 0.65rem; color: var(--red); }
         .adm-spin { animation: spin 0.7s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .adm-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--bg); font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
+        .adm-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--bg-adm); font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
         .adm-avatar.green { background: var(--green); }
         .adm-status { font-family: var(--mono); font-size: 0.52rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; display: inline-block; }
         .adm-status.pending { background: var(--gold-l); color: var(--gold); }
@@ -605,36 +598,36 @@ export default function AdminDashboard() {
         .adm-status.grey    { background: var(--surface); color: var(--ink-faint); }
         .adm-sec-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
         .adm-sec-label span { font-size: 0.6rem; font-weight: 700; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.1em; }
-        .adm-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 8px; background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; }
+        .adm-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 8px; background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; }
         .adm-empty p { font-size: 0.72rem; color: var(--ink-faint); font-weight: 300; }
         .adm-search-wrap { position: relative; }
         .adm-search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); }
-        .adm-search { width: 100%; padding: 8px 12px 8px 34px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--card); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
+        .adm-search { width: 100%; padding: 8px 12px 8px 34px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--card-adm); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
         .adm-search:focus { border-color: var(--accent); }
         .adm-chat-grid { display: grid; grid-template-columns: 280px 1fr; gap: 12px; min-height: 600px; }
-        .adm-ticket-list { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+        .adm-ticket-list { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
         .adm-ticket-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
         .adm-ticket-head-title { font-size: 0.75rem; font-weight: 700; color: var(--ink); }
         .adm-filter-toggle { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 2px; }
         .adm-filter-btn { padding: 4px 10px; border-radius: 6px; border: none; background: transparent; font-family: var(--sans); font-size: 0.6rem; font-weight: 600; color: var(--ink-faint); cursor: pointer; transition: all 0.12s; }
-        .adm-filter-btn.active-open { background: var(--accent); color: var(--bg); }
-        .adm-filter-btn.active-closed { background: var(--surface-hover); color: var(--ink-dim); }
-        .adm-filter-btn.active-pending { background: var(--gold); color: var(--bg); }
-        .adm-filter-btn.active-approved { background: var(--green); color: var(--bg); }
+        .adm-filter-btn.active-open     { background: var(--accent); color: var(--bg-adm); }
+        .adm-filter-btn.active-closed   { background: var(--surface-hover); color: var(--ink-dim); }
+        .adm-filter-btn.active-pending  { background: var(--gold); color: var(--bg-adm); }
+        .adm-filter-btn.active-approved { background: var(--green); color: var(--bg-adm); }
         .adm-filter-btn.active-rejected { background: var(--red); color: white; }
-        .adm-ticket-scroll { flex: 1; overflow-y: auto; }
+        .adm-ticket-scroll { flex: 1; overflow-y: auto; background: var(--card-adm); }
         .adm-ticket-item { width: 100%; text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); background: transparent; border-left: 3px solid transparent; border-right: none; border-top: none; cursor: pointer; transition: background 0.12s, border-left-color 0.12s; display: flex; align-items: flex-start; gap: 10px; min-height: 68px; }
         .adm-ticket-item:hover { background: var(--surface); }
         .adm-ticket-item.sel { background: rgba(56, 189, 248, 0.12); border-left-color: #38bdf8; }
         .adm-ticket-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
         .adm-ticket-item-row1 { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
-        .adm-thread { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 600px; }
+        .adm-thread { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 600px; }
         .adm-thread-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
         .adm-thread-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
         .adm-thread-input { border-top: 1px solid var(--line-strong); padding: 12px 14px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
         .adm-textarea { flex: 1; resize: none; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 9px 13px; font-family: var(--sans); font-size: 0.78rem; color: var(--ink); outline: none; transition: all 0.15s; min-height: 40px; max-height: 120px; }
-        .adm-textarea:focus { border-color: var(--accent); background: var(--card); }
-        .adm-send-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); color: var(--bg); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; }
+        .adm-textarea:focus { border-color: var(--accent); background: var(--card-adm); }
+        .adm-send-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); color: var(--bg-adm); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; }
         .adm-send-btn:hover { opacity: 0.85; }
         .adm-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .adm-msg-row { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 6px; }
@@ -644,7 +637,7 @@ export default function AdminDashboard() {
         .adm-msg-col.user  { align-items: flex-start; }
         .adm-bubble { width: fit-content; max-width: 100%; padding: 9px 13px; border-radius: 14px; font-size: 0.78rem; line-height: 1.5; word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
         .adm-bubble.user  { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); border-bottom-left-radius: 4px; }
-        .adm-bubble.admin { background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
+        .adm-bubble.admin { background: var(--accent); color: var(--bg-adm); border-bottom-right-radius: 4px; }
         .adm-msg-time { font-size: 0.55rem; color: var(--ink-faint); margin-top: 3px; padding: 0 2px; }
         .adm-divider { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
         .adm-divider-line { flex: 1; height: 1px; background: var(--line-strong); }
@@ -668,7 +661,7 @@ export default function AdminDashboard() {
           .adm-back-btn { display: flex; }
         }
 
-        .adm-method-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; position: relative; overflow: hidden; }
+        .adm-method-card { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; position: relative; overflow: hidden; }
         .adm-method-ico { width: 42px; height: 42px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
         .adm-method-addr { margin-top: 6px; padding: 7px 10px; background: var(--surface); border-radius: 7px; font-family: var(--mono); font-size: 0.6rem; color: var(--ink-dim); word-break: break-all; line-height: 1.6; }
         .adm-icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; transition: all 0.12s; color: var(--ink-dim); flex-shrink: 0; }
@@ -679,10 +672,10 @@ export default function AdminDashboard() {
         .adm-toggle-track { position: absolute; inset: 0; background: var(--surface-hover); border-radius: 10px; transition: background 0.2s; }
         .adm-toggle-track::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: var(--ink-faint); border-radius: 50%; transition: transform 0.2s; }
         .adm-toggle input:checked + .adm-toggle-track { background: var(--green); }
-        .adm-toggle input:checked + .adm-toggle-track::before { transform: translateX(16px); background: var(--bg); }
+        .adm-toggle input:checked + .adm-toggle-track::before { transform: translateX(16px); background: var(--bg-adm); }
         .adm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; backdrop-filter: blur(2px); animation: fadein 0.2s; }
         @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-        .adm-drawer { position: fixed; bottom: 0; left: 0; right: 0; max-width: 560px; margin: 0 auto; background: var(--card); border-radius: 22px 22px 0 0; border-top: 1px solid var(--line-strong); padding: 0 22px 44px; z-index: 201; max-height: 92vh; overflow-y: auto; animation: slideup 0.3s cubic-bezier(0.32,0.72,0,1); }
+        .adm-drawer { position: fixed; bottom: 0; left: 0; right: 0; max-width: 560px; margin: 0 auto; background: var(--card-adm); border-radius: 22px 22px 0 0; border-top: 1px solid var(--line-strong); padding: 0 22px 44px; z-index: 201; max-height: 92vh; overflow-y: auto; animation: slideup 0.3s cubic-bezier(0.32,0.72,0,1); }
         @keyframes slideup { from { transform: translateY(100%); } to { transform: translateY(0); } }
         .adm-drawer-handle { width: 36px; height: 4px; background: var(--line-strong); border-radius: 2px; margin: 12px auto 20px; }
         .adm-drawer-title { font-size: 1rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 20px; }
@@ -699,14 +692,14 @@ export default function AdminDashboard() {
         .adm-checkbox-row { display: flex; align-items: center; gap: 10px; padding: 11px 13px; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; cursor: pointer; }
         .adm-checkbox-row input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
         .adm-drawer-footer { display: flex; gap: 10px; margin-top: 20px; }
-        .adm-btn-save { flex: 1; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; padding: 12px; font-family: var(--sans); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+        .adm-btn-save { flex: 1; background: var(--accent); color: var(--bg-adm); border: none; border-radius: 10px; padding: 12px; font-family: var(--sans); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
         .adm-btn-save:hover { opacity: 0.88; }
         .adm-btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
         .adm-btn-cancel { background: var(--surface); color: var(--ink-dim); border: 1px solid var(--line-strong); border-radius: 10px; padding: 12px 18px; font-family: var(--sans); font-size: 0.78rem; font-weight: 600; cursor: pointer; }
-        .adm-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--line-strong); color: var(--ink); padding: 9px 18px; border-radius: 20px; z-index: 300; font-size: 0.72rem; font-weight: 500; white-space: nowrap; animation: fadein 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+        .adm-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card-adm); border: 1px solid var(--line-strong); color: var(--ink); padding: 9px 18px; border-radius: 20px; z-index: 300; font-size: 0.72rem; font-weight: 500; white-space: nowrap; animation: fadein 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
         .adm-toast.ok  { background: var(--green-l); color: var(--green); border-color: var(--green); }
         .adm-toast.err { background: var(--red-l); color: var(--red); border-color: var(--red); }
-        .adm-add-btn { display: flex; align-items: center; gap: 6px; padding: 9px 16px; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; font-family: var(--sans); font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
+        .adm-add-btn { display: flex; align-items: center; gap: 6px; padding: 9px 16px; background: var(--accent); color: var(--bg-adm); border: none; border-radius: 10px; font-family: var(--sans); font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
         .adm-add-btn:hover { opacity: 0.88; }
       `}</style>
 
@@ -840,7 +833,7 @@ export default function AdminDashboard() {
               <p style={{ fontSize: '0.72rem', color: 'var(--ink-faint)' }}>{users.length} total users</p>
               <div className="adm-search-wrap" style={{ width: 200 }}><Search size={13} /><input className="adm-search" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} /></div>
             </div>
-            <div style={{ background: 'var(--card)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
+            <div style={{ background: 'var(--card-adm)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
               {loadingUsers ? (
                 <div style={{ display: 'flex', justifyContent: 'center', padding: 32, gap: 8, color: 'var(--ink-faint)' }}><Loader2 size={16} className="adm-spin" /> Loading…</div>
               ) : users.filter(u => u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
@@ -901,7 +894,7 @@ export default function AdminDashboard() {
                 {deposits.filter(d => d.status !== 'PENDING').length > 0 && (
                   <div>
                     <div className="adm-sec-label"><span>Processed</span></div>
-                    <div style={{ background: 'var(--card)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
+                    <div style={{ background: 'var(--card-adm)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
                       {deposits.filter(d => d.status !== 'PENDING').slice(0, 20).map(d => (
                         <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line-strong)' }}>
                           <div className={`adm-avatar${d.status === 'COMPLETED' ? ' green' : ''}`} style={{ width: 32, height: 32, fontSize: '0.6rem' }}>{d.status === 'COMPLETED' ? <CheckCircle size={14} /> : <XCircle size={14} />}</div>
@@ -977,7 +970,7 @@ export default function AdminDashboard() {
             {processed.length > 0 && (
               <div>
                 <div className="adm-sec-label"><span>Recently Processed</span></div>
-                <div style={{ background: 'var(--card)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
+                <div style={{ background: 'var(--card-adm)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
                   {processed.slice(0, 20).map(w => (
                     <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line-strong)' }}>
                       <div className="adm-avatar" style={{ width: 32, height: 32, fontSize: '0.6rem', background: w.status === 'APPROVED' ? 'var(--green)' : 'var(--red)' }}>{w.status === 'APPROVED' ? <CheckCircle size={14} /> : <XCircle size={14} />}</div>
