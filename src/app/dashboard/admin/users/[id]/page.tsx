@@ -285,7 +285,7 @@ export default function AdminUserDetailPage() {
         .ud-field { margin-bottom: 14px; }
         .ud-field-label { display: block; font-size: 0.58rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; font-family: var(--sans); }
         .ud-input { width: 100%; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 10px 13px; font-family: var(--sans); font-size: 0.8rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
-        .ud-input:focus { border-color: var(--accent); background: var(--card); }
+        .ud-input:focus { border-color: var(--accent); background: var(--card-adm); }
         .ud-input::placeholder { color: var(--ink-faint); }
         .ud-input:disabled { color: var(--ink-faint); cursor: not-allowed; opacity: 0.6; }
         textarea.ud-input { resize: none; line-height: 1.6; }
