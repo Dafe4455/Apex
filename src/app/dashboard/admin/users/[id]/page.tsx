@@ -269,7 +269,7 @@ export default function AdminUserDetailPage() {
         .ud-action-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 10px; font-family: var(--sans); font-size: 0.7rem; font-weight: 600; cursor: pointer; border: 1px solid; transition: opacity 0.12s; }
         .ud-action-btn:hover { opacity: 0.8; }
         .ud-action-btn.primary { background: var(--green-l); color: var(--accent); border-color: var(--green); }
-        .ud-action-btn.danger  { background: var(--red-l);   color: var(--red);    border-color: var(--red); }
+        .ud-action-btn.danger  { background: var(--red-l);   color: var(--red);    border-color: var(--line); }
         .ud-action-btn.warning { background: var(--card-adm);  color: var(--gold);   border-color: var(--line); }
         .ud-info-grid { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
         .ud-info-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
