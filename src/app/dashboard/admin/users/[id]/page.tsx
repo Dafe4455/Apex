@@ -297,13 +297,13 @@ export default function AdminUserDetailPage() {
         .ud-kyc-pill.sel-REJECTED { background: var(--red-l);    border-color: var(--red);         color: var(--red); }
         .ud-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         .ud-form-btns { display: flex; gap: 10px; margin-top: 20px; }
-        .ud-btn-save { flex: 1; background: var(--accent); color: var(--bg); border: none; border-radius: 10px; padding: 12px; font-family: var(--sans); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .ud-btn-save { flex: 1; background: var(--accent); color: var(--bg-adm); border: none; border-radius: 10px; padding: 12px; font-family: var(--sans); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
         .ud-btn-save:hover { opacity: 0.88; }
         .ud-btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
         .ud-btn-cancel { background: var(--surface); color: var(--ink-dim); border: 1px solid var(--line-strong); border-radius: 10px; padding: 12px 18px; font-family: var(--sans); font-size: 0.78rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
         .ud-err { font-size: 0.65rem; color: var(--red); margin-top: 8px; font-family: var(--sans); }
         .ud-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 16px; }
-        .ud-modal { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); overflow: hidden; }
+        .ud-modal { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); overflow: hidden; }
         .ud-modal.lg { max-width: 520px; max-height: 88vh; display: flex; flex-direction: column; }
         .ud-modal-head { padding: 16px 20px; border-bottom: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
         .ud-modal-head-title { font-size: 0.82rem; font-weight: 700; color: var(--ink); display: flex; align-items: center; gap: 8px; font-family: var(--sans); }
