@@ -93,7 +93,7 @@ export default function AdminLoginPage() {
         }
 
         .al-card {
-          background: #f0ece6;
+          background: var(--card-adm);
           border-radius: 20px;
           padding: 32px 28px 28px;
         }
