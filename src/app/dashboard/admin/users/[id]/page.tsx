@@ -280,7 +280,7 @@ export default function AdminUserDetailPage() {
         .ud-info-val.mono { font-family: var(--mono); font-size: 0.75rem; }
         .ud-info-val.large { font-size: 1.3rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; font-family: var(--mono); }
         .ud-info-val.faint { color: var(--ink-faint); font-style: italic; }
-        .ud-form { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 20px; margin-bottom: 12px; }
+        .ud-form { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; padding: 20px; margin-bottom: 12px; }
         .ud-form-title { font-size: 0.88rem; font-weight: 700; color: var(--ink); margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; font-family: var(--sans); }
         .ud-field { margin-bottom: 14px; }
         .ud-field-label { display: block; font-size: 0.58rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; font-family: var(--sans); }
