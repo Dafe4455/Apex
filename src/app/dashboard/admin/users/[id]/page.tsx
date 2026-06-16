@@ -260,7 +260,7 @@ export default function AdminUserDetailPage() {
         .ud-back:hover { background: var(--surface-hover); }
         .ud-brand { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
         .ud-title { font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 20px; }
-        .ud-profile { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 22px 20px; margin-bottom: 12px; position: relative; overflow: hidden; }
+        .ud-profile { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; padding: 22px 20px; margin-bottom: 12px; position: relative; overflow: hidden; }
         .ud-profile-stripe { position: absolute; top: 0; left: 0; bottom: 0; width: 3px; background: var(--accent); border-radius: 3px 0 0 3px; }
         .ud-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--accent); color: var(--bg); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; flex-shrink: 0; font-family: var(--sans); }
         .ud-edit-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: var(--surface); color: var(--accent); border: 1px solid var(--line-strong); border-radius: 8px; font-family: var(--sans); font-size: 0.68rem; font-weight: 600; cursor: pointer; transition: background 0.12s; flex-shrink: 0; }
@@ -271,7 +271,7 @@ export default function AdminUserDetailPage() {
         .ud-action-btn.primary { background: var(--surface); color: var(--accent); border-color: var(--line-strong); }
         .ud-action-btn.danger  { background: var(--red-l);   color: var(--red);    border-color: var(--red); }
         .ud-action-btn.warning { background: var(--gold-l);  color: var(--gold);   border-color: var(--gold); }
-        .ud-info-grid { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
+        .ud-info-grid { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; margin-bottom: 12px; }
         .ud-info-row { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
         .ud-info-row:last-child { border-bottom: none; }
         .ud-info-ico { width: 32px; height: 32px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--ink-faint); }
@@ -347,7 +347,7 @@ export default function AdminUserDetailPage() {
         .ud-email-status.ok  { background: var(--green-l); color: var(--green); border: 1px solid var(--green); }
         .ud-email-status.err { background: var(--red-l);   color: var(--red);   border: 1px solid var(--red); }
         .ud-center { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 10px; color: var(--ink-faint); }
-        .ud-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card); border: 1px solid var(--line-strong); color: var(--ink); padding: 9px 18px; border-radius: 20px; z-index: 300; font-size: 0.72rem; font-weight: 500; white-space: nowrap; animation: fadein 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-family: var(--sans); }
+        .ud-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card-adm); border: 1px solid var(--line-strong); color: var(--ink); padding: 9px 18px; border-radius: 20px; z-index: 300; font-size: 0.72rem; font-weight: 500; white-space: nowrap; animation: fadein 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.3); font-family: var(--sans); }
         .ud-toast.ok  { background: var(--green-l); color: var(--green); border-color: var(--green); }
         .ud-toast.err { background: var(--red-l);   color: var(--red);   border-color: var(--red); }
         .ud-role { font-family: var(--mono); font-size: 0.5rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; background: var(--surface); color: var(--ink-faint); }
