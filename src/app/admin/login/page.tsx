@@ -53,7 +53,7 @@ export default function AdminLoginPage() {
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
-          background: #1c1a17;
+          background: #var(--bg-adm);
           font-family: 'DM Sans', system-ui, sans-serif;
           min-height: 100vh;
           display: flex;
