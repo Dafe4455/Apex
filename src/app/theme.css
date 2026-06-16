@@ -10,7 +10,7 @@
   --bg: #000000;
   --bg-2: #000200;
   --bg-3: #0f2535;
-   --bg-adm: #0f2535;
+   --bg-adm: #263238;
   --card: #050505;
   --ink: #f0f8ff;
   --ink-2: #d6ecf8;
@@ -51,7 +51,7 @@
   --bg: #f0f7f7;        /* Ultra-light, misty ice-blue background */
   --bg-2: #e5eff0;      /* Slightly deeper mist for structural sections */
   --bg-3: #d6e5e6;      /* Accent backgrounds */
-  --bg-adm: #0f2535;
+  --bg-adm: #E0F7FA;
   /* The Cards: A bright, clean ice-white variant that pops over --bg */
   --card: #f9fdfd;      /* Crisp, glowing near-white with a hint of your mint/blue */
   
