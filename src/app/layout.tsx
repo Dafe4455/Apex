@@ -33,26 +33,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Theme init — must run before paint to avoid a flash of the wrong theme.
-            Reads saved preference, falls back to system preference, defaults to dark. */}
         <script
-  dangerouslySetInnerHTML={{
-    __html: `
-      (function() {
-        try {
-          var saved = localStorage.getItem('apex-theme');
-          var prefer = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-          var theme = saved || prefer;
-          if (theme === 'light') {
-            document.documentElement.setAttribute('data-theme', 'light');
-          } else {
-            document.documentElement.removeAttribute('data-theme');
-          }
-        } catch (e) {}
-      })();
-    `,
-  }}
-/>
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var saved = localStorage.getItem('apex-theme');
+                  var prefer = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+                  var theme = saved || prefer;
+                  if (theme === 'light') {
+                    document.documentElement.setAttribute('data-theme', 'light');
+                  } else {
+                    document.documentElement.removeAttribute('data-theme');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <style dangerouslySetInnerHTML={{ __html: `
           .goog-te-banner-frame,
           .goog-te-banner-frame.skiptranslate,
@@ -89,6 +87,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             }, 'google_translate_element');
           }
         `}} />
+
+        {/* Eruda — mobile devtools, remove before production */}
+        <script src="https://cdn.jsdelivr.net/npm/eruda" />
+        <script dangerouslySetInnerHTML={{ __html: `eruda.init();` }} />
       </head>
       <body style={{ margin: 0, padding: 0, background: 'var(--bg, #0a1a26)' }}>
         <div id="google_translate_element" style={{ display: 'none' }} />
