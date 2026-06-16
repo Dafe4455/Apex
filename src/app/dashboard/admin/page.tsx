@@ -579,7 +579,7 @@ export default function AdminDashboard() {
         .adm-tab.active { color: #fff; border-color: transparent; }
         .adm-tab-badge { position: absolute; top: 8px; right: 8px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; font-size: 0.5rem; font-weight: 700; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.25); color: #fff; }
         .adm-tab:not(.active) .adm-tab-badge { background: var(--accent); color: var(--bg); }
-        .adm-card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; padding: 18px 20px; margin-bottom: 10px; position: relative; overflow: hidden; }
+        .adm-card { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; padding: 18px 20px; margin-bottom: 10px; position: relative; overflow: hidden; }
         .adm-card-stripe { position: absolute; top: 0; left: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
         .adm-action-wrap { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line-strong); margin-top: 14px; }
         .adm-note-input { width: 100%; padding: 9px 13px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--surface); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
