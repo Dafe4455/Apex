@@ -255,8 +255,8 @@ export default function AdminUserDetailPage() {
   return (
     <>
       <style>{`
-        .ud-wrap { max-width: 600px; margin: 0 auto; padding: 24px 16px 80px; background: var(--bg); min-height: 100vh; }
-        .ud-back { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 600; color: var(--ink-dim); margin-bottom: 20px; padding: 6px 12px; background: var(--card); border: 1px solid var(--line-strong); border-radius: 8px; transition: background 0.12s; cursor: pointer; font-family: var(--sans); }
+        .ud-wrap { max-width: 600px; margin: 0 auto; padding: 24px 16px 80px; background: var(--bg-adm); min-height: 100vh; }
+        .ud-back { display: inline-flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 600; color: var(--ink-dim); margin-bottom: 20px; padding: 6px 12px; background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 8px; transition: background 0.12s; cursor: pointer; font-family: var(--sans); }
         .ud-back:hover { background: var(--surface-hover); }
         .ud-brand { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
         .ud-title { font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 20px; }
