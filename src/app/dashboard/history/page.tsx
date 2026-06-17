@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { RefreshCw, ArrowDownLeft, ArrowUpRight, Zap, Activity, Search } from 'lucide-react';
 
 type EventKind = 'trade' | 'deposit' | 'withdrawal' | 'activity';
+type Outcome = 'profit' | 'loss' | null;
 
 type TimelineEvent = {
   id: string;
@@ -11,6 +12,7 @@ type TimelineEvent = {
   title: string;
   description: string;
   amount: number | null;
+  outcome: Outcome;
   status: string | null;
   createdAt: string;
 };
@@ -44,28 +46,29 @@ function groupByDate(events: TimelineEvent[]) {
   return groups;
 }
 
-const KIND_CONFIG = {
-  trade: {
-    label: 'Trade',
-    bg: (a: string) => a.startsWith('BUY') ? 'var(--green-l)' : 'var(--red-l)',
-    col: (a: string) => a.startsWith('BUY') ? 'var(--green)' : 'var(--red)',
-  },
-  deposit: {
-    label: 'Deposit',
-    bg: () => 'var(--accent-l)',
-    col: () => 'var(--accent)',
-  },
-  withdrawal: {
-    label: 'Withdrawal',
-    bg: () => 'var(--gold-l)',
-    col: () => 'var(--gold)',
-  },
-  activity: {
-    label: 'Activity',
-    bg: () => 'var(--surface)',
-    col: () => 'var(--ink-dim)',
-  },
+// Color is keyed off outcome (profit/loss), not transaction type or BUY/SELL text.
+// A row with no outcome (e.g. a BUY, or a pre-migration SELL with no pnl) renders neutral.
+function outcomeColors(outcome: Outcome) {
+  if (outcome === 'profit') return { bg: 'var(--green-l)', col: 'var(--green)' };
+  if (outcome === 'loss')   return { bg: 'var(--red-l)',   col: 'var(--red)'   };
+  return { bg: 'var(--surface)', col: 'var(--ink-dim)' };
+}
+
+const KIND_CONFIG: Record<EventKind, { label: string }> = {
+  trade:      { label: 'Trade' },
+  deposit:    { label: 'Deposit' },
+  withdrawal: { label: 'Withdrawal' },
+  activity:   { label: 'Activity' },
 };
+
+function kindBaseColors(kind: EventKind) {
+  switch (kind) {
+    case 'deposit':    return { bg: 'var(--accent-l)', col: 'var(--accent)' };
+    case 'withdrawal': return { bg: 'var(--gold-l)',    col: 'var(--gold)'   };
+    case 'activity':   return { bg: 'var(--surface)',   col: 'var(--ink-dim)' };
+    default:           return { bg: 'var(--surface)',   col: 'var(--ink-dim)' };
+  }
+}
 
 function StatusPill({ status }: { status: string }) {
   const ok      = status === 'COMPLETED' || status === 'APPROVED';
@@ -76,7 +79,7 @@ function StatusPill({ status }: { status: string }) {
     <span style={{
       fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700,
       padding: '2px 7px', borderRadius: 4,
-      background: bg, color: col, whiteSpace: 'nowrap',
+      background: bg, color: col, whiteSpace: 'nowrap', flexShrink: 0,
     }}>
       {status.replace('_', ' ')}
     </span>
@@ -151,7 +154,7 @@ export default function HistoryPage() {
         }
         .filter-btn:hover { color: var(--ink-dim); border-color: var(--line-strong); }
         .filter-btn.active-all        { background: var(--surface); color: var(--accent);   border-color: var(--accent); }
-        .filter-btn.active-trade      { background: var(--green-l); color: var(--green);    border-color: var(--green); }
+        .filter-btn.active-trade      { background: var(--surface); color: var(--ink-dim);  border-color: var(--line-strong); }
         .filter-btn.active-deposit    { background: var(--accent-l); color: var(--accent);  border-color: var(--accent); }
         .filter-btn.active-withdrawal { background: var(--gold-l);  color: var(--gold);     border-color: var(--gold); }
         .filter-btn.active-activity   { background: var(--surface); color: var(--ink-dim);  border-color: var(--line-strong); }
@@ -163,6 +166,27 @@ export default function HistoryPage() {
         }
         .event-row:last-child { border-bottom: none; }
         .event-row:hover { background: var(--surface-hover); }
+
+        .event-main { flex: 1 1 auto; min-width: 0; }
+        .event-title {
+          font-weight: 600; font-size: 0.85rem; color: var(--ink);
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          min-width: 0;
+        }
+        .event-desc {
+          font-family: var(--mono); font-size: 0.62rem; color: var(--ink-faint);
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          flex: 1 1 auto; min-width: 0;
+        }
+        .event-amount-col {
+          flex: 0 0 auto; max-width: 42%;
+          display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+        }
+        .event-amount {
+          font-family: var(--mono); font-size: 0.78rem; font-weight: 700;
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+          max-width: 100%;
+        }
 
         .search-box {
           flex: 1; display: flex; align-items: center; gap: 8px;
@@ -283,52 +307,56 @@ export default function HistoryPage() {
           }}>
             <div className="date-label">{dateKey}</div>
             {grouped[dateKey].map(event => {
-              const cfg     = KIND_CONFIG[event.kind];
-              const iconBg  = cfg.bg(event.description);
-              const iconCol = cfg.col(event.description);
+              const label = KIND_CONFIG[event.kind].label;
+              const { bg: badgeBg, col: badgeCol } = event.kind === 'trade'
+                ? outcomeColors(event.outcome)
+                : kindBaseColors(event.kind);
+              const amountCol = event.kind === 'trade'
+                ? outcomeColors(event.outcome).col
+                : event.kind === 'deposit'
+                  ? 'var(--accent)'
+                  : event.kind === 'withdrawal'
+                    ? 'var(--gold)'
+                    : 'var(--ink)';
+
               return (
                 <div className="event-row" key={event.id}>
                   <div style={{
                     width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                    background: iconBg, display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', color: iconCol,
+                    background: badgeBg, display: 'flex', alignItems: 'center',
+                    justifyContent: 'center', color: badgeCol,
                   }}>
                     {event.kind === 'deposit'    && <ArrowDownLeft size={16} />}
                     {event.kind === 'withdrawal' && <ArrowUpRight  size={16} />}
                     {event.kind === 'trade'      && <Zap           size={16} />}
                     {event.kind === 'activity'   && <Activity      size={14} />}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                      <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {event.kind === 'trade' ? event.title.split(':')[1] ?? event.title : event.title}
-                      </span>
+                  <div className="event-main">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                      <span className="event-title">{event.title}</span>
                       <span style={{
                         fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700,
                         padding: '1px 6px', borderRadius: 4,
-                        background: iconBg, color: iconCol, flexShrink: 0,
+                        background: badgeBg, color: badgeCol, flexShrink: 0,
                       }}>
-                        {cfg.label}
+                        {label}
                       </span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, flexWrap: 'wrap' }}>
-                      <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 220 }}>
-                        {event.description}
-                      </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, minWidth: 0 }}>
+                      <span className="event-desc">{event.description}</span>
                       <span style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', color: 'var(--ink-faint)', flexShrink: 0 }}>
                         {fmtTime(event.createdAt)}
                       </span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                  <div className="event-amount-col">
                     {event.amount !== null && (
-                      <span style={{
-                        fontFamily: 'var(--mono)', fontSize: '0.78rem', fontWeight: 700,
-                        color: event.kind === 'deposit' ? 'var(--accent)'
-                          : event.kind === 'withdrawal' ? 'var(--gold)'
-                          : 'var(--ink)',
-                      }}>
-                        {event.kind === 'deposit' ? '+' : event.kind === 'withdrawal' ? '-' : ''}{fmtUsd(event.amount)}
+                      <span className="event-amount" style={{ color: amountCol }}>
+                        {event.kind === 'deposit' ? '+'
+                          : event.kind === 'withdrawal' ? '-'
+                          : event.kind === 'trade' && event.outcome === 'loss' ? '-'
+                          : ''}
+                        {fmtUsd(event.amount)}
                       </span>
                     )}
                     {event.status && <StatusPill status={event.status} />}
