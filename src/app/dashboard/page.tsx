@@ -531,7 +531,7 @@ export default function DashboardPage() {
         @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
         .sheet {
           position: fixed; bottom: 0; left: 0; right: 0;
-          background: var(--card-adm);
+          background: var(--card);
           border-radius: 24px 24px 0 0;
           border-top: 1px solid var(--line-strong);
           padding: 0 20px 40px; z-index: 201;
@@ -565,7 +565,7 @@ export default function DashboardPage() {
         }
 
         .addr-box {
-          background: var(--bg);
+          background: var(--bg-adm);
           border: 1.5px solid var(--line-strong);
           border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
         }
