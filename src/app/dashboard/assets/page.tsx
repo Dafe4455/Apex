@@ -401,7 +401,7 @@ export default function AssetsPage() {
         {/* ── ACTION BUTTONS ── */}
         <div style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
           {[
-            { href: '/dashboard/deposit',  label: 'Deposit',  color: 'var(--green)' },
+            { href: '/dashboard/deposit',  label: 'Deposit', background: var(--surface-hover), color: 'var(--green)' },
             { href: '/dashboard/withdraw', label: 'Withdraw', color: 'var(--red)'   },
             { href: '/dashboard/history',  label: 'History',  color: 'var(--accent)' },
           ].map(({ href, label, color }) => (
