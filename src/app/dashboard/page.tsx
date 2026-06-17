@@ -777,7 +777,7 @@ export default function DashboardPage() {
           <div className="sheet">
             <div className="sheet-handle" />
             <p className="sheet-title">Quick Deposit</p>
-            <p className="sheet-sub">Copy an address and send funds — then confirm on the full deposit page</p>
+            <p className="sheet-sub">Copy an address and make instant deposit</p>
 
             {methodsLoading ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '30px 0', gap: 12 }}>
@@ -826,7 +826,7 @@ export default function DashboardPage() {
               </>
             )}
             <Link href="/dashboard/deposit" className="sheet-full-link" onClick={closeSheet}>
-              Full Deposit Page →
+              Confirm→
             </Link>
           </div>
         </>
