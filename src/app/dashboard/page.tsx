@@ -560,7 +560,7 @@ export default function DashboardPage() {
         }
         .method-pill.active { background: var(--accent); color: #0a1f2e; border: none; }
         .method-pill.inactive {
-          background: var(--card); color: var(--ink-dim);
+          background: var(--card-adm); color: var(--ink-dim);
           border: 1px solid var(--line-strong);
         }
 
