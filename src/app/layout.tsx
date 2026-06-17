@@ -88,9 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }
         `}} />
 
-        {/* Eruda — mobile devtools, remove before production */}
-        <script src="https://cdn.jsdelivr.net/npm/eruda" />
-        <script dangerouslySetInnerHTML={{ __html: `eruda.init();` }} />
+        
       </head>
       <body style={{ margin: 0, padding: 0, background: 'var(--bg, #0a1a26)' }}>
         <div id="google_translate_element" style={{ display: 'none' }} />
