@@ -160,14 +160,15 @@ export default function HistoryPage() {
         .filter-btn.active-activity   { background: var(--surface); color: var(--ink-dim);  border-color: var(--line-strong); }
 
         .event-row {
-          display: flex; align-items: center; gap: 12px;
+          display: flex; align-items: center; gap: 8px;
           padding: 13px 16px; border-bottom: 1px solid var(--line);
           transition: background 0.12s;
+          max-width: 100%; overflow: hidden;
         }
         .event-row:last-child { border-bottom: none; }
         .event-row:hover { background: var(--surface-hover); }
 
-        .event-main { flex: 1 1 auto; min-width: 0; }
+        .event-main { flex: 1 1 auto; min-width: 0; overflow: hidden; }
         .event-title {
           font-weight: 600; font-size: 0.85rem; color: var(--ink);
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -179,13 +180,13 @@ export default function HistoryPage() {
           flex: 1 1 auto; min-width: 0;
         }
         .event-amount-col {
-          flex: 0 0 auto; max-width: 42%;
+          flex: 0 1 auto; max-width: 38%; min-width: 0;
           display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
         }
         .event-amount {
           font-family: var(--mono); font-size: 0.78rem; font-weight: 700;
           overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-          max-width: 100%;
+          max-width: 100%; min-width: 0;
         }
 
         .search-box {
@@ -270,7 +271,7 @@ export default function HistoryPage() {
         </div>
 
         {/* FILTERS */}
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 2 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {([
             { key: 'all',        label: 'All'         },
             { key: 'trade',      label: 'Trades'      },
