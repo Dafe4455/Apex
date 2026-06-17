@@ -41,17 +41,18 @@ export async function POST(req: NextRequest) {
     }
 
     // ── SELL: check open position exists and amount is valid ──────────────────
+    let openPosForSell = null;
     if (action === 'SELL') {
-      const openPos = await prisma.position.findFirst({
+      openPosForSell = await prisma.position.findFirst({
         where: { userId: user.id, symbol: asset, status: 'OPEN', side: 'LONG' },
         orderBy: { openedAt: 'asc' },
       });
 
-      if (!openPos) {
+      if (!openPosForSell) {
         return NextResponse.json({ error: `No open ${asset} position to sell` }, { status: 400 });
       }
 
-      const positionValue = openPos.entryPrice * openPos.quantity;
+      const positionValue = openPosForSell.entryPrice * openPosForSell.quantity;
       if (numAmount > positionValue) {
         return NextResponse.json({
           error: `Sell amount exceeds position value of ${positionValue.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`,
@@ -60,6 +61,12 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
+      // Pre-calculate pnl for SELL so it can be persisted on the transaction row
+      let sellPnl: number | null = null;
+      if (action === 'SELL' && openPosForSell) {
+        sellPnl = (numPrice - openPosForSell.entryPrice) * openPosForSell.quantity;
+      }
+
       // 1. Transaction record
       const transaction = await tx.transaction.create({
         data: {
@@ -70,6 +77,7 @@ export async function POST(req: NextRequest) {
           price:    numPrice,
           action,
           leverage: numLev,
+          pnl:      sellPnl,
           status:   'COMPLETED' as any,
         },
       });
