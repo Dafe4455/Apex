@@ -524,7 +524,7 @@ export default function DashboardPage() {
 
         .sheet-overlay {
           position: fixed; inset: 0;
-          background: var(--bg-adm);
+          background: var(--card);
           z-index: 200; backdrop-filter: blur(3px);
           animation: fadeIn 0.2s ease;
         }
