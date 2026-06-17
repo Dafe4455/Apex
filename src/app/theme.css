@@ -7,11 +7,11 @@
 
 :root {
   /* Base palette — dark (default) */
-  --bg: #10171D;
+  --bg: #000000;
   --bg-2: #000200;
   --bg-3: #0f2535;
    --bg-adm: #1A1C1E;
-  --card: #1A1C1E;
+  --card: #050505;
    --card-adm: #263238;
   --ink: #f0f8ff;
   --ink-2: #d6ecf8;
