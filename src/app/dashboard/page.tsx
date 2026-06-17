@@ -565,7 +565,7 @@ export default function DashboardPage() {
         }
 
         .addr-box {
-          background: var(--bg-adm);
+          background: var(--card-adm);
           border: 1.5px solid var(--line-strong);
           border-radius: 12px; padding: 14px 16px; margin-bottom: 12px;
         }
