@@ -92,6 +92,7 @@ export default function HistoryPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch]         = useState('');
   const [filter, setFilter]         = useState<EventKind | 'all'>('all');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const load = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -320,48 +321,76 @@ export default function HistoryPage() {
                     ? 'var(--gold)'
                     : 'var(--ink)';
 
+              const isWithdrawal = event.kind === 'withdrawal';
+              const isExpanded   = expandedId === event.id;
+
               return (
-                <div className="event-row" key={event.id}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                    background: badgeBg, display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', color: badgeCol,
-                  }}>
-                    {event.kind === 'deposit'    && <ArrowDownLeft size={16} />}
-                    {event.kind === 'withdrawal' && <ArrowUpRight  size={16} />}
-                    {event.kind === 'trade'      && <Zap           size={16} />}
-                    {event.kind === 'activity'   && <Activity      size={14} />}
+                <div key={event.id}>
+                  <div
+                    className="event-row"
+                    onClick={isWithdrawal ? () => setExpandedId(isExpanded ? null : event.id) : undefined}
+                    style={isWithdrawal ? { cursor: 'pointer' } : undefined}
+                  >
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                      background: badgeBg, display: 'flex', alignItems: 'center',
+                      justifyContent: 'center', color: badgeCol,
+                    }}>
+                      {event.kind === 'deposit'    && <ArrowDownLeft size={16} />}
+                      {event.kind === 'withdrawal' && <ArrowUpRight  size={16} />}
+                      {event.kind === 'trade'      && <Zap           size={16} />}
+                      {event.kind === 'activity'   && <Activity      size={14} />}
+                    </div>
+                    <div className="event-main">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                        <span className="event-title">{event.title}</span>
+                        <span style={{
+                          fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700,
+                          padding: '1px 6px', borderRadius: 4,
+                          background: badgeBg, color: badgeCol, flexShrink: 0,
+                        }}>
+                          {label}
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, minWidth: 0 }}>
+                        {isWithdrawal ? (
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--ink-faint)' }}>
+                            {isExpanded ? 'Tap to hide details' : 'Tap to view details'}
+                          </span>
+                        ) : (
+                          <span className="event-desc">{event.description}</span>
+                        )}
+                        <span style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', color: 'var(--ink-faint)', flexShrink: 0 }}>
+                          {fmtTime(event.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="event-amount-col">
+                      {event.amount !== null && (
+                        <span className="event-amount" style={{ color: amountCol }}>
+                          {event.kind === 'deposit' ? '+'
+                            : event.kind === 'withdrawal' ? '-'
+                            : event.kind === 'trade' && event.outcome === 'loss' ? '-'
+                            : ''}
+                          {fmtUsd(event.amount)}
+                        </span>
+                      )}
+                      {event.status && <StatusPill status={event.status} />}
+                    </div>
                   </div>
-                  <div className="event-main">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-                      <span className="event-title">{event.title}</span>
-                      <span style={{
-                        fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700,
-                        padding: '1px 6px', borderRadius: 4,
-                        background: badgeBg, color: badgeCol, flexShrink: 0,
+                  {isWithdrawal && isExpanded && (
+                    <div style={{
+                      padding: '0 16px 13px 64px',
+                      borderBottom: '1px solid var(--line)',
+                    }}>
+                      <p style={{
+                        fontFamily: 'var(--mono)', fontSize: '0.62rem', color: 'var(--ink-faint)',
+                        lineHeight: 1.5, wordBreak: 'break-word',
                       }}>
-                        {label}
-                      </span>
+                        {event.description}
+                      </p>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3, minWidth: 0 }}>
-                      <span className="event-desc">{event.description}</span>
-                      <span style={{ fontFamily: 'var(--mono)', fontSize: '0.58rem', color: 'var(--ink-faint)', flexShrink: 0 }}>
-                        {fmtTime(event.createdAt)}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="event-amount-col">
-                    {event.amount !== null && (
-                      <span className="event-amount" style={{ color: amountCol }}>
-                        {event.kind === 'deposit' ? '+'
-                          : event.kind === 'withdrawal' ? '-'
-                          : event.kind === 'trade' && event.outcome === 'loss' ? '-'
-                          : ''}
-                        {fmtUsd(event.amount)}
-                      </span>
-                    )}
-                    {event.status && <StatusPill status={event.status} />}
-                  </div>
+                  )}
                 </div>
               );
             })}
