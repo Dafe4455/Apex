@@ -263,6 +263,7 @@ model Transaction {
   price     Float?
   action    String?
   leverage  Float?
+  pnl       Float?
   status    TransactionStatus @default(PENDING)
   userId    String
   user      User              @relation(fields: [userId], references: [id])
