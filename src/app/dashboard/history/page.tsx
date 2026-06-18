@@ -140,7 +140,6 @@ export default function HistoryPage() {
     <>
       <style>{`
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        html, body { overflow-x: hidden; width: 100%; }
         body { background: var(--bg); font-family: var(--sans); color: var(--ink); }
 
         @keyframes shimmer { to { background-position: -200% 0; } }
@@ -195,13 +194,12 @@ export default function HistoryPage() {
           background: var(--card); border: 1px solid var(--line-strong);
           border-radius: 10px; padding: 9px 14px;
           transition: border-color 0.15s;
-          min-width: 0;
         }
         .search-box:focus-within { border-color: var(--accent); }
         .search-box input {
           background: none; border: none; outline: none;
           font-family: var(--mono); font-size: 0.72rem;
-          color: var(--ink); width: 100%; min-width: 0;
+          color: var(--ink); width: 100%;
         }
         .search-box input::placeholder { color: var(--ink-faint); }
 
@@ -212,17 +210,13 @@ export default function HistoryPage() {
           border-bottom: 1px solid var(--line);
           background: var(--surface);
         }
-
-        .stat-card {
-          min-width: 0;
-        }
       `}</style>
 
       <div style={styles.page}>
 
         {/* HEADER */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4, minWidth: 0 }}>
-          <div style={{ minWidth: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+          <div>
             <h1 style={{ fontFamily: 'var(--sans)', fontSize: '1.45rem', fontWeight: 700, color: 'var(--ink)' }}>
               History
             </h1>
@@ -236,7 +230,6 @@ export default function HistoryPage() {
               background: 'none', border: '1px solid var(--line-strong)',
               borderRadius: 8, padding: '8px 10px', cursor: 'pointer',
               color: refreshing ? 'var(--accent)' : 'var(--ink-faint)',
-              flexShrink: 0,
             }}
           >
             <RefreshCw size={15} style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }} />
@@ -244,22 +237,21 @@ export default function HistoryPage() {
         </div>
 
         {/* STATS */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, minWidth: 0 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {[
             { label: 'Trades',    value: stats.trades,           col: 'var(--green)'  },
             { label: 'Deposited', value: fmtUsd(stats.totalIn),  col: 'var(--accent)' },
             { label: 'Withdrawn', value: fmtUsd(stats.totalOut), col: 'var(--gold)'   },
           ].map(s => (
-            <div key={s.label} className="stat-card" style={{
+            <div key={s.label} style={{
               background: 'var(--card)', border: '1px solid var(--line-strong)',
               borderRadius: 12, padding: '12px 14px',
-              display: 'flex', flexDirection: 'column', gap: 4,
-              overflow: 'hidden', minWidth: 0,
+              display: 'flex', flexDirection: 'column', gap: 4, overflow: 'hidden',
             }}>
-              <span style={{ fontFamily: 'var(--mono)', fontSize: '0.55rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: '0.55rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 {s.label}
               </span>
-              <span style={{ fontFamily: 'var(--mono)', fontSize: '0.88rem', fontWeight: 700, color: s.col, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+              <span style={{ fontFamily: 'var(--mono)', fontSize: '0.88rem', fontWeight: 700, color: s.col, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {s.value}
               </span>
             </div>
@@ -267,7 +259,7 @@ export default function HistoryPage() {
         </div>
 
         {/* SEARCH */}
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', minWidth: 0 }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <div className="search-box">
             <Search size={13} style={{ color: 'var(--ink-faint)', flexShrink: 0 }} />
             <input
@@ -312,7 +304,7 @@ export default function HistoryPage() {
         ) : dateKeys.map(dateKey => (
           <div key={dateKey} style={{
             background: 'var(--card)', border: '1px solid var(--line-strong)',
-            borderRadius: 14, overflow: 'hidden', minWidth: 0,
+            borderRadius: 14, overflow: 'hidden',
           }}>
             <div className="date-label">{dateKey}</div>
             {grouped[dateKey].map(event => {
@@ -387,7 +379,6 @@ const styles: Record<string, React.CSSProperties> = {
     minHeight: '100vh', background: 'var(--bg)',
     padding: '20px 16px', display: 'flex', flexDirection: 'column',
     gap: 12, maxWidth: 600, margin: '0 auto',
-    width: '100%', overflowX: 'hidden',
   },
   skeletonBox: {
     background: 'var(--card)',
