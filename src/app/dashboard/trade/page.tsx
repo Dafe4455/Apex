@@ -113,20 +113,29 @@ export default function TradePage() {
   const [dropdownPrices, setDropdownPrices] = useState<Record<string, PriceData>>({});
 
   // ── Theme detection ───────────────────────────────────────────────────────
+  // Watches the data-theme attribute on <html> so the TradingView iframe
+  // re-renders with the correct theme whenever the user toggles light/dark.
+
   const [isDark, setIsDark] = useState(true);
 
   useEffect(() => {
     const getTheme = () =>
       document.documentElement.getAttribute('data-theme') !== 'light';
+
     setIsDark(getTheme());
+
     const observer = new MutationObserver(() => setIsDark(getTheme()));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
     return () => observer.disconnect();
   }, []);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ── Derived ────────────────────────────────────────────────────────────────
+
   const activeAsset  = useMemo(() => ALL_ASSETS.find(a => a.symbol === asset), [asset]);
   const assetType    = useMemo(() => activeAsset?.type ?? 'CRYPTO', [activeAsset]);
   const baseSymbol   = useMemo(() => getPriceSymbol(asset), [asset]);
@@ -144,24 +153,15 @@ export default function TradePage() {
       style: 'currency', currency: 'USD', minimumFractionDigits: 2,
     }), []);
 
-  // ── Read asset + side from URL params ─────────────────────────────────────
-  // Supports links like /dashboard/trade?asset=BTCUSD&side=sell
-  // from the dashboard Quick Trade table.
+  // ── Read asset from URL param ─────────────────────────────────────────────
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-
-    const assetParam = params.get('asset');
-    if (assetParam && ALL_ASSETS.find(a => a.symbol === assetParam)) {
-      setAsset(assetParam);
-    }
-
-    const sideParam = params.get('side');
-    if (sideParam === 'sell') setOrderType('SELL');
-    else if (sideParam === 'buy') setOrderType('BUY');
+    const p = new URLSearchParams(window.location.search).get('asset');
+    if (p && ALL_ASSETS.find(a => a.symbol === p)) setAsset(p);
   }, []);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
+
   useEffect(() => {
     function handler(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node))
@@ -172,6 +172,7 @@ export default function TradePage() {
   }, []);
 
   // ── Lazy-fetch prices when dropdown opens ─────────────────────────────────
+
   useEffect(() => {
     ALL_ASSETS.forEach(async (a) => {
       const sym = getPriceSymbol(a.symbol);
@@ -187,6 +188,7 @@ export default function TradePage() {
   }, []);
 
   // ── Fetch balance ─────────────────────────────────────────────────────────
+
   const fetchBalance = useCallback(async () => {
     try {
       const res = await fetch('/api/user/dashboard', { cache: 'no-store' });
@@ -199,6 +201,7 @@ export default function TradePage() {
   useEffect(() => { fetchBalance(); }, [fetchBalance]);
 
   // ── Fetch live price for selected asset ───────────────────────────────────
+
   useEffect(() => {
     const fetchPrice = async () => {
       try {
@@ -234,12 +237,14 @@ export default function TradePage() {
   }, [asset, baseSymbol]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
   const setPercentage = (pct: number) => {
     if (orderType === 'BUY') setAmount((balance * pct).toFixed(2));
     else toast.error('Enter sell amount manually based on your holdings');
   };
 
   // ── Submit trade ──────────────────────────────────────────────────────────
+
   const handleTrade = async () => {
     const numAmount = Number(amount);
     if (!amount || numAmount <= 0)                  return toast.error('Enter a valid amount');
@@ -284,12 +289,16 @@ export default function TradePage() {
   };
 
   // ── TradingView iframe src ────────────────────────────────────────────────
+  // Rebuilds whenever asset or theme changes, causing the iframe to reload
+  // with the correct symbol and light/dark theme.
+
   const chartSrc = useMemo(() =>
     `https://s.tradingview.com/widgetembed/?symbol=${asset}&interval=15&theme=${isDark ? 'dark' : 'light'}&style=1&locale=en&hide_top_toolbar=0&hide_legend=0&save_image=0`,
     [asset, isDark],
   );
 
   // ── Render ────────────────────────────────────────────────────────────────
+
   return (
     <>
       <style>{`
@@ -309,97 +318,244 @@ export default function TradePage() {
           .trade-wrap { flex-direction: row; height: calc(100vh - 44px); overflow: hidden; }
         }
 
-        .card { background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; }
+        /* ── Card ── */
+        .card {
+          background: var(--card);
+          border: 1px solid var(--line-strong);
+          border-radius: 14px;
+        }
 
-        .trade-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; flex-wrap: wrap; gap: 12px; }
+        /* ── Header ── */
+        .trade-header {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 14px 18px; flex-wrap: wrap; gap: 12px;
+        }
         .asset-selector { position: relative; }
-        .asset-btn { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 6px 10px; border-radius: 8px; transition: background 0.15s; }
+        .asset-btn {
+          background: none; border: none; cursor: pointer;
+          display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
+          padding: 6px 10px; border-radius: 8px; transition: background 0.15s;
+        }
         .asset-btn:hover { background: var(--surface-hover); }
-        .asset-name { font-family: var(--mono); font-size: 1.4rem; font-weight: 600; color: var(--ink); display: flex; align-items: center; gap: 6px; letter-spacing: -0.02em; }
-        .chevron-wrap { display: flex; align-items: center; color: var(--ink-faint); transition: transform 0.2s; }
+        .asset-name {
+          font-family: var(--mono); font-size: 1.4rem; font-weight: 600;
+          color: var(--ink); display: flex; align-items: center; gap: 6px;
+          letter-spacing: -0.02em;
+        }
+        .chevron-wrap {
+          display: flex; align-items: center;
+          color: var(--ink-faint); transition: transform 0.2s;
+        }
         .chevron-wrap.open { transform: rotate(180deg); }
 
-        .asset-dropdown { position: absolute; top: calc(100% + 6px); left: 0; width: 380px; background: var(--card); border: 1px solid var(--line-strong); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; z-index: 50; animation: dropIn 0.15s ease; }
-        @media (max-width: 420px) { .asset-dropdown { width: calc(100vw - 24px); } }
-        @keyframes dropIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-        .dropdown-search { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line-strong); background: var(--bg); }
-        .dropdown-search input { background: none; border: none; outline: none; font-family: var(--mono); font-size: 0.8rem; color: var(--ink-2); width: 100%; }
+        /* ── Dropdown ── */
+        .asset-dropdown {
+          position: absolute; top: calc(100% + 6px); left: 0;
+          width: 380px;
+          background: var(--card);
+          border: 1px solid var(--line-strong); border-radius: 14px;
+          box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+          overflow: hidden; z-index: 50;
+          animation: dropIn 0.15s ease;
+        }
+        @media (max-width: 420px) {
+          .asset-dropdown { width: calc(100vw - 24px); }
+        }
+        @keyframes dropIn {
+          from { opacity: 0; transform: translateY(-6px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .dropdown-search {
+          display: flex; align-items: center; gap: 10px;
+          padding: 12px 16px; border-bottom: 1px solid var(--line-strong);
+          background: var(--bg);
+        }
+        .dropdown-search input {
+          background: none; border: none; outline: none;
+          font-family: var(--mono); font-size: 0.8rem;
+          color: var(--ink-2); width: 100%;
+        }
         .dropdown-search input::placeholder { color: var(--ink-faint); }
         .dropdown-list { max-height: 480px; overflow-y: auto; }
-        .dropdown-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; border: none; background: none; width: 100%; cursor: pointer; border-bottom: 1px solid var(--line); transition: background 0.1s; text-align: left; gap: 12px; }
+        .dropdown-item {
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 14px 16px; border: none; background: none; width: 100%;
+          cursor: pointer; border-bottom: 1px solid var(--line);
+          transition: background 0.1s; text-align: left; gap: 12px;
+        }
         .dropdown-item:hover { background: var(--surface-hover); }
         .dropdown-item-left { display: flex; align-items: center; gap: 12px; }
-        .dropdown-icon { width: 42px; height: 42px; border-radius: 50%; background: var(--surface); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.75rem; color: var(--ink-faint); flex-shrink: 0; font-weight: 700; overflow: hidden; }
+        .dropdown-icon {
+          width: 42px; height: 42px; border-radius: 50%;
+          background: var(--surface); display: flex; align-items: center;
+          justify-content: center; font-family: var(--mono); font-size: 0.75rem;
+          color: var(--ink-faint); flex-shrink: 0; font-weight: 700;
+          overflow: hidden;
+        }
         .dropdown-icon img { width: 100%; height: 100%; object-fit: cover; }
-        .dropdown-item-sym { font-family: var(--mono); font-size: 0.85rem; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+        .dropdown-item-sym {
+          font-family: var(--mono); font-size: 0.85rem; font-weight: 600;
+          color: var(--ink); margin-bottom: 3px;
+        }
         .dropdown-item-name { font-size: 0.68rem; color: var(--ink-faint); }
         .dropdown-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
         .dropdown-item-price { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-2); }
-        .dropdown-item-chg { font-family: var(--mono); font-size: 0.65rem; font-weight: 700; }
+        .dropdown-item-chg   { font-family: var(--mono); font-size: 0.65rem; font-weight: 700; }
 
-        .price-display { font-family: var(--mono); font-size: 1.8rem; font-weight: 600; letter-spacing: -0.03em; transition: color 0.4s; }
+        /* ── Price display ── */
+        .price-display {
+          font-family: var(--mono); font-size: 1.8rem; font-weight: 600;
+          letter-spacing: -0.03em; transition: color 0.4s;
+        }
         .price-display.up   { color: var(--green); }
         .price-display.down { color: var(--red); }
         .price-display.flat { color: var(--ink); }
 
+        /* ── Layout columns ── */
         .left-col  { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
         .right-col { width: 100%; display: flex; flex-direction: column; gap: 10px; padding-bottom: 20px; }
-        @media (min-width: 1024px) { .right-col { width: 320px; overflow-y: auto; padding-bottom: 0; } }
+        @media (min-width: 1024px) {
+          .right-col { width: 320px; overflow-y: auto; padding-bottom: 0; }
+        }
 
-        .chart-wrap { flex: 1; position: relative; overflow: hidden; border-radius: 14px; min-height: 380px; }
+        /* ── Chart ── */
+        .chart-wrap {
+          flex: 1; position: relative; overflow: hidden;
+          border-radius: 14px; min-height: 380px;
+        }
         @media (min-width: 1024px) { .chart-wrap { min-height: unset; } }
         .chart-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
+        /* ── Order panel ── */
         .order-panel { padding: 16px; }
-        .order-toggle { display: flex; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 8px; padding: 3px; margin-bottom: 16px; }
-        .order-btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-family: var(--mono); font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
+        .order-toggle {
+          display: flex; background: var(--bg); border: 1px solid var(--line-strong);
+          border-radius: 8px; padding: 3px; margin-bottom: 16px;
+        }
+        .order-btn {
+          flex: 1; padding: 8px; border: none; border-radius: 6px;
+          font-family: var(--mono); font-size: 0.65rem; font-weight: 700;
+          letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+          transition: all 0.15s;
+        }
         .order-btn.buy.active   { background: var(--green-l); color: var(--green); }
         .order-btn.sell.active  { background: var(--red-l);   color: var(--red); }
         .order-btn.inactive     { background: none; color: var(--ink-faint); }
         .order-btn.inactive:hover { color: var(--ink-dim); }
 
+        /* ── Leverage row ── */
         .lev-row { margin-bottom: 14px; }
-        .lev-label { display: flex; justify-content: space-between; font-size: 0.58rem; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-        .margin-toggle-btn { background: none; border: none; cursor: pointer; font-family: var(--mono); font-size: 0.58rem; font-weight: 700; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+        .lev-label {
+          display: flex; justify-content: space-between; font-size: 0.58rem;
+          font-weight: 700; color: var(--ink-faint); text-transform: uppercase;
+          letter-spacing: 0.08em; margin-bottom: 8px;
+        }
+        .margin-toggle-btn {
+          background: none; border: none; cursor: pointer;
+          font-family: var(--mono); font-size: 0.58rem; font-weight: 700;
+          color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase;
+        }
         .lev-inputs { display: flex; gap: 6px; align-items: center; }
-        .lev-field { flex: 1; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 6px; padding: 8px 10px; display: flex; align-items: center; gap: 4px; }
-        .lev-field input { background: none; border: none; outline: none; font-family: var(--mono); font-size: 0.8rem; color: var(--ink); width: 100%; }
+        .lev-field {
+          flex: 1; background: var(--bg); border: 1px solid var(--line-strong);
+          border-radius: 6px; padding: 8px 10px;
+          display: flex; align-items: center; gap: 4px;
+        }
+        .lev-field input {
+          background: none; border: none; outline: none;
+          font-family: var(--mono); font-size: 0.8rem; color: var(--ink); width: 100%;
+        }
         .lev-field span { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-faint); }
         .lev-presets { display: flex; gap: 4px; }
-        .lev-preset { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line-strong); background: none; font-family: var(--mono); font-size: 0.62rem; color: var(--ink-faint); cursor: pointer; transition: all 0.12s; }
-        .lev-preset:hover { color: var(--ink-dim); }
-        .lev-preset.active { background: var(--surface); color: var(--accent); border-color: color-mix(in srgb, var(--accent) 30%, transparent); }
+        .lev-preset {
+          padding: 6px 8px; border-radius: 6px; border: 1px solid var(--line-strong);
+          background: none; font-family: var(--mono); font-size: 0.62rem;
+          color: var(--ink-faint); cursor: pointer; transition: all 0.12s;
+        }
+        .lev-preset:hover { color: var(--ink-dim); border-color: var(--line-strong); }
+        .lev-preset.active {
+          background: var(--surface);
+          color: var(--accent);
+          border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+        }
 
-        .balance-row { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: 0.65rem; color: var(--ink-faint); margin-bottom: 10px; }
+        /* ── Balance row ── */
+        .balance-row {
+          display: flex; justify-content: space-between; align-items: center;
+          font-family: var(--mono); font-size: 0.65rem;
+          color: var(--ink-faint); margin-bottom: 10px;
+        }
 
-        .amount-field { background: var(--bg); border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; transition: border-color 0.15s; }
+        /* ── Amount field ── */
+        .amount-field {
+          background: var(--bg); border: 1px solid var(--line-strong); border-radius: 8px;
+          padding: 10px 14px; display: flex; align-items: center;
+          justify-content: space-between; margin-bottom: 10px;
+          transition: border-color 0.15s;
+        }
         .amount-field:focus-within { border-color: var(--accent); }
         .amount-field label { font-family: var(--mono); font-size: 0.58rem; color: var(--ink-faint); }
-        .amount-field input { background: none; border: none; outline: none; text-align: right; font-family: var(--mono); font-size: 0.9rem; color: var(--ink); width: 120px; }
+        .amount-field input {
+          background: none; border: none; outline: none; text-align: right;
+          font-family: var(--mono); font-size: 0.9rem; color: var(--ink); width: 120px;
+        }
         .amount-field .unit { font-family: var(--mono); font-size: 0.62rem; color: var(--ink-faint); margin-left: 4px; }
 
+        /* ── % presets ── */
         .pct-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; }
-        .pct-btn { background: var(--bg); border: 1px solid var(--line-strong); border-radius: 6px; padding: 7px; font-family: var(--mono); font-size: 0.62rem; color: var(--ink-faint); cursor: pointer; transition: all 0.12s; }
+        .pct-btn {
+          background: var(--bg); border: 1px solid var(--line-strong); border-radius: 6px;
+          padding: 7px; font-family: var(--mono); font-size: 0.62rem;
+          color: var(--ink-faint); cursor: pointer; transition: all 0.12s;
+        }
         .pct-btn:hover { background: var(--surface-hover); color: var(--ink-dim); }
 
-        .summary-box { background: var(--bg); border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
-        .summary-row { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.65rem; color: var(--ink-faint); margin-bottom: 6px; }
+        /* ── Summary box ── */
+        .summary-box {
+          background: var(--bg); border: 1px solid var(--line-strong); border-radius: 8px;
+          padding: 10px 14px; margin-bottom: 14px;
+        }
+        .summary-row {
+          display: flex; justify-content: space-between;
+          font-family: var(--mono); font-size: 0.65rem; color: var(--ink-faint); margin-bottom: 6px;
+        }
         .summary-row:last-child { margin-bottom: 0; }
         .summary-row span.val { color: var(--ink-2); }
 
-        .exec-btn { width: 100%; padding: 13px; border: none; border-radius: 10px; font-family: var(--mono); font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; }
-        .exec-btn.buy  { background: var(--green); color: var(--green-l); box-shadow: 0 4px 20px color-mix(in srgb, var(--green) 20%, transparent); }
-        .exec-btn.sell { background: var(--red);   color: var(--red-l);   box-shadow: 0 4px 20px color-mix(in srgb, var(--red)   20%, transparent); }
+        /* ── Execute button ── */
+        .exec-btn {
+          width: 100%; padding: 13px; border: none; border-radius: 10px;
+          font-family: var(--mono); font-size: 0.75rem; font-weight: 700;
+          letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+          transition: all 0.15s; display: flex; align-items: center; justify-content: center;
+        }
+        .exec-btn.buy {
+          background: var(--green); color: var(--green-l);
+          box-shadow: 0 4px 20px color-mix(in srgb, var(--green) 20%, transparent);
+        }
+        .exec-btn.sell {
+          background: var(--red); color: var(--red-l);
+          box-shadow: 0 4px 20px color-mix(in srgb, var(--red) 20%, transparent);
+        }
         .exec-btn:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-1px); }
         .exec-btn:active:not(:disabled) { transform: scale(0.98); }
         .exec-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
+        /* ── Orderbook ── */
         .orderbook { padding: 14px 16px; flex: 1; display: flex; flex-direction: column; }
-        .ob-header { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.55rem; font-weight: 700; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; }
+        .ob-header {
+          display: flex; justify-content: space-between;
+          font-family: var(--mono); font-size: 0.55rem; font-weight: 700;
+          color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.1em;
+          margin-bottom: 10px;
+        }
         .ob-side { flex: 1; display: flex; flex-direction: column; gap: 2px; }
         .ob-asks { justify-content: flex-end; margin-bottom: 6px; }
         .ob-bids { margin-top: 6px; }
-        .ob-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 6px; border-radius: 3px; position: relative; overflow: hidden; }
+        .ob-row {
+          display: flex; justify-content: space-between; align-items: center;
+          padding: 3px 6px; border-radius: 3px; position: relative; overflow: hidden;
+        }
         .ob-price { font-family: var(--mono); font-size: 0.68rem; font-weight: 500; z-index: 1; }
         .ob-price.ask { color: var(--red); }
         .ob-price.bid { color: var(--green); }
@@ -408,12 +564,21 @@ export default function TradePage() {
         .ob-fill.ask { background: var(--red); }
         .ob-fill.bid { background: var(--green); }
         [data-theme="dark"] .ob-fill { opacity: 0.15; }
-        .ob-mid { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 0; border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong); font-family: var(--mono); font-size: 0.8rem; font-weight: 600; }
+        .ob-mid {
+          display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 0;
+          border-top: 1px solid var(--line-strong); border-bottom: 1px solid var(--line-strong);
+          font-family: var(--mono); font-size: 0.8rem; font-weight: 600;
+        }
 
-        .dropdown-list::-webkit-scrollbar, .right-col::-webkit-scrollbar { width: 4px; }
-        .dropdown-list::-webkit-scrollbar-track, .right-col::-webkit-scrollbar-track { background: transparent; }
-        .dropdown-list::-webkit-scrollbar-thumb, .right-col::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 2px; }
+        /* ── Scrollbars ── */
+        .dropdown-list::-webkit-scrollbar,
+        .right-col::-webkit-scrollbar { width: 4px; }
+        .dropdown-list::-webkit-scrollbar-track,
+        .right-col::-webkit-scrollbar-track { background: transparent; }
+        .dropdown-list::-webkit-scrollbar-thumb,
+        .right-col::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 2px; }
 
+        /* ── Animations ── */
         @keyframes spin  { to { transform: rotate(360deg); } }
         @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.4; } }
       `}</style>
@@ -424,6 +589,7 @@ export default function TradePage() {
 
         {/* ── LEFT COLUMN ── */}
         <div className="left-col">
+
           <div className="card trade-header">
             <div className="asset-selector" ref={dropdownRef}>
               <button className="asset-btn" onClick={() => setDropdownOpen(v => !v)}>
@@ -456,7 +622,11 @@ export default function TradePage() {
                         <button
                           key={a.symbol}
                           className="dropdown-item"
-                          onClick={() => { setAsset(a.symbol); setDropdownOpen(false); setSearchQuery(''); }}
+                          onClick={() => {
+                            setAsset(a.symbol);
+                            setDropdownOpen(false);
+                            setSearchQuery('');
+                          }}
                         >
                           <div className="dropdown-item-left">
                             <div className="dropdown-icon">
@@ -510,12 +680,17 @@ export default function TradePage() {
           </div>
 
           <div className="card chart-wrap" style={{ flex: 1 }}>
-            <iframe key={chartSrc} src={chartSrc} allowTransparency />
+            <iframe
+              key={chartSrc}
+              src={chartSrc}
+              allowTransparency
+            />
           </div>
         </div>
 
         {/* ── RIGHT COLUMN ── */}
         <div className="right-col">
+
           <div className="card order-panel">
             <div className="order-toggle">
               <button
@@ -661,6 +836,7 @@ export default function TradePage() {
               ))}
             </div>
           </div>
+
         </div>
       </div>
     </>
