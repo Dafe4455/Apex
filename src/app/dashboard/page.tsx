@@ -623,8 +623,8 @@ export default function DashboardPage() {
                   <span className="qt-chg-badge">{m.change24h >= 0 ? '▲' : '▼'} {Math.abs(m.change24h).toFixed(2)}%</span>
                 </div>
                 <div className="qt-btns">
-                  <Link href={`/dashboard/trade?asset=${m.symbol}&side=buy`} className="qt-buy">Buy</Link>
-                  <Link href={`/dashboard/trade?asset=${m.symbol}&side=sell`} className="qt-sell">Sell</Link>
+                  <Link href={`/dashboard/trade?asset=${m.symbol}USD&side=buy`} className="qt-buy">Buy</Link>
+                  <Link href={`/dashboard/trade?asset=${m.symbol}USD&side=sell`} className="qt-sell">Sell</Link>
                 </div>
               </div>
             ))}
