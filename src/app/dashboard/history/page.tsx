@@ -180,7 +180,7 @@ export default function HistoryPage() {
           flex: 1 1 auto; min-width: 0;
         }
         .event-amount-col {
-          flex: 0 1 auto; max-width: 38%; min-width: 0;
+          flex: 0 1 auto; max-width: 38%; min-width: 0; overflow: hidden;
           display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
         }
         .event-amount {
