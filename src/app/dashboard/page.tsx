@@ -275,19 +275,12 @@ export default function DashboardPage() {
   const lossPos      = data?.positions.loss        ?? 0;
   const activityLogs = data?.activityLogs          ?? [];
 
-  // ── PnL display ─────────────────────────────────────────────────────────────
-  // realisedPnl = balance − totalDeposited  (set correctly by the balance API)
-  // portfolioChangePercent = (pnl / totalDeposited) × 100  (also set by API)
-  // We trust these stored values — they are recalculated on every admin balance
-  // update. We never recompute them on the frontend.
+ 
   const profit        = data?.user.realisedPnl            ?? 0;
   const changePercent = data?.user.portfolioChangePercent ?? 0;
   const isProfitable  = profit >= 0;
 
-  // ── 24h market % change for display only (not used in PnL) ──────────────────
-  // The sentiment gauge uses live market 24h changes — this is correct as-is.
-  // NOTE: markets is still fetched even though the Markets table UI was removed
-  // from this page, because fearGreedValue depends on live 24h change data.
+  
   const fearGreedValue = useMemo(() => {
     const weights: Record<string, number> = { BTC: 0.4, ETH: 0.3, SOL: 0.2, BNB: 0.1 };
     let weightedSum = 0, totalWeight = 0;
