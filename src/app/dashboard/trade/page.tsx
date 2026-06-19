@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   ArrowUp, ArrowDown, Wallet, Loader2,
   ChevronDown, Search, TrendingUp,
@@ -92,9 +93,11 @@ function getPriceSymbol(symbol: string) {
   return PRICE_SYMBOL_MAP[symbol] ?? symbol.replace('USD', '');
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Inner component (needs Suspense because it reads useSearchParams) ────────
 
-export default function TradePage() {
+function TradePageInner() {
+  const searchParams = useSearchParams();
+
   const [asset, setAsset]               = useState('BTCUSD');
   const [price, setPrice]               = useState<number | null>(null);
   const [prevPrice, setPrevPrice]       = useState<number | null>(null);
@@ -153,12 +156,33 @@ export default function TradePage() {
       style: 'currency', currency: 'USD', minimumFractionDigits: 2,
     }), []);
 
-  // ── Read asset from URL param ─────────────────────────────────────────────
+  // ── Read asset + action from URL params ───────────────────────────────────
+  // Uses Next's useSearchParams() instead of window.location.search so this
+  // re-runs reliably on client-side navigation (router.push from the markets
+  // page), not just on a hard page load. Also accepts an optional `action`
+  // param (BUY/SELL) so the order-type toggle can be prefilled too.
 
   useEffect(() => {
-    const p = new URLSearchParams(window.location.search).get('asset');
-    if (p && ALL_ASSETS.find(a => a.symbol === p)) setAsset(p);
-  }, []);
+    const assetParam  = searchParams.get('asset');
+    const actionParam = searchParams.get('action');
+
+    if (assetParam) {
+      const match = ALL_ASSETS.find(a => a.symbol === assetParam);
+      if (match) {
+        setAsset(match.symbol);
+      } else {
+        // Fallback: markets page may send a bare symbol (e.g. "BTC") without
+        // the USD suffix our list expects. Try matching after stripping/adding it.
+        const withUsd = `${assetParam}USD`;
+        const matchWithUsd = ALL_ASSETS.find(a => a.symbol === withUsd);
+        if (matchWithUsd) setAsset(matchWithUsd.symbol);
+      }
+    }
+
+    if (actionParam === 'BUY' || actionParam === 'SELL') {
+      setOrderType(actionParam);
+    }
+  }, [searchParams]);
 
   // ── Close dropdown on outside click ──────────────────────────────────────
 
@@ -840,5 +864,18 @@ export default function TradePage() {
         </div>
       </div>
     </>
+  );
+}
+
+// ── Default export wraps the inner component in Suspense ─────────────────────
+// Next.js requires any component using useSearchParams() to be wrapped in a
+// Suspense boundary, since the search params aren't available during static
+// rendering and need a client-side fallback.
+
+export default function TradePage() {
+  return (
+    <Suspense fallback={null}>
+      <TradePageInner />
+    </Suspense>
   );
 }
