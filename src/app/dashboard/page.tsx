@@ -725,7 +725,7 @@ export default function DashboardPage() {
 
         <p className="section-label">
           <span className="section-label-left"><span className="section-label-pip" />Top Movers</span>
-          <Link href="/dashboard/market" className="section-view-all">View all →</Link>
+          <Link href="/dashboard/markets" className="section-view-all">View all →</Link>
         </p>
         <div className="movers-split">
           <div className="movers-card">
