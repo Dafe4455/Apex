@@ -171,7 +171,6 @@ function FearGreedGauge({ value }: { value: number }) {
 
 export default function DashboardPage() {
   const [time, setTime] = useState('');
-  const [balanceOpen, setBalanceOpen] = useState(false);
   const [sheet, setSheet] = useState<'deposit' | null>(null);
   const [copied, setCopied] = useState(false);
   const [method, setMethod] = useState('');
@@ -271,19 +270,24 @@ export default function DashboardPage() {
   const balance      = data?.user.portfolioBalance ?? 0;
   const firstName    = data?.user.firstName        ?? '';
   const userId       = data?.user.id?.slice(-6).toUpperCase() ?? '------';
-  const transactions = data?.transactions          ?? [];
   const openPositions = data?.positions.open       ?? 0;
   const profitPos    = data?.positions.profit      ?? 0;
   const lossPos      = data?.positions.loss        ?? 0;
   const activityLogs = data?.activityLogs          ?? [];
 
-  
+  // ── PnL display ─────────────────────────────────────────────────────────────
+  // realisedPnl = balance − totalDeposited  (set correctly by the balance API)
+  // portfolioChangePercent = (pnl / totalDeposited) × 100  (also set by API)
+  // We trust these stored values — they are recalculated on every admin balance
+  // update. We never recompute them on the frontend.
   const profit        = data?.user.realisedPnl            ?? 0;
   const changePercent = data?.user.portfolioChangePercent ?? 0;
   const isProfitable  = profit >= 0;
 
   // ── 24h market % change for display only (not used in PnL) ──────────────────
   // The sentiment gauge uses live market 24h changes — this is correct as-is.
+  // NOTE: markets is still fetched even though the Markets table UI was removed
+  // from this page, because fearGreedValue depends on live 24h change data.
   const fearGreedValue = useMemo(() => {
     const weights: Record<string, number> = { BTC: 0.4, ETH: 0.3, SOL: 0.2, BNB: 0.1 };
     let weightedSum = 0, totalWeight = 0;
@@ -299,9 +303,15 @@ export default function DashboardPage() {
 
   const activeMethod = depositMethods.find(m => m.id === method);
 
-  const topMovers = [...markets]
-    .sort((a, b) => Math.abs(b.change24h) - Math.abs(a.change24h))
-    .slice(0, 4);
+  const topGainers = [...markets]
+    .filter(m => m.change24h >= 0)
+    .sort((a, b) => b.change24h - a.change24h)
+    .slice(0, 3);
+
+  const topLosers = [...markets]
+    .filter(m => m.change24h < 0)
+    .sort((a, b) => a.change24h - b.change24h)
+    .slice(0, 3);
 
   const tagColors: Record<string, [string, string]> = {
     CRYPTO:      ['var(--accent-l)', 'var(--accent)'],
@@ -392,19 +402,6 @@ export default function DashboardPage() {
         }
         .btn-ghost:hover { background: var(--surface-hover); }
 
-        .tx-drawer { overflow: hidden; transition: max-height 0.35s ease; margin: 0 16px; }
-        .tx-drawer-inner {
-          background: var(--card);
-          border: 1px solid var(--line-strong); border-top: none;
-          border-radius: 0 0 16px 16px; padding: 14px 16px 10px;
-        }
-        .tx-drawer-label { font-size: 0.58rem; color: var(--ink-faint); margin-bottom: 8px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
-        .tx-row {
-          display: flex; justify-content: space-between; align-items: center;
-          padding: 8px 0; border-bottom: 1px solid var(--line);
-          font-size: 0.68rem;
-        }
-
         .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0; padding: 20px 20px 4px; }
         .stat-cell { padding: 0; }
         .stat-cell + .stat-cell { padding-left: 16px; border-left: 1px solid var(--line-strong); }
@@ -418,31 +415,68 @@ export default function DashboardPage() {
         .section-label {
           font-size: 0.58rem; font-weight: 700; color: var(--ink-faint);
           text-transform: uppercase; letter-spacing: 0.12em;
-          padding: 0 20px 10px; display: flex; align-items: center; gap: 7px;
+          padding: 0 20px 10px; display: flex; align-items: center; justify-content: space-between; gap: 7px;
         }
         .section-label-pip { display: inline-block; width: 3px; height: 10px; background: var(--accent); border-radius: 2px; flex-shrink: 0; }
+        .section-label-left { display: flex; align-items: center; gap: 7px; }
+        .section-view-all {
+          font-family: var(--mono); font-size: 0.56rem; font-weight: 700;
+          color: var(--accent); text-decoration: none; letter-spacing: 0.08em;
+          text-transform: uppercase; flex-shrink: 0;
+        }
+        .section-view-all:hover { opacity: 0.8; }
 
-        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 0 16px 8px; }
-        .info-card {
+        .full-card {
+          margin: 0 16px 8px;
+          background: var(--card);
+          border: 1px solid var(--line-strong);
+          border-radius: 14px; padding: 16px;
+          transition: background 0.2s ease;
+        }
+        .fc-label { font-size: 0.58rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+        .movers-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--line); }
+        .movers-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .mover-sym { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 0.74rem; font-weight: 500; color: var(--ink); }
+        .mover-ico { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; }
+        .mover-chg { font-family: var(--mono); font-size: 0.74rem; font-weight: 600; }
+        .mover-chg.up { color: var(--green); }
+        .mover-chg.dn { color: var(--red); }
+
+        .movers-split { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 0 16px 8px; }
+        .movers-card {
           background: var(--card);
           border: 1px solid var(--line-strong);
           border-radius: 14px; padding: 14px;
-          transition: background 0.2s ease;
+          min-width: 0; overflow: hidden;
         }
-        .ic-label { font-size: 0.58rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
-        .movers-item { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
-        .movers-item:last-child { margin-bottom: 0; }
-        .mover-sym { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 0.68rem; font-weight: 500; color: var(--ink); }
-        .mover-ico { width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; flex-shrink: 0; }
-        .mover-chg { font-family: var(--mono); font-size: 0.63rem; font-weight: 500; }
-        .mover-chg.up { color: var(--green); }
-        .mover-chg.dn { color: var(--red); }
+        .movers-card-title {
+          display: flex; align-items: center; gap: 5px;
+          font-family: var(--mono); font-size: 0.6rem; font-weight: 700;
+          letter-spacing: 0.08em; text-transform: uppercase;
+          margin-bottom: 12px;
+        }
+        .movers-card-title.gainers { color: var(--green); }
+        .movers-card-title.losers  { color: var(--red); }
+        .movers-split-item {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 7px 0; border-bottom: 1px solid var(--line); gap: 6px;
+        }
+        .movers-split-item:last-child { border-bottom: none; padding-bottom: 0; }
+        .movers-split-sym { font-family: var(--mono); font-size: 0.66rem; font-weight: 600; color: var(--ink); flex-shrink: 0; }
+        .movers-split-price { font-family: var(--mono); font-size: 0.58rem; color: var(--ink-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1 1 auto; min-width: 0; }
+        .movers-split-chg {
+          font-family: var(--mono); font-size: 0.62rem; font-weight: 700;
+          padding: 2px 7px; border-radius: 6px; flex-shrink: 0; white-space: nowrap;
+        }
+        .movers-split-chg.up { background: var(--green-l); color: var(--green); }
+        .movers-split-chg.dn { background: var(--red-l);   color: var(--red);   }
+        .movers-empty { font-size: 0.6rem; color: var(--ink-faint); padding: 4px 0; }
         .activity-item {
-          font-size: 0.63rem; font-weight: 400; color: var(--ink-dim);
-          margin-bottom: 7px; line-height: 1.4;
-          padding-left: 10px; border-left: 2px solid var(--line-strong);
+          font-size: 0.68rem; font-weight: 400; color: var(--ink-dim);
+          padding: 8px 0 8px 10px; border-bottom: 1px solid var(--line);
+          border-left: 2px solid var(--line-strong); line-height: 1.45;
         }
-        .activity-item:last-child { margin-bottom: 0; }
+        .activity-item:last-child { border-bottom: none; padding-bottom: 0; }
 
         .asset-section { padding: 0 16px 8px; }
         .asset-table-wrap {
@@ -619,24 +653,7 @@ export default function DashboardPage() {
           <div className="bal-actions">
             <button className="btn-dep" onClick={openDeposit}>+ Deposit</button>
             <Link href="/dashboard/withdraw" className="btn-ghost">Withdraw</Link>
-            <button className="btn-ghost" onClick={() => setBalanceOpen(v => !v)}>
-              {balanceOpen ? '↑ Hide' : '📋 History'}
-            </button>
-          </div>
-        </div>
-
-        <div className="tx-drawer" style={{ maxHeight: balanceOpen ? 260 : 0 }}>
-          <div className="tx-drawer-inner">
-            <p className="tx-drawer-label">Recent Transactions</p>
-            {transactions.length === 0
-              ? <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No transactions yet.</p>
-              : transactions.slice(0, 5).map(tx => (
-                <div key={tx.id} className="tx-row">
-                  <span style={{ color: tx.type === 'Deposit' ? 'var(--green)' : 'var(--red)', fontWeight: 500 }}>{tx.type}</span>
-                  <span style={{ fontFamily: 'var(--mono)', color: 'var(--ink)' }}>${fmt(tx.amount, 0)}</span>
-                  <Badge status={tx.status} />
-                </div>
-              ))}
+            <Link href="/dashboard/history" className="btn-ghost">📋 History</Link>
           </div>
         </div>
 
@@ -663,74 +680,52 @@ export default function DashboardPage() {
 
         <div className="section-divider" />
 
-        <p className="section-label"><span className="section-label-pip" />Market Overview</p>
-        <div className="two-col">
-          <div className="info-card">
-            <p className="ic-label">Top Movers</p>
-            {topMovers.length === 0
-              ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)' }}>No data</p>
-              : topMovers.map(m => (
-                <div key={m.symbol} className="movers-item">
-                  <span className="mover-sym">
-                    <span className="mover-ico" style={{ background: m.iconBg }}>{m.icon}</span>
-                    {m.symbol}
-                  </span>
-                  <span className={`mover-chg ${m.change24h >= 0 ? 'up' : 'dn'}`}>
-                    {m.change24h >= 0 ? '+' : ''}{fmt(m.change24h)}%
-                  </span>
+        <p className="section-label">
+          <span className="section-label-left"><span className="section-label-pip" />Top Movers</span>
+          <Link href="/dashboard/market" className="section-view-all">View all →</Link>
+        </p>
+        <div className="movers-split">
+          <div className="movers-card">
+            <p className="movers-card-title gainers">↑ Top Gainers</p>
+            {topGainers.length === 0
+              ? <p className="movers-empty">No data</p>
+              : topGainers.map(m => (
+                <div key={m.symbol} className="movers-split-item">
+                  <span className="movers-split-sym">{m.symbol}</span>
+                  <span className="movers-split-price">${fmt(m.price)}</span>
+                  <span className="movers-split-chg up">+{fmt(m.change24h)}%</span>
                 </div>
               ))}
           </div>
-          <div className="info-card">
-            <p className="ic-label">Recent Activity</p>
-            {activityLogs.length === 0
-              ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)' }}>No recent activity</p>
-              : activityLogs.slice(0, 4).map(a => (
-                <p key={a.id} className="activity-item">{a.description}</p>
-              ))}
-          </div>
-        </div>
-
-        <div className="section-divider" />
-
-        <p className="section-label"><span className="section-label-pip" />Markets</p>
-        <div className="asset-section">
-          <div className="asset-table-wrap">
-            <div className="asset-thead">
-              <span className="asset-th">Asset</span>
-              <span className="asset-th">Price</span>
-              <span className="asset-th">24H</span>
-              <span className="asset-th">Trade</span>
-            </div>
-            {markets.length === 0
-              ? <div style={{ padding: '24px', textAlign: 'center' }}>
-                  <p style={{ fontSize: '0.68rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No market data available.</p>
-                </div>
-              : markets.map(a => (
-                <div key={a.id} className="asset-row">
-                  <div className="asset-name-cell">
-                    <div className="asset-ico" style={{ background: a.iconBg }}>{a.icon}</div>
-                    <div>
-                      <div className="asset-sym">{a.symbol}</div>
-                      <div className="asset-nm">{a.name}</div>
-                    </div>
-                  </div>
-                  <span className="asset-price">${fmt(a.price)}</span>
-                  <span className={`asset-chg ${a.change24h >= 0 ? 'up' : 'dn'}`}>
-                    {a.change24h >= 0 ? '+' : ''}{fmt(a.change24h)}%
-                  </span>
-                  <div className="trade-btns">
-                    <button className="btn-buy">Buy</button>
-                    <button className="btn-sell">Sell</button>
-                  </div>
+          <div className="movers-card">
+            <p className="movers-card-title losers">↓ Top Losers</p>
+            {topLosers.length === 0
+              ? <p className="movers-empty">No data</p>
+              : topLosers.map(m => (
+                <div key={m.symbol} className="movers-split-item">
+                  <span className="movers-split-sym">{m.symbol}</span>
+                  <span className="movers-split-price">${fmt(m.price)}</span>
+                  <span className="movers-split-chg dn">{fmt(m.change24h)}%</span>
                 </div>
               ))}
           </div>
         </div>
 
+        <p className="section-label">
+          <span className="section-label-left"><span className="section-label-pip" />Recent Activity</span>
+          <Link href="/dashboard/history" className="section-view-all">View all →</Link>
+        </p>
+        <div className="full-card">
+          {activityLogs.length === 0
+            ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)' }}>No recent activity</p>
+            : activityLogs.slice(0, 5).map(a => (
+              <p key={a.id} className="activity-item">{a.description}</p>
+            ))}
+        </div>
+
         <div className="section-divider" />
 
-        <p className="section-label"><span className="section-label-pip" />Global Finance News</p>
+        <p className="section-label"><span className="section-label-left"><span className="section-label-pip" />Global Finance News</span></p>
         <div className="news-section">
           <div className="news-wrap">
             {newsLoading ? (
