@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 type Transaction = {
   id: string;
@@ -170,6 +171,7 @@ function FearGreedGauge({ value }: { value: number }) {
 }
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [time, setTime] = useState('');
   const [sheet, setSheet] = useState<'deposit' | null>(null);
   const [copied, setCopied] = useState(false);
@@ -312,6 +314,22 @@ export default function DashboardPage() {
     .filter(m => m.change24h < 0)
     .sort((a, b) => a.change24h - b.change24h)
     .slice(0, 3);
+
+  // ── Quick Trade card ──────────────────────────────────────────────────────
+  // /api/markets (used by this dashboard) only returns crypto — BTC, ETH, SOL,
+  // BNB. No stocks here, so the quick-trade list is crypto-only by necessity.
+  // If stocks are ever added to /api/markets, this list can be extended.
+  const QUICK_TRADE_SYMBOLS = ['BTC', 'ETH', 'SOL', 'BNB'];
+  const CRYPTO_SYMS = ['BTC', 'ETH', 'SOL', 'BNB'];
+
+  const quickTradeAssets = QUICK_TRADE_SYMBOLS
+    .map(sym => markets.find(m => m.symbol === sym))
+    .filter((m): m is Market => Boolean(m));
+
+  const handleQuickTrade = (symbol: string, action: 'BUY' | 'SELL') => {
+    const tradeSymbol = CRYPTO_SYMS.includes(symbol) ? `${symbol}USD` : symbol;
+    router.push(`/dashboard/trade?asset=${tradeSymbol}&action=${action}`);
+  };
 
   const tagColors: Record<string, [string, string]> = {
     CRYPTO:      ['var(--accent-l)', 'var(--accent)'],
@@ -471,6 +489,33 @@ export default function DashboardPage() {
         .movers-split-chg.up { background: var(--green-l); color: var(--green); }
         .movers-split-chg.dn { background: var(--red-l);   color: var(--red);   }
         .movers-empty { font-size: 0.6rem; color: var(--ink-faint); padding: 4px 0; }
+
+        .qt-card {
+          margin: 0 16px 8px;
+          background: var(--card);
+          border: 1px solid var(--line-strong);
+          border-radius: 14px; overflow: hidden;
+        }
+        .qt-row {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 10px; padding: 12px 14px;
+          border-bottom: 1px solid var(--line);
+        }
+        .qt-row:last-child { border-bottom: none; }
+        .qt-row:hover { background: var(--surface-hover); }
+        .qt-asset { display: flex; align-items: center; gap: 10px; min-width: 0; flex-shrink: 1; }
+        .qt-ico {
+          width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 13px; font-weight: 800; color: #fff;
+        }
+        .qt-meta { min-width: 0; }
+        .qt-sym { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--ink); line-height: 1.3; }
+        .qt-price { font-family: var(--mono); font-size: 0.6rem; color: var(--ink-faint); }
+        .qt-chg { font-family: var(--mono); font-size: 0.62rem; font-weight: 600; flex-shrink: 0; }
+        .qt-chg.up { color: var(--green); }
+        .qt-chg.dn { color: var(--red); }
+        .qt-btns { display: flex; gap: 4px; flex-shrink: 0; }
         .activity-item {
           font-size: 0.68rem; font-weight: 400; color: var(--ink-dim);
           padding: 8px 0 8px 10px; border-bottom: 1px solid var(--line);
@@ -709,6 +754,33 @@ export default function DashboardPage() {
                 </div>
               ))}
           </div>
+        </div>
+
+        <p className="section-label">
+          <span className="section-label-left"><span className="section-label-pip" />Quick Trade</span>
+          <Link href="/dashboard/market" className="section-view-all">View all →</Link>
+        </p>
+        <div className="qt-card">
+          {quickTradeAssets.length === 0
+            ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)', padding: '14px' }}>No data</p>
+            : quickTradeAssets.map(a => (
+              <div key={a.symbol} className="qt-row">
+                <div className="qt-asset">
+                  <div className="qt-ico" style={{ background: a.iconBg }}>{a.icon}</div>
+                  <div className="qt-meta">
+                    <div className="qt-sym">{a.symbol}</div>
+                    <div className="qt-price">${fmt(a.price)}</div>
+                  </div>
+                </div>
+                <span className={`qt-chg ${a.change24h >= 0 ? 'up' : 'dn'}`}>
+                  {a.change24h >= 0 ? '+' : ''}{fmt(a.change24h)}%
+                </span>
+                <div className="qt-btns">
+                  <button className="btn-buy" onClick={() => handleQuickTrade(a.symbol, 'BUY')}>Buy</button>
+                  <button className="btn-sell" onClick={() => handleQuickTrade(a.symbol, 'SELL')}>Sell</button>
+                </div>
+              </div>
+            ))}
         </div>
 
         <p className="section-label">
