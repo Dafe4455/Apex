@@ -14,15 +14,11 @@ type Transaction = {
 };
 
 type Market = {
-  id: string;
   symbol: string;
   name: string;
-  icon: string;
-  iconBg: string;
-  iconCol: string;
+  logoUrl: string;
   price: number;
-  change24h: number;
-  volume24h: number;
+  changePercent: number;
 };
 
 type DepositMethod = {
@@ -56,9 +52,11 @@ type DashboardData = {
 
 type NewsItem = {
   headline: string;
+  summary: string;
   source: string;
   time: string;
   tag: string;
+  url: string;
 };
 
 function fmt(n: number | null | undefined, d = 2) {
@@ -182,6 +180,7 @@ export default function DashboardPage() {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [loading, setLoading] = useState(true);
   const [news, setNews] = useState<NewsItem[]>([]);
+  const [expandedNewsIdx, setExpandedNewsIdx] = useState<number | null>(null);
   const [newsLoading, setNewsLoading] = useState(false);
 
   const fetchDashboard = useCallback(async () => {
@@ -193,7 +192,7 @@ export default function DashboardPage() {
 
   const fetchMarkets = useCallback(async () => {
     try {
-      const res = await fetch('/api/markets');
+      const res = await fetch('/api/market');
       if (res.ok) setMarkets(await res.json());
     } catch {}
   }, []);
@@ -201,35 +200,12 @@ export default function DashboardPage() {
   const fetchNews = useCallback(async () => {
     setNewsLoading(true);
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 1000,
-          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-          messages: [{
-            role: 'user',
-            content: `Search for the latest global finance and crypto market news from today. Return ONLY a JSON array (no markdown, no backticks) of exactly 5 news items. Each item must have these keys: "headline" (short, under 10 words), "source" (news outlet name), "time" (e.g. "2h ago"), "tag" (one of: CRYPTO, FOREX, STOCKS, MACRO, COMMODITIES). Example format: [{"headline":"...","source":"...","time":"...","tag":"..."}]`
-          }]
-        })
-      });
-      const d = await response.json();
-      const text = d.content
-        .map((item: { type: string; text?: string }) => item.type === 'text' ? item.text : '')
-        .filter(Boolean)
-        .join('');
-      const clean = text.replace(/```json|```/g, '').trim();
-      const match = clean.match(/\[[\s\S]*\]/);
-      if (match) setNews(JSON.parse(match[0]));
+      const res = await fetch('/api/news');
+      if (!res.ok) throw new Error('news fetch failed');
+      const data = await res.json();
+      setNews(data.news ?? []);
     } catch {
-      setNews([
-        { headline: 'Fed holds rates amid inflation data', source: 'Reuters',   time: '1h ago', tag: 'MACRO' },
-        { headline: 'Bitcoin consolidates above $63k',    source: 'CoinDesk',  time: '2h ago', tag: 'CRYPTO' },
-        { headline: 'S&P 500 edges higher on tech rally', source: 'Bloomberg', time: '3h ago', tag: 'STOCKS' },
-        { headline: 'Oil steadies after OPEC+ meeting',  source: 'FT',        time: '4h ago', tag: 'COMMODITIES' },
-        { headline: 'Dollar weakens vs. major peers',    source: 'CNBC',      time: '5h ago', tag: 'FOREX' },
-      ]);
+      setNews([]);
     } finally { setNewsLoading(false); }
   }, []);
 
@@ -295,7 +271,7 @@ export default function DashboardPage() {
     let weightedSum = 0, totalWeight = 0;
     for (const [sym, w] of Object.entries(weights)) {
       const asset = markets.find(m => m.symbol === sym);
-      if (asset) { weightedSum += asset.change24h * w; totalWeight += w; }
+      if (asset) { weightedSum += asset.changePercent * w; totalWeight += w; }
     }
     if (totalWeight === 0) return data?.user.fearGreedIndex ?? 52;
     const avg = weightedSum / totalWeight;
@@ -306,13 +282,13 @@ export default function DashboardPage() {
   const activeMethod = depositMethods.find(m => m.id === method);
 
   const topGainers = [...markets]
-    .filter(m => m.change24h >= 0)
-    .sort((a, b) => b.change24h - a.change24h)
+    .filter(m => m.changePercent >= 0)
+    .sort((a, b) => b.changePercent - a.changePercent)
     .slice(0, 3);
 
   const topLosers = [...markets]
-    .filter(m => m.change24h < 0)
-    .sort((a, b) => a.change24h - b.change24h)
+    .filter(m => m.changePercent < 0)
+    .sort((a, b) => a.changePercent - b.changePercent)
     .slice(0, 3);
 
   // ── Quick Trade card ──────────────────────────────────────────────────────
@@ -507,7 +483,12 @@ export default function DashboardPage() {
         .qt-ico {
           width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
           display: flex; align-items: center; justify-content: center;
-          font-size: 13px; font-weight: 800; color: #fff;
+          font-size: 11px; font-weight: 800; color: var(--ink-dim);
+          background: var(--surface); font-family: var(--mono);
+        }
+        .qt-ico-img {
+          width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+          object-fit: cover; background: var(--surface);
         }
         .qt-meta { min-width: 0; }
         .qt-sym { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--ink); line-height: 1.3; }
@@ -581,7 +562,8 @@ export default function DashboardPage() {
           border-bottom: 1px solid var(--line);
           transition: background 0.12s;
         }
-        .news-item:last-child { border-bottom: none; }
+        .news-entry:last-child .news-item { border-bottom: none; }
+        .news-entry:last-child .news-expand { border-bottom: none; }
         .news-item:hover { background: var(--surface-hover); }
         .news-tag {
           flex-shrink: 0; padding: 2px 7px; border-radius: 6px;
@@ -591,6 +573,22 @@ export default function DashboardPage() {
         .news-body { flex: 1; min-width: 0; }
         .news-headline { font-size: 0.7rem; font-weight: 500; color: var(--ink); line-height: 1.45; margin-bottom: 3px; }
         .news-meta { font-size: 0.57rem; font-weight: 300; color: var(--ink-faint); }
+        .news-expand {
+          padding: 0 14px 14px 14px;
+          border-bottom: 1px solid var(--line);
+          background: var(--surface);
+        }
+        .news-summary {
+          font-size: 0.66rem; font-weight: 300; color: var(--ink-dim);
+          line-height: 1.55; margin-bottom: 8px; padding-top: 2px;
+        }
+        .news-summary-empty { color: var(--ink-faint); font-style: italic; }
+        .news-readmore {
+          display: inline-flex; font-family: var(--mono); font-size: 0.6rem;
+          font-weight: 700; color: var(--accent); text-decoration: none;
+          letter-spacing: 0.04em;
+        }
+        .news-readmore:hover { opacity: 0.8; }
         .news-pulse {
           display: flex; align-items: center; justify-content: center; gap: 6px;
           padding: 12px; border-top: 1px solid var(--line);
@@ -738,7 +736,7 @@ export default function DashboardPage() {
                 <div key={m.symbol} className="movers-split-item">
                   <span className="movers-split-sym">{m.symbol}</span>
                   <span className="movers-split-price">${fmt(m.price)}</span>
-                  <span className="movers-split-chg up">+{fmt(m.change24h)}%</span>
+                  <span className="movers-split-chg up">+{fmt(m.changePercent)}%</span>
                 </div>
               ))}
           </div>
@@ -750,7 +748,7 @@ export default function DashboardPage() {
                 <div key={m.symbol} className="movers-split-item">
                   <span className="movers-split-sym">{m.symbol}</span>
                   <span className="movers-split-price">${fmt(m.price)}</span>
-                  <span className="movers-split-chg dn">{fmt(m.change24h)}%</span>
+                  <span className="movers-split-chg dn">{fmt(m.changePercent)}%</span>
                 </div>
               ))}
           </div>
@@ -766,14 +764,18 @@ export default function DashboardPage() {
             : quickTradeAssets.map(a => (
               <div key={a.symbol} className="qt-row">
                 <div className="qt-asset">
-                  <div className="qt-ico" style={{ background: a.iconBg }}>{a.icon}</div>
+                  {a.logoUrl
+                    ? <img src={a.logoUrl} alt={a.symbol} className="qt-ico-img"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    : <div className="qt-ico">{a.symbol.slice(0, 2)}</div>
+                  }
                   <div className="qt-meta">
                     <div className="qt-sym">{a.symbol}</div>
                     <div className="qt-price">${fmt(a.price)}</div>
                   </div>
                 </div>
-                <span className={`qt-chg ${a.change24h >= 0 ? 'up' : 'dn'}`}>
-                  {a.change24h >= 0 ? '+' : ''}{fmt(a.change24h)}%
+                <span className={`qt-chg ${a.changePercent >= 0 ? 'up' : 'dn'}`}>
+                  {a.changePercent >= 0 ? '+' : ''}{fmt(a.changePercent)}%
                 </span>
                 <div className="qt-btns">
                   <button className="btn-buy" onClick={() => handleQuickTrade(a.symbol, 'BUY')}>Buy</button>
@@ -813,19 +815,46 @@ export default function DashboardPage() {
               <>
                 {news.map((item, i) => {
                   const [tagBg, tagCol] = tagColors[item.tag] ?? ['var(--surface)', 'var(--ink-dim)'];
+                  const isExpanded = expandedNewsIdx === i;
                   return (
-                    <div key={i} className="news-item">
-                      <span className="news-tag" style={{ background: tagBg, color: tagCol }}>{item.tag}</span>
-                      <div className="news-body">
-                        <p className="news-headline">{item.headline}</p>
-                        <p className="news-meta">{item.source} · {item.time}</p>
+                    <div key={i} className="news-entry">
+                      <div
+                        className="news-item"
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setExpandedNewsIdx(isExpanded ? null : i)}
+                      >
+                        <span className="news-tag" style={{ background: tagBg, color: tagCol }}>{item.tag}</span>
+                        <div className="news-body">
+                          <p className="news-headline">{item.headline}</p>
+                          <p className="news-meta">{item.source} · {item.time}</p>
+                        </div>
+                        <span style={{
+                          color: 'var(--ink-faint)', fontSize: '0.7rem', flexShrink: 0,
+                          transform: isExpanded ? 'rotate(180deg)' : 'none',
+                          transition: 'transform 0.15s', marginTop: 2,
+                        }}>
+                          ▾
+                        </span>
                       </div>
+                      {isExpanded && (
+                        <div className="news-expand">
+                          {item.summary
+                            ? <p className="news-summary">{item.summary}</p>
+                            : <p className="news-summary news-summary-empty">No summary available.</p>
+                          }
+                          {item.url && (
+                            <a href={item.url} target="_blank" rel="noopener noreferrer" className="news-readmore">
+                              Read full article →
+                            </a>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
                 <div className="news-pulse">
                   <span className="news-pulse-dot" />
-                  <span style={{ fontSize: '0.58rem', color: 'var(--ink-faint)', fontFamily: 'var(--mono)' }}>AI-curated · refreshes on load</span>
+                  <span style={{ fontSize: '0.58rem', color: 'var(--ink-faint)', fontFamily: 'var(--mono)' }}>Live · CryptoCompare &amp; BBC Business</span>
                 </div>
               </>
             )}
