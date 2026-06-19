@@ -731,7 +731,9 @@ export default function DashboardPage() {
           <div className="movers-card">
             <p className="movers-card-title gainers">↑ Top Gainers</p>
             {topGainers.length === 0
-              ? <p className="movers-empty">No data</p>
+              ? <p className="movers-empty">
+                  {markets.length === 0 ? 'No data' : 'Markets are down across the board'}
+                </p>
               : topGainers.map(m => (
                 <div key={m.symbol} className="movers-split-item">
                   <span className="movers-split-sym">{m.symbol}</span>
@@ -743,7 +745,9 @@ export default function DashboardPage() {
           <div className="movers-card">
             <p className="movers-card-title losers">↓ Top Losers</p>
             {topLosers.length === 0
-              ? <p className="movers-empty">No data</p>
+              ? <p className="movers-empty">
+                  {markets.length === 0 ? 'No data' : 'Markets are up across the board'}
+                </p>
               : topLosers.map(m => (
                 <div key={m.symbol} className="movers-split-item">
                   <span className="movers-split-sym">{m.symbol}</span>
