@@ -31,7 +31,7 @@ export default function HomePage() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --cream: #1EC1C7;
+          --cream: #91EBEE;
           --cream-dark: #f0f7f7;
           --cream-darker: #e0d9cc;
           --ink: #1a1512;
