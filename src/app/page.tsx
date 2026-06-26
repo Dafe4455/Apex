@@ -32,7 +32,7 @@ export default function HomePage() {
 
         :root {
           --cream: #C9F5F7;
-          --cream-dark: #f0f7f7;
+          --cream-dark: #062526;
           --cream-darker: #e0d9cc;
           --ink: #1a1512;
           --ink-mid: #3d352e;
