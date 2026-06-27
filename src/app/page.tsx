@@ -375,7 +375,7 @@ const CSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --void:    #070B14;
+  --void:    #0f2535;
   --panel:   rgba(255,255,255,0.03);
   --rim:     rgba(255,255,255,0.07);
   --rim2:    rgba(255,255,255,0.12);
