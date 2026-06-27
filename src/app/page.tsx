@@ -899,7 +899,7 @@ background: rgba(var(--void-rgb), 0.92); /* was: rgba(7,11,20,0.9) */
 /* ── RESPONSIVE ── */
 @media (max-width: 1000px) {
   .ap-ticker-wrap { display: none; }
-  .ap-hero-inner  { grid-template-columns: 1fr; }
+  .ap-hero-inner  { grid-template-columns: 1fr; align-items: start; }
   .ap-hero-right  { display: none; }
   .ap-platform    { grid-template-columns: 1fr; gap: 40px; }
   .ap-plat-img    { aspect-ratio: 16/9; }
