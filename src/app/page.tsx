@@ -220,14 +220,14 @@ export default function HomePage() {
           </div>
           <div className="ap-hero-inner">
             <div className="ap-hero-left">
-              <p className="ap-eyebrow">Since 2019 · 180+ Markets · FCA &amp; CySEC Regulated</p>
+              <p className="ap-eyebrow">Since 2019 · FCA &amp; CySEC Regulated</p>
               <h1 className="ap-h1">
                 Trade at<br/>
                 <em>the speed</em><br/>
                 of markets.
               </h1>
               <p className="ap-hero-sub">
-                Institutional execution on equities, crypto, FX, and derivatives. Built for traders who cannot afford to lose an edge.
+                Execute equities, crypto, FX, and derivatives. Made for traders who cannot afford to lose an edge.
               </p>
               <div className="ap-hero-ctas">
                 <a href="/signup" className="ap-btn-primary">Start Trading →</a>
