@@ -550,6 +550,7 @@ background: rgba(var(--void-rgb), 0.92); /* was: rgba(7,11,20,0.9) */
   position: relative; min-height: 100vh;
   padding-top: 58px; overflow: hidden;
   display: flex; flex-direction: column;
+  justify-content: flex-start;
 }
 .ap-hero-grid {
   position: absolute; inset: 0; pointer-events: none;
