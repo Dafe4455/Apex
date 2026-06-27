@@ -63,7 +63,7 @@ export default function HomePage() {
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         :root {
-          --paper: #e7e6df;
+          --paper: #f0f7f7;
           --paper-deep: #d8d6cb;
           --paper-text: #1c1a17;
           --paper-text-dim: #6b6a62;
