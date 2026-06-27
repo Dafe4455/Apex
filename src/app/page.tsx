@@ -227,7 +227,7 @@ export default function HomePage() {
                 AT ALL TIMES. 
               </h1>
               <p className="ap-hero-sub">
-                Execute equities, crypto, FX, and derivatives. Made for traders who cannot afford to lose an edge.
+                Trade equities, crypto, FX, and derivatives from a single platform. Regulated, transparent, and made to handle whatever the market throws at you.
               </p>
               <div className="ap-hero-ctas">
                 <a href="/signup" className="ap-btn-primary">Start Trading →</a>
