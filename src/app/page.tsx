@@ -222,9 +222,9 @@ export default function HomePage() {
             <div className="ap-hero-left">
               <p className="ap-eyebrow">Since 2019 · FCA &amp; CySEC Regulated</p>
               <h1 className="ap-h1">
-                Trade at<br/>
-                <em>the speed</em><br/>
-                of markets.
+                YOUR CAPITAL.<br/>
+                <em>YOUR CALL.</em><br/>
+                AT ALL TIMES. 
               </h1>
               <p className="ap-hero-sub">
                 Execute equities, crypto, FX, and derivatives. Made for traders who cannot afford to lose an edge.
