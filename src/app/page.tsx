@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 /* ─── Data ──────────────────────────────────────────────────────── */
 function makeCandles(n = 58) {
@@ -25,22 +25,6 @@ const TICKERS = [
   { sym: 'NVDA',    price: '875.40', chg: '+4.62%', up: true  },
   { sym: 'GOLD',    price: '2,318',  chg: '−0.23%', up: false },
   { sym: 'S&P 500', price: '5,241',  chg: '+0.56%', up: true  },
-];
-
-const ASKS = [
-  { price: '67,430.10', size: '0.842', pct: 30 },
-  { price: '67,427.85', size: '0.615', pct: 22 },
-  { price: '67,425.40', size: '1.203', pct: 45 },
-  { price: '67,423.15', size: '0.392', pct: 14 },
-  { price: '67,421.00', size: '0.558', pct: 20 },
-];
-
-const BIDS = [
-  { price: '67,419.80', size: '0.674', pct: 24 },
-  { price: '67,417.55', size: '1.488', pct: 53 },
-  { price: '67,415.30', size: '0.291', pct: 11 },
-  { price: '67,412.90', size: '0.926', pct: 33 },
-  { price: '67,410.60', size: '0.512', pct: 19 },
 ];
 
 const MARKETS = [
@@ -110,10 +94,73 @@ function CandleChart({ candles }: { candles: { open: number; close: number; high
   );
 }
 
+/* ─── Live Market Data ──────────────────────────────────────────── */
+// Symbols returned by the crypto leg of /api/market (vs. plain stock tickers).
+const CRYPTO_SET = new Set(['BTC', 'ETH', 'SOL', 'BNB']);
+
+function fmtPrice(price: number) {
+  const decimals = price < 1 ? 4 : 2;
+  return price.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+}
+function fmtChange(pct: number) {
+  return `${pct >= 0 ? '+' : '−'}${Math.abs(pct).toFixed(2)}%`;
+}
+function displaySym(sym: string) {
+  return CRYPTO_SET.has(sym) ? `${sym}/USD` : sym;
+}
+
+async function fetchAssets() {
+  const res = await fetch('/api/market', { cache: 'no-store' });
+  if (!res.ok) throw new Error('market fetch failed');
+  return res.json();
+}
+
+// /api/market gives us a top-of-book price + 24h change, not real depth, so we
+// synthesize a 5-level ladder around the live mid price purely for the visual.
+function buildBook(mid: number) {
+  const unit = Math.max(mid * 0.00003, 0.01);
+  const level = () => ({ size: (0.25 + Math.random() * 1.1).toFixed(3), pct: Math.round(14 + Math.random() * 38) });
+  const asks = Array.from({ length: 5 }, (_, i) => ({ price: fmtPrice(mid + unit * (5 - i)), ...level() }));
+  const bids = Array.from({ length: 5 }, (_, i) => ({ price: fmtPrice(mid - unit * (i + 1)), ...level() }));
+  return { asks, bids, spread: (unit * 2).toFixed(2), mid: fmtPrice(mid) };
+}
+
 /* ─── Main Component ─────────────────────────────────────────────── */
 export default function HomePage() {
   const [candles] = useState(makeCandles);
-  const allTickers = [...TICKERS, ...TICKERS, ...TICKERS];
+  const [assets, setAssets] = useState<any[]>([]);
+
+  // Poll our own /api/market route (CoinGecko + Finnhub under the hood) every 30s.
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const data = await fetchAssets();
+        if (active && Array.isArray(data) && data.length) setAssets(data);
+      } catch {
+        // network/API hiccup — keep showing the last known (or fallback) data
+      }
+    }
+    load();
+    const id = setInterval(load, 30000);
+    return () => { active = false; clearInterval(id); };
+  }, []);
+
+  const live = assets.length > 0;
+
+  const tickerData = live
+    ? assets.map(a => ({ sym: displaySym(a.symbol), price: fmtPrice(a.price), chg: fmtChange(a.changePercent), up: a.changePercent >= 0, logo: a.logoUrl }))
+    : TICKERS.map(t => ({ ...t, logo: undefined }));
+  const allTickers = [...tickerData, ...tickerData, ...tickerData];
+
+  const marketRows = live
+    ? assets.map(a => ({ sym: a.symbol, name: a.name, price: fmtPrice(a.price), chg: fmtChange(a.changePercent), up: a.changePercent >= 0, logo: a.logoUrl }))
+    : MARKETS.map(m => ({ ...m, logo: undefined }));
+
+  const btc = assets.find(a => a.symbol === 'BTC');
+  const midPrice = btc ? btc.price : 67420.50;
+  const midChange = btc ? btc.changePercent : 2.38;
+  const book = useMemo(() => buildBook(midPrice), [midPrice]);
 
   useEffect(() => {
     const io = new IntersectionObserver(
@@ -139,6 +186,14 @@ export default function HomePage() {
             <div className="ap-ticker-track">
               {allTickers.map((t, i) => (
                 <span key={i} className="ap-ticker-item">
+                  {t.logo && (
+                    <img
+                      src={t.logo}
+                      alt=""
+                      className="ap-tlogo"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                    />
+                  )}
                   <span className="ap-tsym">{t.sym}</span>
                   <span className="ap-tprice">{t.price}</span>
                   <span className={t.up ? 'ap-up' : 'ap-dn'}>{t.chg}</span>
@@ -151,7 +206,10 @@ export default function HomePage() {
             <li><a href="#markets">Markets</a></li>
             <li><a href="#trust">Trust</a></li>
           </ul>
-          <a href="#begin" className="ap-nav-cta">Open Account</a>
+          <div className="ap-nav-auth">
+            <a href="/login" className="ap-nav-login">Log In</a>
+            <a href="/signup" className="ap-nav-cta">Sign Up</a>
+          </div>
         </nav>
 
         {/* ── HERO ── */}
@@ -172,7 +230,7 @@ export default function HomePage() {
                 Institutional execution on equities, crypto, FX, and derivatives. Built for traders who cannot afford to lose an edge.
               </p>
               <div className="ap-hero-ctas">
-                <a href="#begin" className="ap-btn-primary">Start Trading →</a>
+                <a href="/signup" className="ap-btn-primary">Start Trading →</a>
                 <a href="#platform" className="ap-btn-ghost">See the platform</a>
               </div>
               <div className="ap-stats">
@@ -195,29 +253,31 @@ export default function HomePage() {
                 <div className="ap-book-head">
                   <div>
                     <div className="ap-book-pair"><span className="ap-live-dot"/>BTC / USD</div>
-                    <div className="ap-book-px">67,420.50</div>
-                    <div className="ap-book-chg ap-up">▲ +2.38% today</div>
+                    <div className="ap-book-px">{book.mid}</div>
+                    <div className={`ap-book-chg ${midChange >= 0 ? 'ap-up' : 'ap-dn'}`}>
+                      {midChange >= 0 ? '▲' : '▼'} {fmtChange(midChange)} today
+                    </div>
                   </div>
                   <div className="ap-book-meta">
-                    <div className="ap-meta-item"><span className="ap-ml">Spread</span><span className="ap-mv">0.50</span></div>
+                    <div className="ap-meta-item"><span className="ap-ml">Spread</span><span className="ap-mv">{book.spread}</span></div>
                     <div className="ap-meta-item"><span className="ap-ml">24h Vol</span><span className="ap-mv">$38.2B</span></div>
                   </div>
                 </div>
                 <div className="ap-book-cols">
                   <span>PRICE</span><span className="ap-tc">DEPTH</span><span className="ap-tr">SIZE</span>
                 </div>
-                {ASKS.map(r => (
-                  <div className="ap-book-row" key={r.price}>
+                {book.asks.map((r, i) => (
+                  <div className="ap-book-row" key={`ask-${i}`}>
                     <span className="ap-dn">{r.price}</span>
                     <div className="ap-depth"><div className="ap-dfill ap-dask" style={{ width: `${r.pct}%` }}/></div>
                     <span className="ap-bsz">{r.size}</span>
                   </div>
                 ))}
                 <div className="ap-spread">
-                  <span>SPREAD</span><strong>0.50</strong><span>MID</span><strong>67,420.50</strong>
+                  <span>SPREAD</span><strong>{book.spread}</strong><span>MID</span><strong>{book.mid}</strong>
                 </div>
-                {BIDS.map(r => (
-                  <div className="ap-book-row" key={r.price}>
+                {book.bids.map((r, i) => (
+                  <div className="ap-book-row" key={`bid-${i}`}>
                     <span className="ap-up">{r.price}</span>
                     <div className="ap-depth"><div className="ap-dfill ap-dbid" style={{ width: `${r.pct}%` }}/></div>
                     <span className="ap-bsz">{r.size}</span>
@@ -285,16 +345,26 @@ export default function HomePage() {
                 <span>Symbol</span><span>Name</span>
                 <span className="ap-tr">Price</span><span className="ap-tr">Change</span>
               </div>
-              {MARKETS.map(m => (
+              {marketRows.map(m => (
                 <div className="ap-mkt-row" key={m.sym}>
-                  <span className="ap-mkt-sym">{m.sym}</span>
+                  <span className="ap-mkt-sym">
+                    {m.logo && (
+                      <img
+                        src={m.logo}
+                        alt=""
+                        className="ap-mkt-logo"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    )}
+                    {m.sym}
+                  </span>
                   <span className="ap-mkt-name">{m.name}</span>
                   <span className="ap-mkt-price ap-tr">{m.price}</span>
                   <span className={`ap-tr ${m.up ? 'ap-up' : 'ap-dn'}`}>{m.chg}</span>
                 </div>
               ))}
             </div>
-            <a href="#begin" className="ap-ilink">View all 180+ instruments →</a>
+            <a href="/signup" className="ap-ilink">View all 180+ instruments →</a>
           </div>
         </section>
 
@@ -343,7 +413,7 @@ export default function HomePage() {
             </p>
             <div className="ap-cta-form">
               <input className="ap-cta-input" type="email" placeholder="Enter your email address"/>
-              <button className="ap-cta-submit">Get Started</button>
+              <a href="/signup" className="ap-cta-submit">Get Started</a>
             </div>
             <div className="ap-trust-badges">
               {['FCA & CySEC regulated', 'Negative balance protection', '24/5 desk support', 'Spreads from 0.0 pips'].map((b, i) => (
@@ -444,6 +514,7 @@ const CSS = `
 }
 .ap-tsym { color: var(--t1); font-weight: 500; letter-spacing: 0.06em; }
 .ap-tprice { font-variant-numeric: tabular-nums; }
+.ap-tlogo { width: 14px; height: 14px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
 
 .ap-nav-links {
   display: flex; gap: 28px; list-style: none; flex-shrink: 0;
@@ -454,6 +525,16 @@ const CSS = `
   color: var(--t2); text-decoration: none; transition: color 0.2s;
 }
 .ap-nav-links a:hover { color: var(--t1); }
+
+.ap-nav-auth {
+  display: flex; align-items: center; gap: 18px; flex-shrink: 0;
+}
+.ap-nav-login {
+  font-family: var(--mono); font-size: 0.63rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--t2); text-decoration: none; transition: color 0.2s;
+}
+.ap-nav-login:hover { color: var(--t1); }
 .ap-nav-cta {
   font-family: var(--mono); font-size: 0.63rem;
   letter-spacing: 0.1em; text-transform: uppercase;
@@ -710,7 +791,8 @@ const CSS = `
 }
 .ap-mkt-row:last-child { border-bottom: none; }
 .ap-mkt-row:hover { background: rgba(255,255,255,0.025); }
-.ap-mkt-sym   { font-weight: 500; color: var(--t1); }
+.ap-mkt-sym   { font-weight: 500; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+.ap-mkt-logo  { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.06); }
 .ap-mkt-name  { font-size: 0.71rem; color: var(--t2); }
 .ap-mkt-price { color: var(--t1); }
 .ap-ilink {
@@ -772,6 +854,8 @@ const CSS = `
   font-family: var(--mono); font-size: 0.69rem; font-weight: 500;
   letter-spacing: 0.1em; text-transform: uppercase;
   cursor: pointer; white-space: nowrap; transition: background 0.2s;
+  display: inline-flex; align-items: center; justify-content: center;
+  text-decoration: none;
 }
 .ap-cta-submit:hover { background: #7B8BFF; }
 .ap-trust-badges {
