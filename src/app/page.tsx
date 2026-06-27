@@ -221,11 +221,11 @@ export default function HomePage() {
           <div className="ap-hero-inner">
             <div className="ap-hero-left">
               <p className="ap-eyebrow">Since 2019 · FCA &amp; CySEC Regulated</p>
-              <h2 className="ap-h2">
+              <h1 className="ap-h1">
                 YOUR CAPITAL.<br/>
                 <em>YOUR CALL.</em><br/>
                 AT ALL TIMES. 
-              </h2>
+              </h1>
               <p className="ap-hero-sub">
                 Trade equities, crypto, FX, and derivatives from a single platform. Regulated, transparent, and made to handle whatever the market throws at you.
               </p>
