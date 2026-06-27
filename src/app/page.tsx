@@ -379,7 +379,7 @@ const CSS = `
   --panel:   rgba(255,255,255,0.03);
   --rim:     rgba(255,255,255,0.07);
   --rim2:    rgba(255,255,255,0.12);
-  --elec:    #5B6BFF;
+  --elec:    #49B6B6;
   --elec-lo: rgba(91,107,255,0.12);
   --mint:    #00D68A;
   --coral:   #FF5252;
