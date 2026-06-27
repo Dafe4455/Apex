@@ -481,7 +481,7 @@ const CSS = `
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   display: flex; align-items: center; gap: 24px;
   padding: 0 48px; height: 58px;
-  background: rgba(7,11,20,0.9);
+  background: rgba(7,16,26,0.9);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--rim);
 }
