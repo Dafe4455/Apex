@@ -66,7 +66,7 @@ const TESTIMONIALS = [
 ];
 
 /* ─── Candlestick Chart ─────────────────────────────────────────── */
-function CandleChart({ candles }) {
+function CandleChart({ candles }: { candles: { open: number; close: number; high: number; low: number }[] }) {
   const W = 1100, H = 200;
   const stride = Math.floor(W / candles.length);
   const bw = Math.max(stride - 4, 4);
@@ -74,7 +74,7 @@ function CandleChart({ candles }) {
   const maxP = Math.max(...candles.map(c => c.high));
   const range = maxP - minP || 1;
   const pad = { t: 12, b: 10 };
-  const toY = p => pad.t + ((maxP - p) / range) * (H - pad.t - pad.b);
+  const toY = (p: number) => pad.t + ((maxP - p) / range) * (H - pad.t - pad.b);
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" preserveAspectRatio="none">
