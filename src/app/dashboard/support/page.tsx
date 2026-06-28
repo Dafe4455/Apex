@@ -128,24 +128,30 @@ export default function SupportPage() {
         .sp-wrap {
           max-width: 720px;
           margin: 0 auto;
-          padding: 16px 16px 60px;
-          min-height: 100vh;
+          padding: 16px;
+          height: 100vh;
+          height: 100dvh;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
           font-family: var(--sans);
         }
 
         .sp-back {
           display: inline-flex; align-items: center; gap: 6px;
           font-size: 0.7rem; font-weight: 600; color: var(--ink-dim);
-          text-decoration: none; margin-bottom: 20px;
+          text-decoration: none; margin-bottom: 16px;
           padding: 6px 12px;
           background: var(--card); border: 1px solid var(--line-strong);
           border-radius: 8px; transition: background 0.12s, border-color 0.12s;
+          flex-shrink: 0;
         }
         .sp-back:hover { background: var(--surface-hover); border-color: var(--accent); }
 
         .sp-header {
           display: flex; align-items: flex-start; justify-content: space-between;
-          margin-bottom: 20px; gap: 12px;
+          margin-bottom: 16px; gap: 12px;
+          flex-shrink: 0;
         }
         .sp-brand {
           font-family: var(--mono); font-size: 0.58rem;
@@ -168,11 +174,11 @@ export default function SupportPage() {
         .sp-status-open   { background: var(--green-l);  color: var(--green); border: 1px solid var(--green); }
         .sp-status-closed { background: var(--surface); color: var(--ink-faint); border: 1px solid var(--line-strong); }
 
-        /* Chat panel — fixed height, no page reflow */
+        /* Chat panel — fills remaining viewport space, no fixed pixel height */
         .sp-chat {
           background: var(--card); border: 1px solid var(--line-strong);
           border-radius: 14px; display: flex; flex-direction: column;
-          height: 620px; overflow: hidden;
+          flex: 1; min-height: 0; overflow: hidden;
         }
 
         .sp-chat-header {
@@ -207,9 +213,10 @@ export default function SupportPage() {
           color: var(--green); letter-spacing: 0.08em;
         }
 
-        /* Messages — scrollable only by user */
+        /* Messages — the only scrollable region in the panel */
         .sp-messages {
           flex: 1;
+          min-height: 0;
           overflow-y: auto;
           overflow-x: hidden;
           padding: 18px;
@@ -290,7 +297,7 @@ export default function SupportPage() {
 
         .sp-error { font-size: 0.65rem; color: var(--red); text-align: center; margin: 4px 0; }
 
-        /* Input — fixed at bottom of panel */
+        /* Input — pinned to bottom of panel via flex, always reachable */
         .sp-input-area {
           border-top: 1px solid var(--line-strong);
           padding: 12px 16px;
