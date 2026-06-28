@@ -774,7 +774,7 @@ background: rgba(var(--void-rgb), 0.92); /* was: rgba(7,11,20,0.9) */
 }
 .ap-mkt-inner { position: relative; z-index: 1; max-width: 820px; }
 .ap-mkt-table {
-  background: rgba(7,11,20,0.78); border: 1px solid var(--rim2);
+  background: rgba(11,21,27,0.78); border: 1px solid var(--rim2);
   backdrop-filter: blur(8px); margin-bottom: 22px; overflow: hidden;
 }
 .ap-mkt-head {
