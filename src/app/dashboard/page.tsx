@@ -339,6 +339,43 @@ export default function DashboardPage() {
           transition: background 0.2s ease;
         }
 
+        /* ── Desktop grid (main column + sidebar) ──────────────────────────── */
+        /* On mobile .dash-grid is just a plain block, so .dash-main then
+           .dash-side stack in document order — identical to the old single
+           column layout. At the desktop breakpoint it becomes a real two
+           column layout instead of the same narrow mobile column stretched
+           out on a wide screen. */
+        .dash-grid { }
+        .dash-main { }
+        .dash-side { }
+
+        @media (min-width: 1024px) {
+          .dash-wrap { max-width: 1280px; }
+
+          .d-header { padding: 32px 24px 20px; }
+          .d-name { font-size: 2.1rem; }
+
+          .hero-card { padding: 28px 28px 16px; }
+          .bal-amount { font-size: 3.4rem; }
+
+          .dash-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 380px;
+            gap: 8px 24px;
+            align-items: start;
+          }
+
+          .dash-side {
+            position: sticky;
+            top: 24px;
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+          }
+          .dash-side::-webkit-scrollbar { width: 4px; }
+          .dash-side::-webkit-scrollbar-track { background: transparent; }
+          .dash-side::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 2px; }
+        }
+
         .d-header { padding: 20px 20px 16px; display: flex; align-items: flex-start; justify-content: space-between; }
         .d-greeting { font-size: 0.75rem; font-weight: 400; color: var(--ink-faint); margin-bottom: 2px; }
         .d-name { font-size: 1.65rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; line-height: 1; margin-bottom: 4px; }
@@ -682,186 +719,198 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="hero-card">
-          <p className="bal-eyebrow">Net Asset Value</p>
-          <p className="bal-amount"><sup>$</sup>{fmt(balance, 0)}<span className="cents">.00</span></p>
-          <div className="bal-row">
-            {/* PnL vs cost basis — sourced from DB fields set by balance API */}
-            <span className={`bal-change ${isProfitable ? 'pos' : 'neg'}`}>
-              {isProfitable ? '+' : ''}{fmt(profit)} ({isProfitable ? '+' : ''}{fmt(changePercent)}%)
-            </span>
-            <span className="bal-period">. </span>
-          </div>
-          <div className="bal-sparkline"><Sparkline positive={isProfitable} width={140} height={30} /></div>
-          <div className="bal-actions">
-            <button className="btn-dep" onClick={openDeposit}>+ Deposit</button>
-            <Link href="/dashboard/withdraw" className="btn-ghost">Withdraw</Link>
-            <Link href="/dashboard/history" className="btn-ghost">📋 History</Link>
-          </div>
-        </div>
+        {/* ── Desktop: main column (left) + sidebar (right). Mobile: plain
+            stacked flow in the same order as before. ── */}
+        <div className="dash-grid">
+          <div className="dash-main">
 
-        <div className="stat-row">
-          <div className="stat-cell">
-            <p className="stat-lbl">P &amp; L</p>
-            {/* Sign-aware color: green for profit, red for loss */}
-            <p className={`stat-val ${isProfitable ? 'pos' : 'neg'}`}>
-              {isProfitable ? '+' : ''}{fmt(profit)}
-            </p>
-            <p className="stat-sub">Realised</p>
-          </div>
-          <div className="stat-cell">
-            <p className="stat-lbl">Positions</p>
-            <p className="stat-val">{openPositions} open</p>
-            <p className="stat-sub">{profitPos} profit · {lossPos} loss</p>
-          </div>
-          <div className="stat-cell fg-cell">
-            {/* Sentiment gauge uses live 24h market changes — intentionally separate from PnL */}
-            <p className="stat-lbl" style={{ textAlign: 'center', marginBottom: 4 }}>Sentiment</p>
-            <FearGreedGauge value={fearGreedValue} />
-          </div>
-        </div>
-
-        <div className="section-divider" />
-
-        <p className="section-label">
-          <span className="section-label-left"><span className="section-label-pip" />Top Movers</span>
-          <Link href="/dashboard/markets" className="section-view-all">View all →</Link>
-        </p>
-        <div className="movers-split">
-          <div className="movers-card">
-            <p className="movers-card-title gainers">↑ Top Gainers</p>
-            {topGainers.length === 0
-              ? <p className="movers-empty">
-                  {markets.length === 0 ? 'No data' : 'Markets are down across the board'}
-                </p>
-              : topGainers.map(m => (
-                <div key={m.symbol} className="movers-split-item">
-                  <span className="movers-split-sym">{m.symbol}</span>
-                  <span className="movers-split-price">${fmt(m.price)}</span>
-                  <span className="movers-split-chg up">+{fmt(m.changePercent)}%</span>
-                </div>
-              ))}
-          </div>
-          <div className="movers-card">
-            <p className="movers-card-title losers">↓ Top Losers</p>
-            {topLosers.length === 0
-              ? <p className="movers-empty">
-                  {markets.length === 0 ? 'No data' : 'Markets are up across the board'}
-                </p>
-              : topLosers.map(m => (
-                <div key={m.symbol} className="movers-split-item">
-                  <span className="movers-split-sym">{m.symbol}</span>
-                  <span className="movers-split-price">${fmt(m.price)}</span>
-                  <span className="movers-split-chg dn">{fmt(m.changePercent)}%</span>
-                </div>
-              ))}
-          </div>
-        </div>
-
-        <p className="section-label">
-          <span className="section-label-left"><span className="section-label-pip" />Quick Trade</span>
-          <Link href="/dashboard/markets" className="section-view-all">View all →</Link>
-        </p>
-        <div className="qt-card">
-          {quickTradeAssets.length === 0
-            ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)', padding: '14px' }}>No data</p>
-            : quickTradeAssets.map(a => (
-              <div key={a.symbol} className="qt-row">
-                <div className="qt-asset">
-                  {a.logoUrl
-                    ? <img src={a.logoUrl} alt={a.symbol} className="qt-ico-img"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    : <div className="qt-ico">{a.symbol.slice(0, 2)}</div>
-                  }
-                  <div className="qt-meta">
-                    <div className="qt-sym">{a.symbol}</div>
-                    <div className="qt-price">${fmt(a.price)}</div>
-                  </div>
-                </div>
-                <span className={`qt-chg ${a.changePercent >= 0 ? 'up' : 'dn'}`}>
-                  {a.changePercent >= 0 ? '+' : ''}{fmt(a.changePercent)}%
+            <div className="hero-card">
+              <p className="bal-eyebrow">Net Asset Value</p>
+              <p className="bal-amount"><sup>$</sup>{fmt(balance, 0)}<span className="cents">.00</span></p>
+              <div className="bal-row">
+                {/* PnL vs cost basis — sourced from DB fields set by balance API */}
+                <span className={`bal-change ${isProfitable ? 'pos' : 'neg'}`}>
+                  {isProfitable ? '+' : ''}{fmt(profit)} ({isProfitable ? '+' : ''}{fmt(changePercent)}%)
                 </span>
-                <div className="qt-btns">
-                  <button className="btn-buy" onClick={() => handleQuickTrade(a.symbol, 'BUY')}>Buy</button>
-                  <button className="btn-sell" onClick={() => handleQuickTrade(a.symbol, 'SELL')}>Sell</button>
-                </div>
+                <span className="bal-period">. </span>
               </div>
-            ))}
-        </div>
-
-        <p className="section-label">
-          <span className="section-label-left"><span className="section-label-pip" />Recent Activity</span>
-          <Link href="/dashboard/history" className="section-view-all">View all →</Link>
-        </p>
-        <div className="full-card">
-          {activityLogs.length === 0
-            ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)' }}>No recent activity</p>
-            : activityLogs.slice(0, 5).map(a => (
-              <p key={a.id} className="activity-item">{a.description}</p>
-            ))}
-        </div>
-
-        <div className="section-divider" />
-
-        <p className="section-label"><span className="section-label-left"><span className="section-label-pip" />Global Finance News</span></p>
-        <div className="news-section">
-          <div className="news-wrap">
-            {newsLoading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 0', gap: 10 }}>
-                <div style={{ width: 22, height: 22, border: '2.5px solid var(--line-strong)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'dspin 0.7s linear infinite' }} />
-                <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)' }}>Fetching latest news…</p>
+              <div className="bal-sparkline"><Sparkline positive={isProfitable} width={140} height={30} /></div>
+              <div className="bal-actions">
+                <button className="btn-dep" onClick={openDeposit}>+ Deposit</button>
+                <Link href="/dashboard/withdraw" className="btn-ghost">Withdraw</Link>
+                <Link href="/dashboard/history" className="btn-ghost">📋 History</Link>
               </div>
-            ) : news.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center' }}>
-                <p style={{ fontSize: '0.68rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No news available.</p>
+            </div>
+
+            <div className="stat-row">
+              <div className="stat-cell">
+                <p className="stat-lbl">P &amp; L</p>
+                {/* Sign-aware color: green for profit, red for loss */}
+                <p className={`stat-val ${isProfitable ? 'pos' : 'neg'}`}>
+                  {isProfitable ? '+' : ''}{fmt(profit)}
+                </p>
+                <p className="stat-sub">Realised</p>
               </div>
-            ) : (
-              <>
-                {news.map((item, i) => {
-                  const [tagBg, tagCol] = tagColors[item.tag] ?? ['var(--surface)', 'var(--ink-dim)'];
-                  const isExpanded = expandedNewsIdx === i;
-                  return (
-                    <div key={i} className="news-entry">
-                      <div
-                        className="news-item"
-                        style={{ cursor: 'pointer' }}
-                        onClick={() => setExpandedNewsIdx(isExpanded ? null : i)}
-                      >
-                        <span className="news-tag" style={{ background: tagBg, color: tagCol }}>{item.tag}</span>
-                        <div className="news-body">
-                          <p className="news-headline">{item.headline}</p>
-                          <p className="news-meta">{item.source} · {item.time}</p>
-                        </div>
-                        <span style={{
-                          color: 'var(--ink-faint)', fontSize: '0.7rem', flexShrink: 0,
-                          transform: isExpanded ? 'rotate(180deg)' : 'none',
-                          transition: 'transform 0.15s', marginTop: 2,
-                        }}>
-                          ▾
-                        </span>
+              <div className="stat-cell">
+                <p className="stat-lbl">Positions</p>
+                <p className="stat-val">{openPositions} open</p>
+                <p className="stat-sub">{profitPos} profit · {lossPos} loss</p>
+              </div>
+              <div className="stat-cell fg-cell">
+                {/* Sentiment gauge uses live 24h market changes — intentionally separate from PnL */}
+                <p className="stat-lbl" style={{ textAlign: 'center', marginBottom: 4 }}>Sentiment</p>
+                <FearGreedGauge value={fearGreedValue} />
+              </div>
+            </div>
+
+            <div className="section-divider" />
+
+            <p className="section-label">
+              <span className="section-label-left"><span className="section-label-pip" />Top Movers</span>
+              <Link href="/dashboard/markets" className="section-view-all">View all →</Link>
+            </p>
+            <div className="movers-split">
+              <div className="movers-card">
+                <p className="movers-card-title gainers">↑ Top Gainers</p>
+                {topGainers.length === 0
+                  ? <p className="movers-empty">
+                      {markets.length === 0 ? 'No data' : 'Markets are down across the board'}
+                    </p>
+                  : topGainers.map(m => (
+                    <div key={m.symbol} className="movers-split-item">
+                      <span className="movers-split-sym">{m.symbol}</span>
+                      <span className="movers-split-price">${fmt(m.price)}</span>
+                      <span className="movers-split-chg up">+{fmt(m.changePercent)}%</span>
+                    </div>
+                  ))}
+              </div>
+              <div className="movers-card">
+                <p className="movers-card-title losers">↓ Top Losers</p>
+                {topLosers.length === 0
+                  ? <p className="movers-empty">
+                      {markets.length === 0 ? 'No data' : 'Markets are up across the board'}
+                    </p>
+                  : topLosers.map(m => (
+                    <div key={m.symbol} className="movers-split-item">
+                      <span className="movers-split-sym">{m.symbol}</span>
+                      <span className="movers-split-price">${fmt(m.price)}</span>
+                      <span className="movers-split-chg dn">{fmt(m.changePercent)}%</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+
+            <p className="section-label">
+              <span className="section-label-left"><span className="section-label-pip" />Quick Trade</span>
+              <Link href="/dashboard/markets" className="section-view-all">View all →</Link>
+            </p>
+            <div className="qt-card">
+              {quickTradeAssets.length === 0
+                ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)', padding: '14px' }}>No data</p>
+                : quickTradeAssets.map(a => (
+                  <div key={a.symbol} className="qt-row">
+                    <div className="qt-asset">
+                      {a.logoUrl
+                        ? <img src={a.logoUrl} alt={a.symbol} className="qt-ico-img"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                        : <div className="qt-ico">{a.symbol.slice(0, 2)}</div>
+                      }
+                      <div className="qt-meta">
+                        <div className="qt-sym">{a.symbol}</div>
+                        <div className="qt-price">${fmt(a.price)}</div>
                       </div>
-                      {isExpanded && (
-                        <div className="news-expand">
-                          {item.summary
-                            ? <p className="news-summary">{item.summary}</p>
-                            : <p className="news-summary news-summary-empty">No summary available.</p>
-                          }
-                          {item.url && (
-                            <a href={item.url} target="_blank" rel="noopener noreferrer" className="news-readmore">
-                              Read full article →
-                            </a>
+                    </div>
+                    <span className={`qt-chg ${a.changePercent >= 0 ? 'up' : 'dn'}`}>
+                      {a.changePercent >= 0 ? '+' : ''}{fmt(a.changePercent)}%
+                    </span>
+                    <div className="qt-btns">
+                      <button className="btn-buy" onClick={() => handleQuickTrade(a.symbol, 'BUY')}>Buy</button>
+                      <button className="btn-sell" onClick={() => handleQuickTrade(a.symbol, 'SELL')}>Sell</button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+          </div>
+
+          <div className="dash-side">
+
+            <p className="section-label">
+              <span className="section-label-left"><span className="section-label-pip" />Recent Activity</span>
+              <Link href="/dashboard/history" className="section-view-all">View all →</Link>
+            </p>
+            <div className="full-card">
+              {activityLogs.length === 0
+                ? <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)' }}>No recent activity</p>
+                : activityLogs.slice(0, 5).map(a => (
+                  <p key={a.id} className="activity-item">{a.description}</p>
+                ))}
+            </div>
+
+            <div className="section-divider" />
+
+            <p className="section-label"><span className="section-label-left"><span className="section-label-pip" />Global Finance News</span></p>
+            <div className="news-section">
+              <div className="news-wrap">
+                {newsLoading ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '28px 0', gap: 10 }}>
+                    <div style={{ width: 22, height: 22, border: '2.5px solid var(--line-strong)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'dspin 0.7s linear infinite' }} />
+                    <p style={{ fontSize: '0.62rem', color: 'var(--ink-faint)' }}>Fetching latest news…</p>
+                  </div>
+                ) : news.length === 0 ? (
+                  <div style={{ padding: '24px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '0.68rem', color: 'var(--ink-faint)', fontWeight: 300 }}>No news available.</p>
+                  </div>
+                ) : (
+                  <>
+                    {news.map((item, i) => {
+                      const [tagBg, tagCol] = tagColors[item.tag] ?? ['var(--surface)', 'var(--ink-dim)'];
+                      const isExpanded = expandedNewsIdx === i;
+                      return (
+                        <div key={i} className="news-entry">
+                          <div
+                            className="news-item"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => setExpandedNewsIdx(isExpanded ? null : i)}
+                          >
+                            <span className="news-tag" style={{ background: tagBg, color: tagCol }}>{item.tag}</span>
+                            <div className="news-body">
+                              <p className="news-headline">{item.headline}</p>
+                              <p className="news-meta">{item.source} · {item.time}</p>
+                            </div>
+                            <span style={{
+                              color: 'var(--ink-faint)', fontSize: '0.7rem', flexShrink: 0,
+                              transform: isExpanded ? 'rotate(180deg)' : 'none',
+                              transition: 'transform 0.15s', marginTop: 2,
+                            }}>
+                              ▾
+                            </span>
+                          </div>
+                          {isExpanded && (
+                            <div className="news-expand">
+                              {item.summary
+                                ? <p className="news-summary">{item.summary}</p>
+                                : <p className="news-summary news-summary-empty">No summary available.</p>
+                              }
+                              {item.url && (
+                                <a href={item.url} target="_blank" rel="noopener noreferrer" className="news-readmore">
+                                  Read full article →
+                                </a>
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      );
+                    })}
+                    <div className="news-pulse">
+                      <span className="news-pulse-dot" />
+                      <span style={{ fontSize: '0.58rem', color: 'var(--ink-faint)', fontFamily: 'var(--mono)' }}>Live · CryptoCompare &amp; BBC Business</span>
                     </div>
-                  );
-                })}
-                <div className="news-pulse">
-                  <span className="news-pulse-dot" />
-                  <span style={{ fontSize: '0.58rem', color: 'var(--ink-faint)', fontFamily: 'var(--mono)' }}>Live · CryptoCompare &amp; BBC Business</span>
-                </div>
-              </>
-            )}
+                  </>
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
 
