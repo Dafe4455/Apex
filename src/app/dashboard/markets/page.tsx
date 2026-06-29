@@ -36,20 +36,13 @@ function ChangeBadge({ value }: { value: number }) {
   const pos = value >= 0;
   return (
     <span style={{
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: 2,
-      padding: '2px 6px',
-      borderRadius: 5,
-      // Use theme vars so badge bg adapts in light mode
+      display: 'inline-flex', alignItems: 'center', gap: 2,
+      padding: '2px 6px', borderRadius: 5,
       background: pos ? 'var(--green-l)' : 'var(--red-l)',
       border: `1px solid color-mix(in srgb, ${pos ? 'var(--green)' : 'var(--red)'} 20%, transparent)`,
-      fontFamily: 'var(--mono)',
-      fontSize: '0.63rem',
-      fontWeight: 600,
+      fontFamily: 'var(--mono)', fontSize: '0.63rem', fontWeight: 600,
       color: pos ? 'var(--green)' : 'var(--red)',
-      letterSpacing: '0.02em',
-      whiteSpace: 'nowrap',
+      letterSpacing: '0.02em', whiteSpace: 'nowrap',
     }}>
       {pos ? '▲' : '▼'} {pos ? '+' : ''}{fmt(value)}%
     </span>
@@ -123,27 +116,27 @@ export default function MarketsPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
-        /*
-          No :root block — consumes shared theme vars from global stylesheet / layout.
-        */
-
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+        /* ── Page shell — centered, full-bleed padding ── */
         .mkt-wrap {
-          max-width: 900px;
           padding: 16px 16px 80px;
           color: var(--ink);
           font-family: var(--sans);
         }
+        .mkt-inner {
+          max-width: 1100px;
+          margin: 0 auto;
+        }
 
         /* ── Header ── */
         .mkt-header { margin-bottom: 20px; }
+        .mkt-header-row {
+          display: flex; align-items: center; justify-content: space-between;
+        }
         .mkt-title {
           font-size: 1.4rem; font-weight: 700; color: var(--ink);
           letter-spacing: -0.02em; margin-bottom: 4px;
-        }
-        .mkt-header-row {
-          display: flex; align-items: center; justify-content: space-between;
         }
         .mkt-sub {
           font-size: 0.6rem; color: var(--ink-faint);
@@ -195,12 +188,12 @@ export default function MarketsPage() {
         .strip-chg.up { color: var(--green); background: var(--green-l); }
         .strip-chg.dn { color: var(--red);   background: var(--red-l); }
 
-        /* ── Controls ── */
+        /* ── Controls: stacked on mobile, one row on desktop ── */
         .mkt-controls {
-          display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px;
-        }
-        .controls-row {
-          display: flex; gap: 10px; align-items: center;
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-bottom: 14px;
         }
         .search-box {
           flex: 1; display: flex; align-items: center; gap: 8px;
@@ -215,13 +208,13 @@ export default function MarketsPage() {
           color: var(--ink); width: 100%;
         }
         .search-box input::placeholder { color: var(--ink-faint); }
-
-        .tab-row { display: flex; gap: 6px; }
+        .tab-row { display: flex; gap: 6px; flex-shrink: 0; }
         .tab-btn {
           padding: 6px 16px; border-radius: 20px; border: 1px solid var(--line-strong);
           background: none; font-family: var(--mono); font-size: 0.6rem;
           font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
           color: var(--ink-faint); cursor: pointer; transition: all 0.15s;
+          white-space: nowrap;
         }
         .tab-btn.active {
           background: var(--accent); border-color: var(--accent); color: var(--accent-l);
@@ -233,13 +226,43 @@ export default function MarketsPage() {
           background: var(--card); border: 1px solid var(--line-strong);
           border-radius: 14px; overflow: hidden;
         }
+
+        /* Mobile column layout: hide Trend col */
         .mkt-thead {
           display: grid;
-          grid-template-columns: 2.2fr 1.4fr 1.6fr 1fr 1.8fr;
+          grid-template-columns: 2.2fr 1.4fr 1.6fr 1.8fr;
           padding: 10px 16px;
           border-bottom: 1px solid var(--line-strong);
           background: var(--bg);
         }
+        .mkt-row {
+          display: grid;
+          grid-template-columns: 2.2fr 1.4fr 1.6fr 1.8fr;
+          align-items: center; padding: 13px 16px;
+          border-bottom: 1px solid var(--line);
+          transition: background 0.12s;
+        }
+        .spark-col { display: none; }
+
+        /* Desktop: restore Trend column, wider padding */
+        @media (min-width: 640px) {
+          .mkt-wrap { padding: 24px 24px 80px; }
+          .mkt-controls { flex-direction: row; align-items: center; }
+          .mkt-thead {
+            grid-template-columns: 2.2fr 1.4fr 1.6fr 1fr 1.8fr;
+            padding: 10px 20px;
+          }
+          .mkt-row {
+            grid-template-columns: 2.2fr 1.4fr 1.6fr 1fr 1.8fr;
+            padding: 14px 20px;
+          }
+          .spark-col { display: flex; }
+          .mover-strip-card { padding: 16px 20px; }
+        }
+
+        .mkt-row:last-child { border-bottom: none; }
+        .mkt-row:hover { background: var(--surface-hover); }
+
         .mkt-th {
           font-size: 0.54rem; font-weight: 700; color: var(--ink-faint);
           text-transform: uppercase; letter-spacing: 0.09em;
@@ -249,16 +272,6 @@ export default function MarketsPage() {
         .mkt-th:hover { color: var(--ink-dim); }
         .mkt-th.sorted { color: var(--accent); }
         .sort-arrow { font-size: 0.5rem; opacity: 0.7; }
-
-        .mkt-row {
-          display: grid;
-          grid-template-columns: 2.2fr 1.4fr 1.6fr 1fr 1.8fr;
-          align-items: center; padding: 13px 16px;
-          border-bottom: 1px solid var(--line);
-          transition: background 0.12s;
-        }
-        .mkt-row:last-child { border-bottom: none; }
-        .mkt-row:hover { background: var(--surface-hover); }
 
         /* ── Asset cell ── */
         .asset-cell { display: flex; align-items: center; gap: 10px; }
@@ -276,20 +289,18 @@ export default function MarketsPage() {
         .asset-name { font-size: 0.58rem; font-weight: 300; color: var(--ink-faint); margin-top: 2px; }
 
         .price-cell {
-          font-family: var(--mono); font-size: 0.72rem; padding-right: 6px;
-          font-weight: 600; color: var(--ink);
+          font-family: var(--mono); font-size: 0.72rem;
+          font-weight: 600; color: var(--ink); padding-right: 6px;
         }
 
         /* ── Trade buttons ── */
         .trade-cell { display: flex; gap: 6px; }
         .btn-buy {
-          background: var(--green-l);
-          color: var(--green);
+          background: var(--green-l); color: var(--green);
           border: 1px solid color-mix(in srgb, var(--green) 20%, transparent);
           border-radius: 7px; padding: 6px 14px;
           font-family: var(--sans); font-size: 0.62rem; font-weight: 700;
-          cursor: pointer; transition: all 0.15s;
-          letter-spacing: 0.03em;
+          cursor: pointer; transition: all 0.15s; letter-spacing: 0.03em;
         }
         .btn-buy:hover {
           background: var(--green); color: var(--green-l);
@@ -297,13 +308,11 @@ export default function MarketsPage() {
         }
         .btn-buy:active { transform: scale(0.97); }
         .btn-sell {
-          background: var(--red-l);
-          color: var(--red);
+          background: var(--red-l); color: var(--red);
           border: 1px solid color-mix(in srgb, var(--red) 20%, transparent);
           border-radius: 7px; padding: 6px 14px;
           font-family: var(--sans); font-size: 0.62rem; font-weight: 700;
-          cursor: pointer; transition: all 0.15s;
-          letter-spacing: 0.03em;
+          cursor: pointer; transition: all 0.15s; letter-spacing: 0.03em;
         }
         .btn-sell:hover {
           background: var(--red); color: var(--red-l);
@@ -323,63 +332,55 @@ export default function MarketsPage() {
           margin: 0 auto 12px;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* ── Mobile ── */
-        @media (max-width: 640px) {
-          .mkt-wrap { padding: 16px 14px 80px; }
-          .mkt-thead { grid-template-columns: 2fr 1.3fr 1.6fr 1.6fr; }
-          .mkt-row   { grid-template-columns: 2fr 1.3fr 1.6fr 1.6fr; }
-          .spark-col { display: none; }
-        }
       `}</style>
 
       <div className="mkt-wrap">
+        <div className="mkt-inner">
 
-        {/* Header */}
-        <div className="mkt-header">
-          <div className="mkt-header-row">
-            <h1 className="mkt-title">Markets</h1>
-            {lastUpdated && (
-              <span className="last-updated">
-                Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-              </span>
-            )}
-          </div>
-          <div className="mkt-sub">
-            <span className="live-dot" />
-            Live prices · Refreshes every 30s
-          </div>
-        </div>
-
-        {/* Gainers / Losers */}
-        {assets.length > 0 && (
-          <div className="mover-strip">
-            <div className="mover-strip-card">
-              <p className="strip-label up">↑ Top Gainers</p>
-              {gainers.map(a => (
-                <div key={a.symbol} className="strip-row">
-                  <span className="strip-sym">{a.symbol}</span>
-                  <span className="strip-price">${fmt(a.price)}</span>
-                  <span className="strip-chg up">+{fmt(a.changePercent)}%</span>
-                </div>
-              ))}
+          {/* Header */}
+          <div className="mkt-header">
+            <div className="mkt-header-row">
+              <h1 className="mkt-title">Markets</h1>
+              {lastUpdated && (
+                <span className="last-updated">
+                  Updated {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
+              )}
             </div>
-            <div className="mover-strip-card">
-              <p className="strip-label dn">↓ Top Losers</p>
-              {losers.map(a => (
-                <div key={a.symbol} className="strip-row">
-                  <span className="strip-sym">{a.symbol}</span>
-                  <span className="strip-price">${fmt(a.price)}</span>
-                  <span className="strip-chg dn">{fmt(a.changePercent)}%</span>
-                </div>
-              ))}
+            <div className="mkt-sub">
+              <span className="live-dot" />
+              Live prices · Refreshes every 30s
             </div>
           </div>
-        )}
 
-        {/* Controls */}
-        <div className="mkt-controls">
-          <div className="controls-row">
+          {/* Gainers / Losers */}
+          {assets.length > 0 && (
+            <div className="mover-strip">
+              <div className="mover-strip-card">
+                <p className="strip-label up">↑ Top Gainers</p>
+                {gainers.map(a => (
+                  <div key={a.symbol} className="strip-row">
+                    <span className="strip-sym">{a.symbol}</span>
+                    <span className="strip-price">${fmt(a.price)}</span>
+                    <span className="strip-chg up">+{fmt(a.changePercent)}%</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mover-strip-card">
+                <p className="strip-label dn">↓ Top Losers</p>
+                {losers.map(a => (
+                  <div key={a.symbol} className="strip-row">
+                    <span className="strip-sym">{a.symbol}</span>
+                    <span className="strip-price">${fmt(a.price)}</span>
+                    <span className="strip-chg dn">{fmt(a.changePercent)}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Controls — single row on desktop */}
+          <div className="mkt-controls">
             <div className="search-box">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <circle cx="6" cy="6" r="4.5" stroke="var(--ink-faint)" strokeWidth="1.2" />
@@ -391,65 +392,65 @@ export default function MarketsPage() {
                 onChange={e => setSearch(e.target.value)}
               />
             </div>
-          </div>
-          <div className="tab-row">
-            {(['ALL', 'CRYPTO', 'STOCKS'] as const).map(t => (
-              <button key={t} className={`tab-btn ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="mkt-table-wrap">
-          <div className="mkt-thead">
-            <span className="mkt-th">Asset</span>
-            <span className={`mkt-th ${sortKey === 'price' ? 'sorted' : ''}`} onClick={() => handleSort('price')}>
-              Price <span className="sort-arrow">{sortKey === 'price' ? (sortDir === 'desc' ? '↓' : '↑') : '↕'}</span>
-            </span>
-            <span className={`mkt-th ${sortKey === 'changePercent' ? 'sorted' : ''}`} onClick={() => handleSort('changePercent')}>
-              24h Change <span className="sort-arrow">{sortKey === 'changePercent' ? (sortDir === 'desc' ? '↓' : '↑') : '↕'}</span>
-            </span>
-            <span className="mkt-th spark-col">Trend</span>
-            <span className="mkt-th">Trade</span>
+            <div className="tab-row">
+              {(['ALL', 'CRYPTO', 'STOCKS'] as const).map(t => (
+                <button key={t} className={`tab-btn ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
+                  {t}
+                </button>
+              ))}
+            </div>
           </div>
 
-          {loading ? (
-            <div className="mkt-empty">
-              <div className="spinner" />
-              <p>Loading markets…</p>
+          {/* Table */}
+          <div className="mkt-table-wrap">
+            <div className="mkt-thead">
+              <span className="mkt-th">Asset</span>
+              <span className={`mkt-th ${sortKey === 'price' ? 'sorted' : ''}`} onClick={() => handleSort('price')}>
+                Price <span className="sort-arrow">{sortKey === 'price' ? (sortDir === 'desc' ? '↓' : '↑') : '↕'}</span>
+              </span>
+              <span className={`mkt-th ${sortKey === 'changePercent' ? 'sorted' : ''}`} onClick={() => handleSort('changePercent')}>
+                24h Change <span className="sort-arrow">{sortKey === 'changePercent' ? (sortDir === 'desc' ? '↓' : '↑') : '↕'}</span>
+              </span>
+              <span className="mkt-th spark-col">Trend</span>
+              <span className="mkt-th">Trade</span>
             </div>
-          ) : filtered.length === 0 ? (
-            <div className="mkt-empty">
-              <p>No assets found{search ? ` for "${search}"` : ''}.</p>
-            </div>
-          ) : filtered.map(a => (
-            <div key={a.symbol} className="mkt-row">
-              <div className="asset-cell">
-                {a.logoUrl
-                  ? <img src={a.logoUrl} alt={a.symbol} className="asset-logo"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                  : <div className="asset-logo-placeholder">{a.symbol.slice(0, 2)}</div>
-                }
-                <div>
-                  <div className="asset-sym">{a.symbol}</div>
-                  <div className="asset-name">{a.name}</div>
+
+            {loading ? (
+              <div className="mkt-empty">
+                <div className="spinner" />
+                <p>Loading markets…</p>
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="mkt-empty">
+                <p>No assets found{search ? ` for "${search}"` : ''}.</p>
+              </div>
+            ) : filtered.map(a => (
+              <div key={a.symbol} className="mkt-row">
+                <div className="asset-cell">
+                  {a.logoUrl
+                    ? <img src={a.logoUrl} alt={a.symbol} className="asset-logo"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    : <div className="asset-logo-placeholder">{a.symbol.slice(0, 2)}</div>
+                  }
+                  <div>
+                    <div className="asset-sym">{a.symbol}</div>
+                    <div className="asset-name">{a.name}</div>
+                  </div>
+                </div>
+                <span className="price-cell">{fmtPrice(a.price)}</span>
+                <span><ChangeBadge value={a.changePercent} /></span>
+                <span className="spark-col">
+                  <MiniSparkline positive={a.changePercent >= 0} />
+                </span>
+                <div className="trade-cell">
+                  <button className="btn-buy"  onClick={() => handleTrade(a, 'BUY')}>Buy</button>
+                  <button className="btn-sell" onClick={() => handleTrade(a, 'SELL')}>Sell</button>
                 </div>
               </div>
-              <span className="price-cell">{fmtPrice(a.price)}</span>
-              <span><ChangeBadge value={a.changePercent} /></span>
-              <span className="spark-col">
-                <MiniSparkline positive={a.changePercent >= 0} />
-              </span>
-              <div className="trade-cell">
-                <button className="btn-buy"  onClick={() => handleTrade(a, 'BUY')}>Buy</button>
-                <button className="btn-sell" onClick={() => handleTrade(a, 'SELL')}>Sell</button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
 
+        </div>
       </div>
     </>
   );
