@@ -87,7 +87,8 @@ const CRYPTO_COINS: CryptoCoin[] = [
 ];
 
 export default function WithdrawPage() {
-  const [method, setMethod]         = useState('bank');
+  // Crypto is the default withdrawal method.
+  const [method, setMethod]         = useState('crypto');
   const [amount, setAmount]         = useState('');
   const [note, setNote]             = useState('');
   const [details, setDetails]       = useState<Record<string, string>>({});
@@ -189,6 +190,38 @@ export default function WithdrawPage() {
           max-width: 480px; margin: 0 auto;
           padding: 16px 16px 80px; min-height: 100vh;
           font-family: var(--sans); color: var(--ink);
+        }
+
+        /* ── Desktop grid (form column + history sidebar) ──────────────────── */
+        /* On mobile .wd-grid is a plain block, so .wd-main then .wd-side stack
+           in document order — identical to the old single column layout. At
+           the desktop breakpoint it becomes a real two column layout instead
+           of the same narrow mobile column stretched out on a wide screen. */
+        .wd-grid { }
+        .wd-main { }
+        .wd-side { }
+
+        @media (min-width: 1024px) {
+          .wd-wrap { max-width: 960px; }
+
+          .wd-title { font-size: 1.7rem; }
+
+          .wd-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 360px;
+            gap: 24px;
+            align-items: start;
+          }
+
+          .wd-side {
+            position: sticky;
+            top: 24px;
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+          }
+          .wd-side::-webkit-scrollbar { width: 4px; }
+          .wd-side::-webkit-scrollbar-track { background: transparent; }
+          .wd-side::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 2px; }
         }
 
         /* ── Back link ── */
@@ -502,248 +535,258 @@ export default function WithdrawPage() {
         <h1 className="wd-title">Withdraw Funds</h1>
         <p className="wd-sub">Transfer funds to your bank, card, or wallet</p>
 
-        {/* ── BALANCE ── */}
-        <div className="wd-balance-card">
-          <div>
-            <p className="wd-balance-lbl">Available Balance</p>
-            <p className="wd-balance-val">${fmt(balance)}</p>
-          </div>
-          <div className="wd-balance-arrow">
-            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 14V4M9 4L4.5 8.5M9 4L13.5 8.5"
-                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-        </div>
+        {/* ── Desktop: form column (left) + history sidebar (right). Mobile:
+            plain stacked flow in the same order as before. ── */}
+        <div className="wd-grid">
+          <div className="wd-main">
 
-        {/* ── METHOD ── */}
-        {!submitted && (
-          <div className="wd-card">
-            <p className="wd-section-lbl">Withdrawal Method</p>
-            <div className="wd-method-grid">
-              {METHODS.map(m => {
-                const Icon = m.icon;
-                return (
-                  <div
-                    key={m.id}
-                    className={`wd-method${method === m.id ? ' active' : ''}`}
-                    onClick={() => { setMethod(m.id); setDetails({}); setCryptoCoin(''); setCryptoNet(''); }}
-                  >
-                    <div className="wd-method-icon"><Icon size={20} strokeWidth={1.5} /></div>
-                    <p className="wd-method-lbl">{m.label}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── AMOUNT + DETAILS ── */}
-        {!submitted && (
-          <div className="wd-card">
-            <p className="wd-section-lbl">Amount & Details</p>
-
-            <div className="wd-warning">
-              <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>⚠️</span>
-              <p>Withdrawals are typically processed instantly. Minimum withdrawal is $500.</p>
-            </div>
-
-            <div className="wd-amount-row">
-              <span className="wd-currency">$</span>
-              <input className="wd-input" type="number" placeholder="0.00"
-                value={amount} onChange={e => setAmount(e.target.value)} min="0" />
-            </div>
-
-            <div className="wd-quick">
-              {['100', '500', '1000', '5000'].map(q => (
-                <button key={q} className={`wd-quick-btn${amount === q ? ' active' : ''}`}
-                  onClick={() => setAmount(q)}>${q}</button>
-              ))}
-            </div>
-
-            {/* NON-CRYPTO FIELDS */}
-            {method !== 'crypto' && activeMethod.fields.map(field => (
-              <div key={field} className="wd-field">
-                <label className="wd-field-label">{field}</label>
-                <input className="wd-field-input" placeholder={`Enter ${field.toLowerCase()}`}
-                  value={details[field] ?? ''}
-                  onChange={e => setDetails(prev => ({ ...prev, [field]: e.target.value }))} />
+            {/* ── BALANCE ── */}
+            <div className="wd-balance-card">
+              <div>
+                <p className="wd-balance-lbl">Available Balance</p>
+                <p className="wd-balance-val">${fmt(balance)}</p>
               </div>
-            ))}
+              <div className="wd-balance-arrow">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <path d="M9 14V4M9 4L4.5 8.5M9 4L13.5 8.5"
+                    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            </div>
 
-            {/* CRYPTO FIELDS */}
-            {method === 'crypto' && (
-              <>
-                {/* Step 1 — Coin */}
-                <div className="wd-field">
-                  <label className="wd-field-label">Coin</label>
-                  <div className="wd-coin-grid">
-                    {CRYPTO_COINS.map(coin => (
+            {/* ── METHOD ── */}
+            {!submitted && (
+              <div className="wd-card">
+                <p className="wd-section-lbl">Withdrawal Method</p>
+                <div className="wd-method-grid">
+                  {METHODS.map(m => {
+                    const Icon = m.icon;
+                    return (
                       <div
-                        key={coin.id}
-                        className={`wd-coin${cryptoCoin === coin.id ? ' active' : ''}`}
-                        style={{ '--coin-color': coin.color } as React.CSSProperties}
-                        onClick={() => { setCryptoCoin(coin.id); setCryptoNet(''); }}
+                        key={m.id}
+                        className={`wd-method${method === m.id ? ' active' : ''}`}
+                        onClick={() => { setMethod(m.id); setDetails({}); setCryptoCoin(''); setCryptoNet(''); }}
                       >
-                        <span className="wd-coin-sym">{coin.symbol}</span>
-                        <span className="wd-coin-name">{coin.name}</span>
+                        <div className="wd-method-icon"><Icon size={20} strokeWidth={1.5} /></div>
+                        <p className="wd-method-lbl">{m.label}</p>
                       </div>
-                    ))}
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ── AMOUNT + DETAILS ── */}
+            {!submitted && (
+              <div className="wd-card">
+                <p className="wd-section-lbl">Amount & Details</p>
+
+                <div className="wd-warning">
+                  <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>⚠️</span>
+                  <p>Withdrawals are typically processed instantly. Minimum withdrawal is $500.</p>
+                </div>
+
+                <div className="wd-amount-row">
+                  <span className="wd-currency">$</span>
+                  <input className="wd-input" type="number" placeholder="0.00"
+                    value={amount} onChange={e => setAmount(e.target.value)} min="0" />
+                </div>
+
+                <div className="wd-quick">
+                  {['100', '500', '1000', '5000'].map(q => (
+                    <button key={q} className={`wd-quick-btn${amount === q ? ' active' : ''}`}
+                      onClick={() => setAmount(q)}>${q}</button>
+                  ))}
+                </div>
+
+                {/* NON-CRYPTO FIELDS */}
+                {method !== 'crypto' && activeMethod.fields.map(field => (
+                  <div key={field} className="wd-field">
+                    <label className="wd-field-label">{field}</label>
+                    <input className="wd-field-input" placeholder={`Enter ${field.toLowerCase()}`}
+                      value={details[field] ?? ''}
+                      onChange={e => setDetails(prev => ({ ...prev, [field]: e.target.value }))} />
+                  </div>
+                ))}
+
+                {/* CRYPTO FIELDS */}
+                {method === 'crypto' && (
+                  <>
+                    {/* Step 1 — Coin */}
+                    <div className="wd-field">
+                      <label className="wd-field-label">Coin</label>
+                      <div className="wd-coin-grid">
+                        {CRYPTO_COINS.map(coin => (
+                          <div
+                            key={coin.id}
+                            className={`wd-coin${cryptoCoin === coin.id ? ' active' : ''}`}
+                            style={{ '--coin-color': coin.color } as React.CSSProperties}
+                            onClick={() => { setCryptoCoin(coin.id); setCryptoNet(''); }}
+                          >
+                            <span className="wd-coin-sym">{coin.symbol}</span>
+                            <span className="wd-coin-name">{coin.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Step 2 — Network */}
+                    {cryptoCoin && activeCoin && (
+                      <div className="wd-field">
+                        <label className="wd-field-label">Network</label>
+                        <div className="wd-net-list">
+                          {activeCoin.networks.map(net => (
+                            <div
+                              key={net.id}
+                              className={`wd-net${cryptoNet === net.id ? ' active' : ''}`}
+                              onClick={() => setCryptoNet(net.id)}
+                            >
+                              <span className="wd-net-tag">{net.tag}</span>
+                              <span className="wd-net-label">{net.label}</span>
+                              {cryptoNet === net.id && (
+                                <svg className="wd-net-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                  <path d="M2.5 7L5.5 10L11.5 4"
+                                    stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                                </svg>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        {cryptoNet && (
+                          <p className="wd-net-warning">
+                            ⚠️ Send only <strong>{cryptoCoin}</strong> on the <strong>{activeNet?.label}</strong> network.
+                            Sending on the wrong network will result in permanent loss of funds.
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Step 3 — Wallet address */}
+                    {cryptoCoin && cryptoNet && (
+                      <div className="wd-field">
+                        <label className="wd-field-label">Wallet Address</label>
+                        <input
+                          className="wd-field-input"
+                          style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', letterSpacing: '0.02em' }}
+                          placeholder="Enter your wallet address"
+                          value={details['Wallet Address'] ?? ''}
+                          onChange={e => setDetails(prev => ({ ...prev, 'Wallet Address': e.target.value }))}
+                          autoComplete="off"
+                          spellCheck={false}
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div className="wd-field">
+                  <label className="wd-field-label">Note (optional)</label>
+                  <input className="wd-field-input" placeholder="Any additional instructions"
+                    value={note} onChange={e => setNote(e.target.value)} />
+                </div>
+
+                {/* PASSWORD CONFIRMATION */}
+                <div className="wd-password-wrap">
+                  <div className="wd-password-header">
+                    <Lock size={12} style={{ color: 'var(--ink-faint)' }} />
+                    <span>Confirm Identity</span>
+                  </div>
+                  <p className="wd-password-hint">
+                    Enter your account password to authorise this withdrawal.
+                  </p>
+                  <div className="wd-password-row">
+                    <Lock size={14} className="wd-password-icon" />
+                    <input
+                      className="wd-password-input"
+                      type="password"
+                      placeholder="Account password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      autoComplete="current-password"
+                    />
                   </div>
                 </div>
 
-                {/* Step 2 — Network */}
-                {cryptoCoin && activeCoin && (
-                  <div className="wd-field">
-                    <label className="wd-field-label">Network</label>
-                    <div className="wd-net-list">
-                      {activeCoin.networks.map(net => (
-                        <div
-                          key={net.id}
-                          className={`wd-net${cryptoNet === net.id ? ' active' : ''}`}
-                          onClick={() => setCryptoNet(net.id)}
-                        >
-                          <span className="wd-net-tag">{net.tag}</span>
-                          <span className="wd-net-label">{net.label}</span>
-                          {cryptoNet === net.id && (
-                            <svg className="wd-net-check" width="14" height="14" viewBox="0 0 14 14" fill="none">
-                              <path d="M2.5 7L5.5 10L11.5 4"
-                                stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                            </svg>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    {cryptoNet && (
-                      <p className="wd-net-warning">
-                        ⚠️ Send only <strong>{cryptoCoin}</strong> on the <strong>{activeNet?.label}</strong> network.
-                        Sending on the wrong network will result in permanent loss of funds.
-                      </p>
-                    )}
-                  </div>
-                )}
+                {submitErr && <p className="wd-err">{submitErr}</p>}
 
-                {/* Step 3 — Wallet address */}
-                {cryptoCoin && cryptoNet && (
-                  <div className="wd-field">
-                    <label className="wd-field-label">Wallet Address</label>
-                    <input
-                      className="wd-field-input"
-                      style={{ fontFamily: 'var(--mono)', fontSize: '0.72rem', letterSpacing: '0.02em' }}
-                      placeholder="Enter your wallet address"
-                      value={details['Wallet Address'] ?? ''}
-                      onChange={e => setDetails(prev => ({ ...prev, 'Wallet Address': e.target.value }))}
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                  </div>
-                )}
-              </>
+                <button className="wd-submit" disabled={!canSubmit} onClick={handleSubmit}>
+                  {submitting
+                    ? <><Loader2 size={16} className="wd-spin" /> Submitting…</>
+                    : `Request Withdrawal of $${amount || '0'}`}
+                </button>
+              </div>
             )}
 
-            <div className="wd-field">
-              <label className="wd-field-label">Note (optional)</label>
-              <input className="wd-field-input" placeholder="Any additional instructions"
-                value={note} onChange={e => setNote(e.target.value)} />
-            </div>
-
-            {/* PASSWORD CONFIRMATION */}
-            <div className="wd-password-wrap">
-              <div className="wd-password-header">
-                <Lock size={12} style={{ color: 'var(--ink-faint)' }} />
-                <span>Confirm Identity</span>
+            {/* ── SUCCESS ── */}
+            {submitted && (
+              <div className="wd-card">
+                <div className="wd-success">
+                  <div className="wd-success-ico">
+                    <CheckCircle2 size={28} />
+                  </div>
+                  <p className="wd-success-title">Withdrawal Requested</p>
+                  <p className="wd-success-sub">
+                    Your withdrawal of <strong>${fmt(Number(amount))}</strong> via {activeMethod.label} has been submitted.<br />
+                    It will be reviewed and processed within 1–3 business days.
+                  </p>
+                  <button className="wd-success-btn" onClick={resetForm}>Make Another Request</button>
+                </div>
               </div>
-              <p className="wd-password-hint">
-                Enter your account password to authorise this withdrawal.
-              </p>
-              <div className="wd-password-row">
-                <Lock size={14} className="wd-password-icon" />
-                <input
-                  className="wd-password-input"
-                  type="password"
-                  placeholder="Account password"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                />
-              </div>
-            </div>
+            )}
 
-            {submitErr && <p className="wd-err">{submitErr}</p>}
-
-            <button className="wd-submit" disabled={!canSubmit} onClick={handleSubmit}>
-              {submitting
-                ? <><Loader2 size={16} className="wd-spin" /> Submitting…</>
-                : `Request Withdrawal of $${amount || '0'}`}
-            </button>
           </div>
-        )}
 
-        {/* ── SUCCESS ── */}
-        {submitted && (
-          <div className="wd-card">
-            <div className="wd-success">
-              <div className="wd-success-ico">
-                <CheckCircle2 size={28} />
-              </div>
-              <p className="wd-success-title">Withdrawal Requested</p>
-              <p className="wd-success-sub">
-                Your withdrawal of <strong>${fmt(Number(amount))}</strong> via {activeMethod.label} has been submitted.<br />
-                It will be reviewed and processed within 1–3 business days.
-              </p>
-              <button className="wd-success-btn" onClick={resetForm}>Make Another Request</button>
+          <div className="wd-side">
+            {/* ── HISTORY ── */}
+            <div className="wd-card" style={{ marginTop: 4 }}>
+              <p className="wd-section-lbl">Withdrawal History</p>
+              {historyLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
+                  <Loader2 size={18} className="wd-spin" style={{ color: 'var(--ink-faint)' }} />
+                </div>
+              ) : history.length === 0 ? (
+                <div className="wd-empty">
+                  <Clock size={22} style={{ opacity: 0.25 }} />
+                  <p>No withdrawals yet</p>
+                </div>
+              ) : history.map(w => (
+                <div key={w.id} className="wd-history-row">
+                  <div className="wd-history-ico" style={{
+                    background: w.status === 'APPROVED'
+                      ? 'color-mix(in srgb, var(--green) 10%, transparent)'
+                      : w.status === 'REJECTED'
+                      ? 'color-mix(in srgb, var(--red) 10%, transparent)'
+                      : 'color-mix(in srgb, var(--gold) 10%, transparent)',
+                    color: w.status === 'APPROVED' ? 'var(--green)'
+                      : w.status === 'REJECTED'    ? 'var(--red)'
+                      : 'var(--gold)',
+                    border: `1px solid ${
+                      w.status === 'APPROVED'
+                        ? 'color-mix(in srgb, var(--green) 20%, transparent)'
+                        : w.status === 'REJECTED'
+                        ? 'color-mix(in srgb, var(--red) 20%, transparent)'
+                        : 'color-mix(in srgb, var(--gold) 20%, transparent)'
+                    }`,
+                  }}>
+                    {w.status === 'APPROVED' ? <CheckCircle2 size={16} />
+                      : w.status === 'REJECTED' ? <XCircle size={16} />
+                      : <Clock size={16} />}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>
+                      ${fmt(w.amount)} {w.currency}
+                    </p>
+                    <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', fontFamily: 'var(--mono)' }}>
+                      {fmtDate(w.createdAt)}{w.note ? ` · "${w.note}"` : ''}
+                    </p>
+                  </div>
+                  <StatusBadge status={w.status} />
+                </div>
+              ))}
             </div>
           </div>
-        )}
 
-        {/* ── HISTORY ── */}
-        <div className="wd-card" style={{ marginTop: 4 }}>
-          <p className="wd-section-lbl">Withdrawal History</p>
-          {historyLoading ? (
-            <div style={{ display: 'flex', justifyContent: 'center', padding: '20px 0' }}>
-              <Loader2 size={18} className="wd-spin" style={{ color: 'var(--ink-faint)' }} />
-            </div>
-          ) : history.length === 0 ? (
-            <div className="wd-empty">
-              <Clock size={22} style={{ opacity: 0.25 }} />
-              <p>No withdrawals yet</p>
-            </div>
-          ) : history.map(w => (
-            <div key={w.id} className="wd-history-row">
-              <div className="wd-history-ico" style={{
-                background: w.status === 'APPROVED'
-                  ? 'color-mix(in srgb, var(--green) 10%, transparent)'
-                  : w.status === 'REJECTED'
-                  ? 'color-mix(in srgb, var(--red) 10%, transparent)'
-                  : 'color-mix(in srgb, var(--gold) 10%, transparent)',
-                color: w.status === 'APPROVED' ? 'var(--green)'
-                  : w.status === 'REJECTED'    ? 'var(--red)'
-                  : 'var(--gold)',
-                border: `1px solid ${
-                  w.status === 'APPROVED'
-                    ? 'color-mix(in srgb, var(--green) 20%, transparent)'
-                    : w.status === 'REJECTED'
-                    ? 'color-mix(in srgb, var(--red) 20%, transparent)'
-                    : 'color-mix(in srgb, var(--gold) 20%, transparent)'
-                }`,
-              }}>
-                {w.status === 'APPROVED' ? <CheckCircle2 size={16} />
-                  : w.status === 'REJECTED' ? <XCircle size={16} />
-                  : <Clock size={16} />}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ink)', marginBottom: 2 }}>
-                  ${fmt(w.amount)} {w.currency}
-                </p>
-                <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', fontFamily: 'var(--mono)' }}>
-                  {fmtDate(w.createdAt)}{w.note ? ` · "${w.note}"` : ''}
-                </p>
-              </div>
-              <StatusBadge status={w.status} />
-            </div>
-          ))}
         </div>
-
       </div>
     </>
   );
