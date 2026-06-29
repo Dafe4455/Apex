@@ -93,12 +93,30 @@ function getPriceSymbol(symbol: string) {
   return PRICE_SYMBOL_MAP[symbol] ?? symbol.replace('USD', '');
 }
 
+// ── Resolve an asset param (e.g. "ETHUSD" or bare "ETH") to a known symbol ────
+
+function resolveAssetParam(assetParam: string | null): string | null {
+  if (!assetParam) return null;
+  const direct = ALL_ASSETS.find(a => a.symbol === assetParam);
+  if (direct) return direct.symbol;
+  // Fallback: markets page may send a bare symbol (e.g. "BTC") without
+  // the USD suffix our list expects.
+  const withUsd = ALL_ASSETS.find(a => a.symbol === `${assetParam}USD`);
+  return withUsd ? withUsd.symbol : null;
+}
+
 // ── Inner component (needs Suspense because it reads useSearchParams) ────────
 
 function TradePageInner() {
   const searchParams = useSearchParams();
 
-  const [asset, setAsset]               = useState('BTCUSD');
+  // Read the preselected asset synchronously on first render (via a lazy
+  // useState initializer) instead of in a useEffect. This guarantees the
+  // very first price fetch below already targets the right asset, so we
+  // never kick off a throwaway "BTCUSD" request that can race the real one
+  // and clobber it if its response happens to land last.
+  const [asset, setAsset] = useState(() => resolveAssetParam(searchParams.get('asset')) ?? 'BTCUSD');
+
   const [price, setPrice]               = useState<number | null>(null);
   const [prevPrice, setPrevPrice]       = useState<number | null>(null);
   const [priceLoading, setPriceLoading] = useState(false);
@@ -156,29 +174,18 @@ function TradePageInner() {
       style: 'currency', currency: 'USD', minimumFractionDigits: 2,
     }), []);
 
-  // ── Read asset + action from URL params ───────────────────────────────────
+  // ── Read asset + action from URL params on subsequent changes ────────────
   // Uses Next's useSearchParams() instead of window.location.search so this
   // re-runs reliably on client-side navigation (router.push from the markets
-  // page), not just on a hard page load. Also accepts an optional `action`
-  // param (BUY/SELL) so the order-type toggle can be prefilled too.
+  // page) while this component instance stays mounted. The *initial* value
+  // is already handled by the lazy useState initializer above, so this only
+  // matters for param changes that happen after first mount.
 
   useEffect(() => {
-    const assetParam  = searchParams.get('asset');
+    const resolved = resolveAssetParam(searchParams.get('asset'));
+    if (resolved) setAsset(resolved);
+
     const actionParam = searchParams.get('action');
-
-    if (assetParam) {
-      const match = ALL_ASSETS.find(a => a.symbol === assetParam);
-      if (match) {
-        setAsset(match.symbol);
-      } else {
-        // Fallback: markets page may send a bare symbol (e.g. "BTC") without
-        // the USD suffix our list expects. Try matching after stripping/adding it.
-        const withUsd = `${assetParam}USD`;
-        const matchWithUsd = ALL_ASSETS.find(a => a.symbol === withUsd);
-        if (matchWithUsd) setAsset(matchWithUsd.symbol);
-      }
-    }
-
     if (actionParam === 'BUY' || actionParam === 'SELL') {
       setOrderType(actionParam);
     }
@@ -227,12 +234,19 @@ function TradePageInner() {
   // ── Fetch live price for selected asset ───────────────────────────────────
 
   useEffect(() => {
+    let cancelled = false;
+
     const fetchPrice = async () => {
       try {
         setPriceLoading(true);
         const res = await fetch(`/api/price?symbol=${baseSymbol}`);
         if (!res.ok) throw new Error();
         const data = await res.json();
+        // If the asset changed while this request was in flight, its result
+        // is stale — drop it instead of letting it clobber the current asset's
+        // price. This is what previously let a slow BTC response overwrite a
+        // faster, but more recent, preselected-asset price.
+        if (cancelled) return;
         const p = data.price as number;
         setPrice(prev => { setPrevPrice(prev); return p; });
         const spread = p * 0.0005;
@@ -251,13 +265,13 @@ function TradePageInner() {
       } catch {
         // silent
       } finally {
-        setPriceLoading(false);
+        if (!cancelled) setPriceLoading(false);
       }
     };
 
     fetchPrice();
     const id = setInterval(fetchPrice, 30_000);
-    return () => clearInterval(id);
+    return () => { cancelled = true; clearInterval(id); };
   }, [asset, baseSymbol]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -375,14 +389,14 @@ function TradePageInner() {
         /* ── Dropdown ── */
         .asset-dropdown {
           position: absolute; top: calc(100% + 6px); left: 0;
-          width: 380px;
+          width: 440px;
           background: var(--card);
           border: 1px solid var(--line-strong); border-radius: 14px;
           box-shadow: 0 20px 60px rgba(0,0,0,0.3);
           overflow: hidden; z-index: 50;
           animation: dropIn 0.15s ease;
         }
-        @media (max-width: 420px) {
+        @media (max-width: 480px) {
           .asset-dropdown { width: calc(100vw - 24px); }
         }
         @keyframes dropIn {
@@ -391,40 +405,40 @@ function TradePageInner() {
         }
         .dropdown-search {
           display: flex; align-items: center; gap: 10px;
-          padding: 12px 16px; border-bottom: 1px solid var(--line-strong);
+          padding: 14px 18px; border-bottom: 1px solid var(--line-strong);
           background: var(--bg);
         }
         .dropdown-search input {
           background: none; border: none; outline: none;
-          font-family: var(--mono); font-size: 0.8rem;
+          font-family: var(--mono); font-size: 0.85rem;
           color: var(--ink-2); width: 100%;
         }
         .dropdown-search input::placeholder { color: var(--ink-faint); }
-        .dropdown-list { max-height: 480px; overflow-y: auto; }
+        .dropdown-list { max-height: 560px; overflow-y: auto; }
         .dropdown-item {
           display: flex; justify-content: space-between; align-items: center;
-          padding: 14px 16px; border: none; background: none; width: 100%;
+          padding: 16px 18px; border: none; background: none; width: 100%;
           cursor: pointer; border-bottom: 1px solid var(--line);
           transition: background 0.1s; text-align: left; gap: 12px;
         }
         .dropdown-item:hover { background: var(--surface-hover); }
-        .dropdown-item-left { display: flex; align-items: center; gap: 12px; }
+        .dropdown-item-left { display: flex; align-items: center; gap: 14px; }
         .dropdown-icon {
-          width: 42px; height: 42px; border-radius: 50%;
+          width: 48px; height: 48px; border-radius: 50%;
           background: var(--surface); display: flex; align-items: center;
-          justify-content: center; font-family: var(--mono); font-size: 0.75rem;
+          justify-content: center; font-family: var(--mono); font-size: 0.8rem;
           color: var(--ink-faint); flex-shrink: 0; font-weight: 700;
           overflow: hidden;
         }
         .dropdown-icon img { width: 100%; height: 100%; object-fit: cover; }
         .dropdown-item-sym {
-          font-family: var(--mono); font-size: 0.85rem; font-weight: 600;
+          font-family: var(--mono); font-size: 0.92rem; font-weight: 600;
           color: var(--ink); margin-bottom: 3px;
         }
-        .dropdown-item-name { font-size: 0.68rem; color: var(--ink-faint); }
+        .dropdown-item-name { font-size: 0.74rem; color: var(--ink-faint); }
         .dropdown-item-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-        .dropdown-item-price { font-family: var(--mono); font-size: 0.75rem; color: var(--ink-2); }
-        .dropdown-item-chg   { font-family: var(--mono); font-size: 0.65rem; font-weight: 700; }
+        .dropdown-item-price { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-2); }
+        .dropdown-item-chg   { font-family: var(--mono); font-size: 0.68rem; font-weight: 700; }
 
         /* ── Price display ── */
         .price-display {
@@ -657,7 +671,7 @@ function TradePageInner() {
                               {logo
                                 ? <img src={logo} alt={a.symbol}
                                     onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                                : <span style={{ fontSize: '1.1rem' }}>{ASSET_ICONS[a.symbol] ?? a.symbol[0]}</span>
+                                : <span style={{ fontSize: '1.2rem' }}>{ASSET_ICONS[a.symbol] ?? a.symbol[0]}</span>
                               }
                             </div>
                             <div>
