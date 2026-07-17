@@ -303,7 +303,7 @@ model Subscription {
 
   user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan SubscriptionPlan @relation(fields: [planId], references: [id])
-@@unique([Id, planId]) 
+@@unique([userId, planId]) 
 }
 
 model TradingBot {
