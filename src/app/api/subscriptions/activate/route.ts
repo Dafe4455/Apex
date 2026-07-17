@@ -1,6 +1,6 @@
 // app/api/subscriptions/activate/route.ts
 import { NextResponse } from "next/server";
-import { auth } from "@root/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { calculatePeriodEnd } from "@/lib/dates";
 
