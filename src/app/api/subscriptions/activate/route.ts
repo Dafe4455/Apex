@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@root/auth";
 import { prisma } from "@/lib/prisma";
+import { calculatePeriodEnd } from "@/lib/dates";
 
 export async function POST(req: Request) {
   const session = await auth();
