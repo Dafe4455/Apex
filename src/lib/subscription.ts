@@ -1,16 +1,15 @@
-// lib/subscription.ts
-import { prisma } from "@/lib/prisma";
+import { prisma } from '@/lib/prisma';
 
 export async function hasActiveAutoTradeSubscription(userId: string): Promise<boolean> {
-  const activeSub = await prisma.subscription.findFirst({
+  const active = await prisma.subscription.findFirst({
     where: {
       userId,
-      status: "active",
+      status: 'active',
       plan: {
-        features: { array_contains: ["auto-trading"] },
+        features: { array_contains: ['auto-trading'] },
         isActive: true,
       },
     },
   });
-  return !!activeSub;
+  return !!active;
 }
