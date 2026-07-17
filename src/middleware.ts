@@ -1,7 +1,11 @@
 import NextAuth from "next-auth";
+import { NextResponse } from "next/server";
 import { authConfig } from "@root/auth.config";
 
 const { auth } = NextAuth(authConfig);
+
+const publicRoutes = ["/", "/login", "/signup", "/admin/login", "/manifest.json", "/sw.js", "/icon-192.png", "/icon-512.png", "/offline"];
+const authRoutes   = ["/login", "/signup"];
 
 export default auth((req) => {
   const { nextUrl } = req;
