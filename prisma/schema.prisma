@@ -84,6 +84,7 @@ previousBalance       Float     @default(0)
   activityLogs   ActivityLog[]
   kycSubmission  KYCSubmission?
 transaction  Transaction[] 
+subscriptions Subscription[]
 }
 
 model Account {
