@@ -1,13 +1,12 @@
-
-/* 1. Tell Tailwind v4 to compile this file */
 @import "tailwindcss";
 
-/* 2. Map your custom variables to native Tailwind utilities */
 @theme {
   --color-bg: var(--bg);
   --color-bg-2: var(--bg-2);
   --color-bg-3: var(--bg-3);
+  --color-bg-adm: var(--bg-adm);
   --color-card: var(--card);
+  --color-card-adm: var(--card-adm);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-ink-dim: var(--ink-dim);
@@ -28,17 +27,7 @@
 
   --font-sans: var(--sans);
   --font-mono: var(--mono);
-}
-
-/* ─────────────────────────────────────────────
-   YOUR SHARED THEME CONTINUES BELOW
-───────────────────────────────────────────── */
-:root {
-  /* Base palette — dark (default) */
-  --bg: #080C12;
-  ...
-
-
+} /* <--- This brace must close cleanly right here! */
 
 /* ─────────────────────────────────────────────
    SHARED THEME — import this once at the layout
@@ -52,9 +41,9 @@
   --bg: #080C12;
   --bg-2: #000200;
   --bg-3: #0f2535;
-   --bg-adm: #1A1C1E;
+  --bg-adm: #1A1C1E;
   --card: #0B1018;
-   --card-adm: #263238;
+  --card-adm: #263238;
   --ink: #f0f8ff;
   --ink-2: #d6ecf8;
   --ink-dim: #8dbdd8;
@@ -67,6 +56,9 @@
   --red-l: #2a0d0d;
   --gold-l: #2a2200;
   --gold: #fbbf24;
+  
+  /* ... Rest of your theme variables continue safely down here */
+
 
   /* CRITICAL FIX: Raw RGB channels for pure white (255, 255, 255).
      This allows us to scale alpha opacities down to tiny fractions safely.
