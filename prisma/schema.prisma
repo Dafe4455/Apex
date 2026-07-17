@@ -85,7 +85,7 @@ previousBalance       Float     @default(0)
   kycSubmission  KYCSubmission?
 transaction  Transaction[] 
 subscriptions Subscription[]
-tradingBots babyBot[]
+tradingBots baby-bottleot[]
 }
 
 model Account {
