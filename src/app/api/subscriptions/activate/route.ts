@@ -1,6 +1,6 @@
 // app/api/subscriptions/activate/route.ts
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { auth } from "@root/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
