@@ -4,6 +4,8 @@ import crypto from "crypto";
 const ALGORITHM = "aes-256-gcm";
 const SECRET = process.env.ENCRYPTION_KEY; // 32‑byte hex string
 
+if (!SECRET) throw new Error("ENCRYPTION_KEY environment variable is missing");
+
 export function encrypt(text: string): { encrypted: string; iv: string; tag: string } {
   const iv = crypto.randomBytes(16);
   const key = Buffer.from(SECRET, "hex");
