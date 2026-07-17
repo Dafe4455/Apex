@@ -1,5 +1,6 @@
 // app/api/cron/renew-subscriptions/route.ts
 import { prisma } from "@/lib/prisma";
+import { calculatePeriodEnd } from "@/lib/dates";
 
 export async function GET(req: Request) {
   // Verify cron secret (set in env)
