@@ -10,7 +10,7 @@ export async function GET() {
   const subscription = await prisma.subscription.findFirst({
     where: {
       userId: session.user.id,
-      status: { in: ['active', 'upgraded'] },
+      status: { in: ['active', 'cancelled'] },  // <-- THIS LINE
     },
     include: {
       plan: {
@@ -25,7 +25,7 @@ export async function GET() {
         select: { name: true, tier: true, price: true },
       },
     },
-    orderBy: { startDate: 'desc' },  // changed from createdAt
+    orderBy: { startDate: 'desc' },
   });
 
   if (!subscription) return NextResponse.json(null);
