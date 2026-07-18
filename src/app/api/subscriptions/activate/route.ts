@@ -1,3 +1,4 @@
+// src/app/api/subscriptions/activate/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@root/auth';
 import { prisma } from '@/lib/prisma';
@@ -11,9 +12,10 @@ export async function POST(req: NextRequest) {
   if (!planId) return NextResponse.json({ error: 'Missing planId' }, { status: 400 });
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-  const plan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-  if (!user || !plan || !plan.isActive) {
+  const plan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
+  if (!plan || !plan.isActive) {
     return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
   }
 
@@ -21,10 +23,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
   }
 
-  // Check for any active subscription
   const existingActive = await prisma.subscription.findFirst({
     where: { userId: user.id, status: 'active' },
-    include: { plan: true },
   });
 
   if (existingActive) {
