@@ -719,9 +719,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* MOBILE TOPBAR */}
         <div className="db-mobile-bar">
           <div className="db-mobile-bar-left">
-            <button className="db-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle menu">
-              <HamburgerIcon />
-            </button>
+            {!isAdmin && (
+              <button className="db-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle menu">
+                <HamburgerIcon />
+              </button>
+            )}
             <span className="db-mobile-logo">APEX<span>•</span></span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -752,73 +754,75 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
 
         {/* MOBILE SIDEBAR */}
-        {sidebarOpen && (
+        {!isAdmin && sidebarOpen && (
           <div className="db-mobile-sidebar-overlay open" onClick={() => setSidebarOpen(false)} />
         )}
-        <div className={`db-mobile-sidebar ${sidebarOpen ? 'open' : ''}`}>
-          <div className="db-mobile-sidebar-header">
-            <span className="db-mobile-sidebar-logo">APEX<span>•</span>MARKETS</span>
-            <button className="db-mobile-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close menu">
-              <ChevronLeft />
-            </button>
+        {!isAdmin && (
+          <div className={`db-mobile-sidebar ${sidebarOpen ? 'open' : ''}`}>
+            <div className="db-mobile-sidebar-header">
+              <span className="db-mobile-sidebar-logo">APEX<span>•</span>MARKETS</span>
+              <button className="db-mobile-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close menu">
+                <ChevronLeft />
+              </button>
+            </div>
+            <div className="db-mobile-sidebar-content">
+              <Link href="/dashboard/support" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
+                <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
+                  <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
+                  <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+                  <circle cx="6.5" cy="9.5" r="0.6" fill="currentColor" />
+                </svg>
+                Support
+              </Link>
+              <div className="db-mobile-sidebar-divider" />
+              <Link href="/dashboard/settings" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                  <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+                Settings
+              </Link>
+              <div className="db-mobile-sidebar-divider" />
+              <Link href="/dashboard/notifications" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                  <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+                </svg>
+                Alerts
+              </Link>
+              <div className="db-mobile-sidebar-divider" />
+              <Link href="/dashboard/kyc" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                  <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                  <circle cx="7.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
+                  <path d="M11 8h4M11 11h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+                </svg>
+                KYC
+              </Link>
+              <div className="db-mobile-sidebar-divider" />
+              <Link href="/dashboard/subscription" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
+                <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                  <rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                  <path d="M3 8h14" stroke="currentColor" strokeWidth="1.3" />
+                  <circle cx="10" cy="12" r="1.2" fill="currentColor" />
+                </svg>
+                Subscription
+              </Link>
+            </div>
+            <div className="db-mobile-sidebar-footer">
+              <button 
+                className="db-mobile-sidebar-row" 
+                style={{ color: 'var(--red)' }}
+                onClick={() => { setSidebarOpen(false); signOut({ callbackUrl: '/login' }); }}
+              >
+                <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
+                  <path d="M5 2H2v9h3M8 9l3-2.5L8 4M11 6.5H5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+                </svg>
+                Sign Out
+              </button>
+            </div>
           </div>
-          <div className="db-mobile-sidebar-content">
-            <Link href="/dashboard/support" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
-              <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
-                <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
-                <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
-                <circle cx="6.5" cy="9.5" r="0.6" fill="currentColor" />
-              </svg>
-              Support
-            </Link>
-            <div className="db-mobile-sidebar-divider" />
-            <Link href="/dashboard/settings" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
-              <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-                <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-              </svg>
-              Settings
-            </Link>
-            <div className="db-mobile-sidebar-divider" />
-            <Link href="/dashboard/notifications" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
-              <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.3" />
-                <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-              </svg>
-              Alerts
-            </Link>
-            <div className="db-mobile-sidebar-divider" />
-            <Link href="/dashboard/kyc" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
-              <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
-                <circle cx="7.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
-                <path d="M11 8h4M11 11h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-              </svg>
-              KYC
-            </Link>
-            <div className="db-mobile-sidebar-divider" />
-            <Link href="/dashboard/subscription" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
-              <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                <rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
-                <path d="M3 8h14" stroke="currentColor" strokeWidth="1.3" />
-                <circle cx="10" cy="12" r="1.2" fill="currentColor" />
-              </svg>
-              Subscription
-            </Link>
-          </div>
-          <div className="db-mobile-sidebar-footer">
-            <button 
-              className="db-mobile-sidebar-row" 
-              style={{ color: 'var(--red)' }}
-              onClick={() => { setSidebarOpen(false); signOut({ callbackUrl: '/login' }); }}
-            >
-              <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
-                <path d="M5 2H2v9h3M8 9l3-2.5L8 4M11 6.5H5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
-              </svg>
-              Sign Out
-            </button>
-          </div>
-        </div>
+        )}
 
         {/* BOTTOM NAV + MORE SHEET — both guarded by the same !isAdmin condition */}
         {!isAdmin && (
