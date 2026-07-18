@@ -61,10 +61,10 @@ export default function SubscriptionPage() {
 
         try {
 
-            const [plansRes, subRes, portfolioRes] = await Promise.all([
+            const [plansRes, subRes, dashboardRes] = await Promise.all([
                 fetch('/api/subscriptions/plans'),
                 fetch('/api/subscriptions/mine'),
-                fetch('/api/portfolio')
+                fetch('/api/assets')
             ]);
 
             if (plansRes.ok) {
@@ -75,9 +75,9 @@ export default function SubscriptionPage() {
                 setSubscription(await subRes.json());
             }
 
-            if (portfolioRes.ok) {
+            if (dashboardRes.ok) {
 
-                const data = await portfolioRes.json();
+                const data = await dashboardRes.json();
 
                 setPortfolioBalance(data.portfolioBalance ?? 0);
 
@@ -456,6 +456,8 @@ export default function SubscriptionPage() {
   padding:24px 24px 80px;
   color:var(--ink);
   font-family:var(--sans);
+  min-height:100vh;
+  overflow-y:auto;
 }
 
 .sub-inner{
