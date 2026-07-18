@@ -50,11 +50,38 @@ export async function POST(req: NextRequest) {
         description: `Activated ${plan.name} plan`,
       },
     }),
-    prisma.subscription.create({
+    const existingSubscription = await prisma.subscription.findUnique({
+  where: {
+    userId_planId: {
+      userId: user.id,
+      planId: plan.id,
+    },
+  },
+});
+
+if (existingSubscription) {
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
       data: {
+        portfolioBalance: {
+          decrement: plan.price,
+        },
+      },
+    }),
+    prisma.transaction.create({
+      data: {
+        type: "SubscriptionFee",
+        amount: plan.price,
         userId: user.id,
-        planId: plan.id,
-        status: 'active',
+        status: "COMPLETED",
+        description: `Activated ${plan.name} plan`,
+      },
+    }),
+    prisma.subscription.update({
+      where: { id: existingSubscription.id },
+      data: {
+        status: "active",
         startDate: now,
         currentPeriodStart: now,
         currentPeriodEnd: calculatePeriodEnd(now, plan.interval),
@@ -62,6 +89,40 @@ export async function POST(req: NextRequest) {
         autoRenew: true,
       },
     }),
+  ]);
+} else {
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: user.id },
+      data: {
+        portfolioBalance: {
+          decrement: plan.price,
+        },
+      },
+    }),
+    prisma.transaction.create({
+      data: {
+        type: "SubscriptionFee",
+        amount: plan.price,
+        userId: user.id,
+        status: "COMPLETED",
+        description: `Activated ${plan.name} plan`,
+      },
+    }),
+    prisma.subscription.create({
+      data: {
+        userId: user.id,
+        planId: plan.id,
+        status: "active",
+        startDate: now,
+        currentPeriodStart: now,
+        currentPeriodEnd: calculatePeriodEnd(now, plan.interval),
+        nextBillingDate: calculatePeriodEnd(now, plan.interval),
+        autoRenew: true,
+      },
+    }),
+  ]);
+}
   ]);
 
   return NextResponse.json({ success: true, message: `${plan.name} activated` });
