@@ -85,6 +85,18 @@ const ChevronRight = () => (
   </svg>
 );
 
+const HamburgerIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+    <path d="M2 4h12M2 8h12M2 12h12" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+  </svg>
+);
+
+const ChevronLeft = () => (
+  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+    <path d="M6.5 2l-3 3 3 3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+  </svg>
+);
+
 const SunIcon = () => (
   <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
     <circle cx="10" cy="10" r="3.5" stroke="currentColor" strokeWidth="1.4" />
@@ -101,6 +113,7 @@ const MoonIcon = () => (
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   useEffect(() => {
@@ -304,7 +317,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           letter-spacing: 0.1em;
           color: var(--ink-faint);
         }
-        .db-topbar-sep { color: var(--ink-faint); }
+        .db-topbar-sep { color: var(--line-strong); opacity: 0.5; }
 
         .db-topbar-theme {
           display: flex;
@@ -371,6 +384,114 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           color: var(--ink-dim);
           cursor: pointer;
           transition: background 0.15s;
+        }
+
+        .db-hamburger {
+          display: none;
+          align-items: center;
+          justify-content: center;
+          width: 28px; height: 28px;
+          background: var(--surface);
+          border: 1px solid var(--line-strong);
+          border-radius: 4px;
+          color: var(--ink-dim);
+          cursor: pointer;
+          transition: background 0.15s;
+          margin-right: 8px;
+        }
+        .db-hamburger:hover {
+          background: var(--surface-hover);
+        }
+
+        /* ── MOBILE SIDEBAR ── */
+        .db-mobile-sidebar-overlay {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.6);
+          z-index: 55;
+          animation: fadeIn 0.2s ease;
+          backdrop-filter: blur(4px);
+        }
+        .db-mobile-sidebar-overlay.open { display: block; }
+
+        .db-mobile-sidebar {
+          display: none;
+          position: fixed;
+          top: 0; left: 0; bottom: 0;
+          z-index: 56;
+          width: 220px;
+          background: var(--bg);
+          border-right: 1px solid var(--line-strong);
+          padding-bottom: max(env(safe-area-inset-bottom), 16px);
+          flex-direction: column;
+          transition: background 0.2s ease;
+          transform: translateX(-100%);
+          animation: slideInLeft 0.28s cubic-bezier(0.32,0.72,0,1);
+        }
+        .db-mobile-sidebar.open { transform: translateX(0); }
+        @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+
+        .db-mobile-sidebar-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 14px 16px;
+          border-bottom: 1px solid var(--line-strong);
+        }
+        .db-mobile-sidebar-logo {
+          font-family: var(--mono);
+          font-size: 0.75rem;
+          font-weight: 600;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          color: var(--ink-2);
+        }
+        .db-mobile-sidebar-logo span { color: var(--accent); }
+        .db-mobile-sidebar-close {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 24px; height: 24px;
+          background: none;
+          border: none;
+          cursor: pointer;
+          color: var(--ink-dim);
+        }
+
+        .db-mobile-sidebar-content {
+          flex: 1;
+          overflow-y: auto;
+          padding: 12px 0;
+        }
+        .db-mobile-sidebar-row {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px 16px;
+          text-decoration: none;
+          background: none;
+          border: none;
+          width: 100%;
+          cursor: pointer;
+          transition: background 0.12s;
+          text-align: left;
+          color: var(--ink-2);
+          font-family: var(--mono);
+          font-size: 0.65rem;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+        }
+        .db-mobile-sidebar-row:hover,
+        .db-mobile-sidebar-row:active { background: var(--surface-hover); }
+        .db-mobile-sidebar-divider {
+          height: 1px;
+          background: var(--line);
+          margin: 4px 0;
+        }
+        .db-mobile-sidebar-footer {
+          padding: 12px 0;
+          border-top: 1px solid var(--line-strong);
         }
 
         /* ── BOTTOM NAV ── */
@@ -546,6 +667,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .db-main { margin-left: 0; }
           .db-topbar { display: none; }
           .db-mobile-bar { display: flex; }
+          .db-hamburger { display: flex; }
+          .db-mobile-sidebar { display: flex; }
           .db-bottom-nav { display: block; }
 
           .db-content {
@@ -596,7 +719,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* MOBILE TOPBAR */}
         <div className="db-mobile-bar">
           <div className="db-mobile-bar-left">
-            <span className="db-mobile-logo">APEX<span>•</span>MARKETS</span>
+            <button className="db-hamburger" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="Toggle menu">
+              <HamburgerIcon />
+            </button>
+            <span className="db-mobile-logo">APEX<span>•</span></span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <button className="db-mobile-theme" onClick={toggleTheme} aria-label="Toggle theme">
@@ -624,6 +750,75 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <div className="db-content">{children}</div>
         </main>
+
+        {/* MOBILE SIDEBAR */}
+        {sidebarOpen && (
+          <div className="db-mobile-sidebar-overlay open" onClick={() => setSidebarOpen(false)} />
+        )}
+        <div className={`db-mobile-sidebar ${sidebarOpen ? 'open' : ''}`}>
+          <div className="db-mobile-sidebar-header">
+            <span className="db-mobile-sidebar-logo">APEX<span>•</span>MARKETS</span>
+            <button className="db-mobile-sidebar-close" onClick={() => setSidebarOpen(false)} aria-label="Close menu">
+              <ChevronLeft />
+            </button>
+          </div>
+          <div className="db-mobile-sidebar-content">
+            <Link href="/dashboard/support" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
+              <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
+                <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
+                <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+                <circle cx="6.5" cy="9.5" r="0.6" fill="currentColor" />
+              </svg>
+              Support
+            </Link>
+            <div className="db-mobile-sidebar-divider" />
+            <Link href="/dashboard/settings" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+                <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
+              Settings
+            </Link>
+            <div className="db-mobile-sidebar-divider" />
+            <Link href="/dashboard/notifications" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.3" />
+                <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
+              Alerts
+            </Link>
+            <div className="db-mobile-sidebar-divider" />
+            <Link href="/dashboard/kyc" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                <circle cx="7.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
+                <path d="M11 8h4M11 11h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+              </svg>
+              KYC
+            </Link>
+            <div className="db-mobile-sidebar-divider" />
+            <Link href="/dashboard/subscription" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
+              <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                <rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                <path d="M3 8h14" stroke="currentColor" strokeWidth="1.3" />
+                <circle cx="10" cy="12" r="1.2" fill="currentColor" />
+              </svg>
+              Subscription
+            </Link>
+          </div>
+          <div className="db-mobile-sidebar-footer">
+            <button 
+              className="db-mobile-sidebar-row" 
+              style={{ color: 'var(--red)' }}
+              onClick={() => { setSidebarOpen(false); signOut({ callbackUrl: '/login' }); }}
+            >
+              <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
+                <path d="M5 2H2v9h3M8 9l3-2.5L8 4M11 6.5H5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
+              </svg>
+              Sign Out
+            </button>
+          </div>
+        </div>
 
         {/* BOTTOM NAV + MORE SHEET — both guarded by the same !isAdmin condition */}
         {!isAdmin && (
