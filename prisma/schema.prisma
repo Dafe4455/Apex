@@ -282,15 +282,15 @@ model Transaction {
 model SubscriptionPlan {
   id                String   @id @default(cuid())
   name              String
-  tier              String   @default("basic")      // "basic" | "advanced" | "platinum"
+  tier              String   @default("basic")
   description       String?
   price             Float
-  minInvestment     Float    @default(0)           // minimum portfolio balance required
-  weeklyReturnRate  Float    @default(0)           // expected weekly return %
-  interval          String   @default("WEEKLY")     // "WEEKLY" | "MONTHLY" | "YEARLY"
-  features          Json?    // ["auto-trading", "signals", "priority support"]
+  minInvestment     Float    @default(0)
+  weeklyReturnRate  Float    @default(0)
+  interval          String   @default("WEEKLY")
+  features          Json?
   isActive          Boolean  @default(true)
-  highlight         String?  // "Most Popular" | "Best Value" | etc.
+  highlight         String?
   sortOrder         Int      @default(0)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -303,15 +303,15 @@ model Subscription {
   id                   String    @id @default(cuid())
   userId               String
   planId               String
-  status               String    @default("active") // "active" | "cancelled" | "expired" | "upgraded"
+  status               String    @default("active")
   startDate            DateTime
   currentPeriodStart   DateTime
   currentPeriodEnd     DateTime
   nextBillingDate      DateTime
   autoRenew            Boolean   @default(true)
   cancelledAt          DateTime?
-  pendingPlanId        String?   // for scheduled downgrades
-  previousSubscriptionId String? // chain upgrades
+  pendingPlanId        String?
+  previousSubscriptionId String?
 
   user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   plan         SubscriptionPlan  @relation("ActivePlan", fields: [planId], references: [id])
@@ -320,6 +320,7 @@ model Subscription {
   @@index([userId, status])
   @@index([nextBillingDate, autoRenew, status])
 }
+
 
 model TradingBot {
   id        String    @id @default(cuid())
