@@ -1,32 +1,14 @@
 // src/app/api/subscriptions/mine/route.ts
 import { NextResponse } from 'next/server';
 import { auth } from '@root/auth';
-import { prisma } from '@/lib/prisma';
+import { ensureSubscriptionActive } from '@/lib/subscriptions';
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return new NextResponse('Unauthorized', { status: 401 });
 
-  const subscription = await prisma.subscription.findFirst({
-    where: {
-      userId: session.user.id,
-      status: { in: ['active', 'cancelled'] },  // <-- THIS LINE
-    },
-    include: {
-      plan: {
-        select: {
-          name: true,
-          tier: true,
-          price: true,
-          interval: true,
-        },
-      },
-      pendingPlan: {
-        select: { name: true, tier: true, price: true },
-      },
-    },
-    orderBy: { startDate: 'desc' },
-  });
+  // Auto-renew if expired before returning data
+  const subscription = await ensureSubscriptionActive(session.user.id);
 
   if (!subscription) return NextResponse.json(null);
 
@@ -37,6 +19,5 @@ export async function GET() {
     currentPeriodEnd: subscription.currentPeriodEnd,
     autoRenew: subscription.autoRenew,
     plan: subscription.plan,
-    pendingPlan: subscription.pendingPlan,
   });
 }
