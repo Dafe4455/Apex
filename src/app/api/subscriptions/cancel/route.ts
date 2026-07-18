@@ -1,3 +1,4 @@
+// src/app/api/subscriptions/cancel/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@root/auth';
 import { prisma } from '@/lib/prisma';
@@ -6,10 +7,8 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return new NextResponse('Unauthorized', { status: 401 });
 
-  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-
   const currentSub = await prisma.subscription.findFirst({
-    where: { userId: user.id, status: 'active' },
+    where: { userId: session.user.id, status: 'active' },
   });
 
   if (!currentSub) {
@@ -23,7 +22,7 @@ export async function POST(req: NextRequest) {
     data: {
       autoRenew: false,
       cancelledAt: now,
-      pendingPlanId: null, // Clear any pending downgrade
+      pendingPlanId: null,
     },
   });
 
