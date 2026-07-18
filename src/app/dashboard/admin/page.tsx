@@ -8,11 +8,23 @@ import {
   Clock, KeyRound, InboxIcon, CheckCircle2,
   RefreshCw, Circle, MessageCircle, Settings,
   TrendingUp, Plus, Trash2, ToggleLeft, ToggleRight, ChevronLeft,
-  ShieldCheck, Eye, FileText, Camera,
+  ShieldCheck, Eye, FileText, Camera, CreditCard,
 } from 'lucide-react';
 import Link from 'next/link';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
+interface Subscription {
+  id: string;
+  userId: string;
+  plan: string;
+  status: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'EXPIRED';
+  startDate: string;
+  renewalDate: string;
+  amount: number;
+  currency: string;
+  user: { name?: string; email?: string };
+}
+
 interface Ticket {
   id: string;
   subject: string;
@@ -323,7 +335,7 @@ function KYCActions({ submission, onDone }: { submission: KYCSubmission; onDone:
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 export default function AdminDashboard() {
-  type Tab = 'chat' | 'users' | 'deposits' | 'withdrawals' | 'kyc' | 'settings';
+  type Tab = 'chat' | 'users' | 'deposits' | 'withdrawals' | 'kyc' | 'subscriptions' | 'settings';
   const [tab, setTab] = useState<Tab>('chat');
 
   // Support
@@ -554,6 +566,7 @@ export default function AdminDashboard() {
     { id: 'deposits',    label: 'Deposits',    icon: TrendingUp,    badge: pendingDeps.length, color: '#2e7d4f' },
     { id: 'withdrawals', label: 'Withdrawals', icon: ArrowUpToLine, badge: actionableWd,       color: '#b85c0d' },
     { id: 'kyc',         label: 'KYC',         icon: ShieldCheck,   badge: pendingKyc,         color: '#0369a1' },
+    { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard, badge: 0, color: '#7c3aed' },
     { id: 'settings',    label: 'Settings',    icon: Settings,      badge: 0,                  color: '#6b6457' },
   ];
 
@@ -566,7 +579,7 @@ export default function AdminDashboard() {
         .adm-title { font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
         .adm-bell { position: relative; width: 38px; height: 38px; border-radius: 50%; background: var(--card-adm); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .adm-bell-badge { position: absolute; top: -3px; right: -3px; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; color: var(--bg-adm); font-size: 0.52rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-        .adm-tabs { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 20px; }
+        .adm-tabs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px; }
         .adm-tab { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 8px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card-adm); font-family: var(--sans); font-size: 0.65rem; font-weight: 600; color: var(--ink-faint); cursor: pointer; transition: all 0.15s; }
         .adm-tab:hover { border-color: var(--accent); color: var(--ink-dim); }
         .adm-tab.active { color: #fff; border-color: transparent; }
@@ -615,6 +628,10 @@ export default function AdminDashboard() {
         .adm-filter-btn.active-pending  { background: var(--gold); color: var(--bg-adm); }
         .adm-filter-btn.active-approved { background: var(--green); color: var(--bg-adm); }
         .adm-filter-btn.active-rejected { background: var(--red); color: white; }
+        .adm-filter-btn.active-active   { background: var(--green); color: var(--bg-adm); }
+        .adm-filter-btn.active-paused   { background: var(--gold); color: var(--bg-adm); }
+        .adm-filter-btn.active-cancelled { background: var(--red); color: white; }
+        .adm-filter-btn.active-expired  { background: var(--ink-faint); color: var(--bg-adm); }
         .adm-ticket-scroll { flex: 1; overflow-y: auto; background: var(--card-adm); }
         .adm-ticket-item { width: 100%; text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); background: transparent; border-left: 3px solid transparent; border-right: none; border-top: none; cursor: pointer; transition: background 0.12s, border-left-color 0.12s; display: flex; align-items: flex-start; gap: 10px; min-height: 68px; }
         .adm-ticket-item:hover { background: var(--surface); }
@@ -1048,6 +1065,16 @@ export default function AdminDashboard() {
               </div>
             ))}
           </div>
+        )}
+
+        {/* ══ Subscriptions ══ */}
+        {tab === 'subscriptions' && (
+          <Link href="/dashboard/admin/subscriptions" style={{ display: 'inline-block', textDecoration: 'none' }}>
+            <button style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 20px', background: 'var(--accent)', color: 'var(--bg-adm)', border: 'none', borderRadius: 10, font: '600 0.78rem var(--sans)', cursor: 'pointer', transition: 'opacity 0.15s' }} onMouseEnter={e => e.currentTarget.style.opacity = '0.88'} onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
+              <CreditCard size={16} />
+              Go to Subscriptions
+            </button>
+          </Link>
         )}
 
         {/* ══ Settings ══ */}
