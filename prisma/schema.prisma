@@ -8,6 +8,8 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+
+
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
 enum Role {
@@ -45,47 +47,48 @@ enum MessageSender {
   ADMIN
 }
 
-
 enum TransactionType {
   Deposit
   Withdrawal
   Trade
-SubscriptionFee
+  SubscriptionFee
+  SubscriptionUpgrade    // NEW
+  SubscriptionDowngrade  // NEW
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 model User {
-  id                    String    @id @default(cuid())
-  firstName             String?
-  name                  String?
-  email                 String    @unique
-  emailVerified         DateTime?
-  password              String?
-  image                 String?
-  role                  Role      @default(USER)
-  portfolioBalance      Float     @default(0)
-previousBalance       Float     @default(0)
-  portfolioChangePercent Float    @default(0)
-  realisedPnl           Float     @default(0)
-  volatility            Float     @default(0)
-  riskLabel             String    @default("Conservative")
-  kycStatus             KycStatus @default(NONE)
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  id                     String    @id @default(cuid())
+  firstName              String?
+  name                   String?
+  email                  String    @unique
+  emailVerified          DateTime?
+  password               String?
+  image                  String?
+  role                   Role      @default(USER)
+  portfolioBalance       Float     @default(0)
+  previousBalance        Float     @default(0)
+  portfolioChangePercent Float     @default(0)
+  realisedPnl            Float     @default(0)
+  volatility             Float     @default(0)
+  riskLabel              String    @default("Conservative")
+  kycStatus              KycStatus @default(NONE)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
-  accounts       Account[]
-  sessions       Session[]
-  deposits       Deposit[]
-  withdrawals    Withdrawal[]
-  supportTickets SupportTicket[]
-  positions      Position[]
-  notifications  Notification[]
-  activityLogs   ActivityLog[]
-  kycSubmission  KYCSubmission?
-transaction  Transaction[] 
-subscriptions Subscription[]
-tradingBots TradingBot[]
+  accounts        Account[]
+  sessions        Session[]
+  deposits        Deposit[]
+  withdrawals     Withdrawal[]
+  supportTickets  SupportTicket[]
+  positions       Position[]
+  notifications   Notification[]
+  activityLogs    ActivityLog[]
+  kycSubmission   KYCSubmission?
+  transactions    Transaction[]
+  subscriptions   Subscription[]
+  tradingBots     TradingBot[]
 }
 
 model Account {
@@ -168,9 +171,6 @@ model Withdrawal {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-
-
-
 model Notification {
   id        String   @id @default(cuid())
   userId    String
@@ -228,6 +228,7 @@ model SupportMessage {
 
   ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
+
 model MarketPrice {
   id        String   @id @default(cuid())
   symbol    String   @unique
@@ -240,6 +241,7 @@ model MarketPrice {
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
 }
+
 model Position {
   id         String    @id @default(cuid())
   userId     String
@@ -259,66 +261,79 @@ model Position {
 }
 
 model Transaction {
-  id        String            @id @default(cuid())
-  type      TransactionType
-  asset     String?
-  amount    Float
-  price     Float?
-  action    String?
-  leverage  Float?
-  pnl       Float?
-  status    TransactionStatus @default(PENDING)
-  userId    String
-  user      User              @relation(fields: [userId], references: [id])
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
+  id          String            @id @default(cuid())
+  type        TransactionType
+  asset       String?
+  amount      Float
+  price       Float?
+  action      String?
+  leverage    Float?
+  pnl         Float?
+  status      TransactionStatus @default(PENDING)
+  userId      String
+  description String?             // NEW: human-readable note
+  user        User                @relation(fields: [userId], references: [id])
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
 }
-model SubscriptionPlan {
-  id          String       @id @default(cuid())
-  name        String
-  description String?
-  price       Float        // in your base currency (e.g., USD)
-  interval    String       // "MONTHLY" | "YEARLY"
-  features    Json?        // e.g., ["auto-trading", "signals"]
-  isActive    Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
 
-  subscriptions Subscription[]
+// ── Subscriptions ─────────────────────────────────────────────────────────────
+
+model SubscriptionPlan {
+  id                String   @id @default(cuid())
+  name              String
+  tier              String   @default("basic")      // "basic" | "advanced" | "platinum"
+  description       String?
+  price             Float
+  minInvestment     Float    @default(0)           // minimum portfolio balance required
+  weeklyReturnRate  Float    @default(0)           // expected weekly return %
+  interval          String   @default("WEEKLY")     // "WEEKLY" | "MONTHLY" | "YEARLY"
+  features          Json?    // ["auto-trading", "signals", "priority support"]
+  isActive          Boolean  @default(true)
+  highlight         String?  // "Most Popular" | "Best Value" | etc.
+  sortOrder         Int      @default(0)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  subscriptions        Subscription[] @relation("ActivePlan")
+  pendingSubscriptions Subscription[] @relation("PendingPlan")
 }
 
 model Subscription {
-  id                 String   @id @default(cuid())
-  userId             String
-  planId             String
-  status             String   // "active" | "paused" | "cancelled" | "expired"
-  startDate          DateTime
-  currentPeriodStart DateTime
-  currentPeriodEnd   DateTime
-  nextBillingDate    DateTime
-  autoRenew          Boolean  @default(true)
-  cancelledAt        DateTime?
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  id                   String    @id @default(cuid())
+  userId               String
+  planId               String
+  status               String    @default("active") // "active" | "cancelled" | "expired" | "upgraded"
+  startDate            DateTime
+  currentPeriodStart   DateTime
+  currentPeriodEnd     DateTime
+  nextBillingDate      DateTime
+  autoRenew            Boolean   @default(true)
+  cancelledAt          DateTime?
+  pendingPlanId        String?   // for scheduled downgrades
+  previousSubscriptionId String? // chain upgrades
 
-  user User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan SubscriptionPlan @relation(fields: [planId], references: [id])
-@@unique([userId, planId]) 
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan         SubscriptionPlan  @relation("ActivePlan", fields: [planId], references: [id])
+  pendingPlan  SubscriptionPlan? @relation("PendingPlan", fields: [pendingPlanId], references: [id])
+
+  @@index([userId, status])
+  @@index([nextBillingDate, autoRenew, status])
 }
 
 model TradingBot {
-  id           String    @id @default(cuid())
-  userId       String
-  name         String
-  strategy     String    // "dca", etc.
-  config       Json      // { symbol, baseAmount, interval }
-  status       String    @default("stopped") // "running", "paused", "stopped"
-  lastRun      DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  strategy  String    // "dca", etc.
+  config    Json      // { symbol, baseAmount, interval }
+  status    String    @default("stopped") // "running", "paused", "stopped"
+  lastRun   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  user    User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  trades  BotTrade[]
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trades BotTrade[]
 }
 
 model BotTrade {
