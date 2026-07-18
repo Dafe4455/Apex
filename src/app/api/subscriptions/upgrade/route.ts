@@ -30,6 +30,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No active subscription. Use activate instead.' }, { status: 400 });
   }
 
+  // Prevent upgrading to the same plan
+  if (currentSub.planId === planId) {
+    return NextResponse.json({ error: 'You are already on this plan.' }, { status: 400 });
+  }
+
   const currentTierIdx = TIER_ORDER.indexOf(currentSub.plan.tier);
   const newTierIdx = TIER_ORDER.indexOf(newPlan.tier);
 
@@ -37,64 +42,80 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Not an upgrade. Use downgrade for lower tiers.' }, { status: 400 });
   }
 
-  const now = new Date();
-  const periodStart = currentSub.currentPeriodStart;
-  const periodEnd = currentSub.currentPeriodEnd;
-  const totalPeriodMs = periodEnd.getTime() - periodStart.getTime();
-  const elapsedMs = now.getTime() - periodStart.getTime();
-  const remainingRatio = Math.max(0, 1 - elapsedMs / totalPeriodMs);
+  try {
+    const now = new Date();
+    const periodStart = currentSub.currentPeriodStart;
+    const periodEnd = currentSub.currentPeriodEnd;
+    const totalPeriodMs = periodEnd.getTime() - periodStart.getTime();
+    const elapsedMs = now.getTime() - periodStart.getTime();
+    const remainingRatio = Math.max(0, 1 - elapsedMs / totalPeriodMs);
 
-  const unusedOld = currentSub.plan.price * remainingRatio;
-  const proratedNew = newPlan.price * remainingRatio;
-  const chargeAmount = Math.max(0, proratedNew - unusedOld);
+    const unusedOld = currentSub.plan.price * remainingRatio;
+    const proratedNew = newPlan.price * remainingRatio;
+    const chargeAmount = Math.max(0, proratedNew - unusedOld);
 
-  if (user.portfolioBalance < chargeAmount) {
+    if (user.portfolioBalance < chargeAmount) {
+      return NextResponse.json(
+        { error: `Insufficient balance. Prorated charge: $${chargeAmount.toFixed(2)}` },
+        { status: 400 }
+      );
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { portfolioBalance: { decrement: chargeAmount } },
+      }),
+      prisma.transaction.create({
+        data: {
+          type: 'SubscriptionUpgrade',
+          amount: chargeAmount,
+          userId: user.id,
+          status: 'COMPLETED',
+          description: `Upgraded from ${currentSub.plan.name} to ${newPlan.name} (prorated)`,
+        },
+      }),
+      prisma.subscription.update({
+        where: { id: currentSub.id },
+        data: {
+          status: 'upgraded',
+          autoRenew: false,
+          cancelledAt: now,
+        },
+      }),
+      prisma.subscription.create({
+        data: {
+          userId: user.id,
+          planId: newPlan.id,
+          status: 'active',
+          startDate: now,
+          currentPeriodStart: now,
+          currentPeriodEnd: periodEnd,
+          nextBillingDate: periodEnd,
+          autoRenew: true,
+          previousSubscriptionId: currentSub.id,
+        },
+      }),
+    ]);
+
+    return NextResponse.json({
+      success: true,
+      message: `Upgraded to ${newPlan.name}`,
+      proratedCharge: chargeAmount,
+    });
+  } catch (error: any) {
+    // Handle unique constraint error (P2002)
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Upgrade already in progress. Please refresh and try again.' },
+        { status: 409 }
+      );
+    }
+
+    console.error('Subscription upgrade error:', error);
     return NextResponse.json(
-      { error: `Insufficient balance. Prorated charge: $${chargeAmount.toFixed(2)}` },
-      { status: 400 }
+      { error: 'Failed to upgrade subscription' },
+      { status: 500 }
     );
   }
-
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: user.id },
-      data: { portfolioBalance: { decrement: chargeAmount } },
-    }),
-    prisma.transaction.create({
-      data: {
-        type: 'SubscriptionUpgrade',
-        amount: chargeAmount,
-        userId: user.id,
-        status: 'COMPLETED',
-        description: `Upgraded from ${currentSub.plan.name} to ${newPlan.name} (prorated)`,
-      },
-    }),
-    prisma.subscription.update({
-      where: { id: currentSub.id },
-      data: {
-        status: 'upgraded',
-        autoRenew: false,
-        cancelledAt: now,
-      },
-    }),
-    prisma.subscription.create({
-      data: {
-        userId: user.id,
-        planId: newPlan.id,
-        status: 'active',
-        startDate: now,
-        currentPeriodStart: now,
-        currentPeriodEnd: periodEnd,
-        nextBillingDate: periodEnd,
-        autoRenew: true,
-        previousSubscriptionId: currentSub.id,
-      },
-    }),
-  ]);
-
-  return NextResponse.json({
-    success: true,
-    message: `Upgraded to ${newPlan.name}`,
-    proratedCharge: chargeAmount,
-  });
 }
