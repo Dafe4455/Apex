@@ -1,3 +1,4 @@
+// src/app/api/subscriptions/downgrade/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@root/auth';
 import { prisma } from '@/lib/prisma';
@@ -11,15 +12,13 @@ export async function POST(req: NextRequest) {
   const { planId } = await req.json();
   if (!planId) return NextResponse.json({ error: 'Missing planId' }, { status: 400 });
 
-  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
   const newPlan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
-
-  if (!user || !newPlan || !newPlan.isActive) {
+  if (!newPlan || !newPlan.isActive) {
     return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
   }
 
   const currentSub = await prisma.subscription.findFirst({
-    where: { userId: user.id, status: 'active' },
+    where: { userId: session.user.id, status: 'active' },
     include: { plan: true },
   });
 
@@ -34,12 +33,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Not a downgrade.' }, { status: 400 });
   }
 
-  // Schedule downgrade — update next billing to new plan, keep current until then
   await prisma.subscription.update({
     where: { id: currentSub.id },
     data: {
       pendingPlanId: newPlan.id,
-      autoRenew: true, // Will renew into the new plan
+      autoRenew: true,
     },
   });
 
