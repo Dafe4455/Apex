@@ -6,15 +6,30 @@ export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) return new NextResponse('Unauthorized', { status: 401 });
 
-  const activeSub = await prisma.subscription.findFirst({
-    where: { userId: session.user.id, status: 'active' },
+  const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+
+  const currentSub = await prisma.subscription.findFirst({
+    where: { userId: user.id, status: 'active' },
   });
-  if (!activeSub) return NextResponse.json({ error: 'No active subscription' }, { status: 404 });
+
+  if (!currentSub) {
+    return NextResponse.json({ error: 'No active subscription' }, { status: 400 });
+  }
+
+  const now = new Date();
 
   await prisma.subscription.update({
-    where: { id: activeSub.id },
-    data: { autoRenew: false, cancelledAt: new Date() },
+    where: { id: currentSub.id },
+    data: {
+      autoRenew: false,
+      cancelledAt: now,
+      pendingPlanId: null, // Clear any pending downgrade
+    },
   });
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({
+    success: true,
+    message: 'Subscription cancelled. Access continues until period end.',
+    accessUntil: currentSub.currentPeriodEnd,
+  });
 }
