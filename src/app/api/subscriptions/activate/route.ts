@@ -92,14 +92,12 @@ export async function POST(req: NextRequest) {
     });
 
     // Look for an existing subscription for this plan
-    const existingSubscription = await tx.subscription.findUnique({
-      where: {
-        userId_planId: {
-          userId: user.id,
-          planId: plan.id,
-        },
-      },
-    });
+    const existingSubscription = await tx.subscription.findFirst({
+  where: {
+    userId: user.id,
+    planId: plan.id,
+  },
+});
 
     if (existingSubscription) {
       // Reactivate it
