@@ -172,18 +172,6 @@ export default function SubscriptionPage() {
                 body: JSON.stringify({ planId: plan.id }),
             });
             const data = await res.json();
-            
-            // Handle duplicate subscription (409) - it already exists, show success and refresh
-            if (res.status === 409) {
-                toast.success(`${plan.name} is already active`);
-                // Wait a bit then refresh to show the active subscription
-                setTimeout(() => {
-                    loadPage();
-                    router.refresh();
-                }, 1000);
-                return;
-            }
-            
             if (!res.ok) throw new Error(data.error);
             toast.success(`${plan.name} activated successfully`);
             await loadPage();
@@ -222,17 +210,6 @@ export default function SubscriptionPage() {
                 body: JSON.stringify({ planId: plan.id }),
             });
             const data = await res.json();
-            
-            // Handle duplicate subscription (409) - already upgrading, refresh and show success
-            if (res.status === 409) {
-                toast.success(`Already upgrading to ${plan.name}`);
-                setTimeout(() => {
-                    loadPage();
-                    router.refresh();
-                }, 1000);
-                return;
-            }
-            
             if (!res.ok) throw new Error(data.error);
             toast.success(`Upgraded to ${plan.name}`);
             await loadPage();
@@ -254,17 +231,6 @@ export default function SubscriptionPage() {
                 body: JSON.stringify({ planId: plan.id }),
             });
             const data = await res.json();
-            
-            // Handle duplicate subscription (409) - already downgrading, refresh and show success
-            if (res.status === 409) {
-                toast.success(`Already downgrading to ${plan.name}`);
-                setTimeout(() => {
-                    loadPage();
-                    router.refresh();
-                }, 1000);
-                return;
-            }
-            
             if (!res.ok) throw new Error(data.error);
             toast.success(`Downgrade to ${plan.name} scheduled`);
             await loadPage();
@@ -342,7 +308,7 @@ export default function SubscriptionPage() {
     }, [currentPlan, portfolioBalance]);
 
     const hasActiveSubscription = subscription?.status === 'active';
-    const hasAnyPlan = subscription?.status === 'active' || subscription?.status === 'cancelled';
+const hasAnyPlan = subscription?.status === 'active' || subscription?.status === 'cancelled';
 
     // ─── Render ────────────────────────────────────────────────────────────────
 
