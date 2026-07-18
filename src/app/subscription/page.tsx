@@ -205,7 +205,15 @@ export default function SubscriptionPage() {
         return plans.find(p =>
             p.name.toLowerCase().includes('pro')
         );
-    }, [plans]);  // ← Add closing }) and dependency array
+    }, [plans]);
+
+    if (loading) {
+        return (
+            <div className="sub-loading">
+                <Loader2 className="spin" size={28} />
+            </div>
+        );
+    }
 
     return (
         <>
@@ -214,9 +222,232 @@ export default function SubscriptionPage() {
             <div className="sub-wrap">
                 <div className="sub-inner">
 
-                    
+                    {/* Header */}
 
-     <style jsx global>{`
+                    <div className="sub-header">
+
+                        <Link href="/dashboard" className="back-link">
+                            <ArrowLeft size={16} />
+                            Dashboard
+                        </Link>
+
+                        <h1 className="sub-title">
+                            Subscription Plans
+                        </h1>
+
+                        <p className="sub-description">
+                            Upgrade your account with premium tools, automated trading and
+                            advanced analytics.
+                        </p>
+
+                    </div>
+
+                    {/* Summary */}
+
+                    <div className="summary-grid">
+
+                        <div className="summary-card">
+
+                            <div className="summary-label">
+                                <Wallet size={16} />
+                                Portfolio Balance
+                            </div>
+
+                            <div className="summary-value">
+                                ${money(portfolioBalance)}
+                            </div>
+
+                            <div className="summary-small">
+                                Subscription fees are deducted from your portfolio balance.
+                            </div>
+
+                        </div>
+
+                        <div className="summary-card">
+
+                            <div className="summary-label">
+                                <CheckCircle2 size={16} />
+                                Current Subscription
+                            </div>
+
+                            {subscription ? (
+                                <>
+                                    <div className="summary-value">
+                                        {subscription.plan.name}
+                                    </div>
+
+                                    <div className="summary-small">
+
+                                        {subscription.autoRenew
+                                            ? `Renews ${new Date(
+                                                subscription.currentPeriodEnd
+                                            ).toLocaleDateString()}`
+                                            : `Ends ${new Date(
+                                                subscription.currentPeriodEnd
+                                            ).toLocaleDateString()}`}
+
+                                    </div>
+
+                                    {subscription.autoRenew && (
+                                        <button
+                                            className="cancel-btn"
+                                            onClick={cancelSubscription}
+                                            disabled={processing === subscription.planId}
+                                        >
+                                            {processing === subscription.planId ? (
+                                                <Loader2 className="spin" size={15} />
+                                            ) : (
+                                                'Cancel Subscription'
+                                            )}
+                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <div className="summary-value">
+                                        No Active Plan
+                                    </div>
+
+                                    <div className="summary-small">
+                                        Choose one of the plans below.
+                                    </div>
+                                </>
+                            )}
+
+                        </div>
+
+                    </div>
+
+                    {/* Plans */}
+
+                    <div className="plans-grid">
+
+                        {plans.map(plan => {
+
+                            const current =
+                                subscription?.planId === plan.id &&
+                                subscription.status === 'active';
+
+                            const insufficient =
+                                portfolioBalance < plan.price;
+
+                            const recommended =
+                                recommendedPlan?.id === plan.id;
+
+                            return (
+
+                                <div
+                                    key={plan.id}
+                                    className={`plan-card ${recommended ? 'recommended' : ''}`}
+                                >
+
+                                    {recommended && (
+                                        <div className="recommended-badge">
+                                            MOST POPULAR
+                                        </div>
+                                    )}
+
+                                    <div className="plan-icon">
+
+                                        {plan.name.toLowerCase().includes('basic') ? (
+                                            <Shield size={26} />
+                                        ) : plan.name.toLowerCase().includes('pro') ? (
+                                            <Zap size={26} />
+                                        ) : (
+                                            <Crown size={26} />
+                                        )}
+
+                                    </div>
+
+                                    <h2 className="plan-title">
+                                        {plan.name}
+                                    </h2>
+
+                                    <div className="plan-price">
+
+                                        ${money(plan.price)}
+
+                                        <span>
+                                            /{plan.interval.toLowerCase()}
+                                        </span>
+
+                                    </div>
+
+                                    <p className="plan-description">
+                                        {plan.description}
+                                    </p>
+
+                                    {plan.features && (
+
+                                        <ul className="feature-list">
+
+                                            {plan.features.map(feature => (
+
+                                                <li key={feature}>
+
+                                                    <CheckCircle2
+                                                        size={15}
+                                                        className="feature-icon"
+                                                    />
+
+                                                    {feature}
+
+                                                </li>
+
+                                            ))}
+
+                                        </ul>
+
+                                    )}
+
+                                    {current ? (
+
+                                        <button
+                                            disabled
+                                            className="btn-current"
+                                        >
+                                            Current Plan
+                                        </button>
+
+                                    ) : insufficient ? (
+
+                                        <button
+                                            disabled
+                                            className="btn-disabled"
+                                        >
+                                            Insufficient Balance
+                                        </button>
+
+                                    ) : (
+
+                                        <button
+                                            onClick={() => activatePlan(plan)}
+                                            disabled={processing === plan.id}
+                                            className="btn-activate"
+                                        >
+
+                                            {processing === plan.id ? (
+                                                <Loader2 className="spin" size={16} />
+                                            ) : (
+                                                'Activate Plan'
+                                            )}
+
+                                        </button>
+
+                                    )}
+
+                                </div>
+
+                            );
+
+                        })}
+
+                    </div>
+
+                </div>
+            </div>
+
+            <style jsx global>{`
 :root{
   --radius:16px;
 }
@@ -508,248 +739,7 @@ padding:22px;
 }
 
 }
-`}</style> 
-      
-    }, [plans]);
-  if (loading) {
-  return (
-    <div className="sub-loading">
-      <Loader2 className="spin" size={28} />
-    </div>
-  );
+`}</style>
+        </>
+    );
 }
-
-return (
-  <>
-    <Toaster position="top-center" />
-
-    <div className="sub-wrap">
-      <div className="sub-inner">
-
-        {/* Header */}
-
-        <div className="sub-header">
-
-          <Link href="/dashboard" className="back-link">
-            <ArrowLeft size={16} />
-            Dashboard
-          </Link>
-
-          <h1 className="sub-title">
-            Subscription Plans
-          </h1>
-
-          <p className="sub-description">
-            Upgrade your account with premium tools, automated trading and
-            advanced analytics.
-          </p>
-
-        </div>
-
-        {/* Summary */}
-
-        <div className="summary-grid">
-
-          <div className="summary-card">
-
-            <div className="summary-label">
-              <Wallet size={16} />
-              Portfolio Balance
-            </div>
-
-            <div className="summary-value">
-              ${money(portfolioBalance)}
-            </div>
-
-            <div className="summary-small">
-              Subscription fees are deducted from your portfolio balance.
-            </div>
-
-          </div>
-
-          <div className="summary-card">
-
-            <div className="summary-label">
-              <CheckCircle2 size={16} />
-              Current Subscription
-            </div>
-
-            {subscription ? (
-              <>
-                <div className="summary-value">
-                  {subscription.plan.name}
-                </div>
-
-                <div className="summary-small">
-
-                  {subscription.autoRenew
-                    ? `Renews ${new Date(
-                        subscription.currentPeriodEnd
-                      ).toLocaleDateString()}`
-                    : `Ends ${new Date(
-                        subscription.currentPeriodEnd
-                      ).toLocaleDateString()}`}
-
-                </div>
-
-                {subscription.autoRenew && (
-                  <button
-                    className="cancel-btn"
-                    onClick={cancelSubscription}
-                    disabled={processing === subscription.planId}
-                  >
-                    {processing === subscription.planId ? (
-                      <Loader2 className="spin" size={15} />
-                    ) : (
-                      'Cancel Subscription'
-                    )}
-                  </button>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="summary-value">
-                  No Active Plan
-                </div>
-
-                <div className="summary-small">
-                  Choose one of the plans below.
-                </div>
-              </>
-            )}
-
-          </div>
-
-        </div>
-
-        {/* Plans */}
-
-        <div className="plans-grid">
-
-          {plans.map(plan => {
-
-            const current =
-              subscription?.planId === plan.id &&
-              subscription.status === 'active';
-
-            const insufficient =
-              portfolioBalance < plan.price;
-
-            const recommended =
-              recommendedPlan?.id === plan.id;
-
-            return (
-
-              <div
-                key={plan.id}
-                className={`plan-card ${recommended ? 'recommended' : ''}`}
-              >
-
-                {recommended && (
-                  <div className="recommended-badge">
-                    MOST POPULAR
-                  </div>
-                )}
-
-                <div className="plan-icon">
-
-                  {plan.name.toLowerCase().includes('basic') ? (
-                    <Shield size={26} />
-                  ) : plan.name.toLowerCase().includes('pro') ? (
-                    <Zap size={26} />
-                  ) : (
-                    <Crown size={26} />
-                  )}
-
-                </div>
-
-                <h2 className="plan-title">
-                  {plan.name}
-                </h2>
-
-                <div className="plan-price">
-
-                  ${money(plan.price)}
-
-                  <span>
-                    /{plan.interval.toLowerCase()}
-                  </span>
-
-                </div>
-
-                <p className="plan-description">
-                  {plan.description}
-                </p>
-
-                {plan.features && (
-
-                  <ul className="feature-list">
-
-                    {plan.features.map(feature => (
-
-                      <li key={feature}>
-
-                        <CheckCircle2
-                          size={15}
-                          className="feature-icon"
-                        />
-
-                        {feature}
-
-                      </li>
-
-                    ))}
-
-                  </ul>
-
-                )}
-
-                {current ? (
-
-                  <button
-                    disabled
-                    className="btn-current"
-                  >
-                    Current Plan
-                  </button>
-
-                ) : insufficient ? (
-
-                  <button
-                    disabled
-                    className="btn-disabled"
-                  >
-                    Insufficient Balance
-                  </button>
-
-                ) : (
-
-                  <button
-                    onClick={() => activatePlan(plan)}
-                    disabled={processing === plan.id}
-                    className="btn-activate"
-                  >
-
-                    {processing === plan.id ? (
-                      <Loader2 className="spin" size={16} />
-                    ) : (
-                      'Activate Plan'
-                    )}
-
-                  </button>
-
-                )}
-
-              </div>
-
-            );
-
-          })}
-
-        </div>
-
-      </div>
-    </div>
-  </>
-);
-  
