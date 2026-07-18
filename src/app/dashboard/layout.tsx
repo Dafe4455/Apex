@@ -126,7 +126,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   const walletActive = pathname === '/dashboard/assets';
-  const moreActive = ['/dashboard/support', '/dashboard/settings', '/dashboard/notifications', '/dashboard/kyc'].includes(pathname);
+  const moreActive = ['/dashboard/support', '/dashboard/settings', '/dashboard/notifications', '/dashboard/kyc', '/dashboard/subscription'].includes(pathname);
   const isAdmin = pathname.startsWith('/dashboard/admin');
 
   return (
@@ -743,6 +743,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       <div className="db-sheet-row-text">
                         <span className="db-sheet-row-label">KYC</span>
                         <span className="db-sheet-row-sub">Identity verification</span>
+                      </div>
+                      <div className="db-sheet-row-arrow"><ChevronRight /></div>
+                    </Link>
+                    <div className="db-sheet-row-divider" />
+                    <Link href="/dashboard/subscription" className="db-sheet-row" onClick={() => setMoreOpen(false)}>
+                      <div className="db-sheet-row-icon" style={{ color: 'var(--ink-dim)' }}>
+                        <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
+                          <rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
+                          <path d="M3 8h14" stroke="currentColor" strokeWidth="1.3" />
+                          <circle cx="10" cy="12" r="1.2" fill="currentColor" />
+                        </svg>
+                      </div>
+                      <div className="db-sheet-row-text">
+                        <span className="db-sheet-row-label">Subscription</span>
+                        <span className="db-sheet-row-sub">Manage your plan</span>
                       </div>
                       <div className="db-sheet-row-arrow"><ChevronRight /></div>
                     </Link>
