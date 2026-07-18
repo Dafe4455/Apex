@@ -1,3 +1,4 @@
+// src/app/api/subscriptions/mine/route.ts
 import { NextResponse } from 'next/server';
 import { auth } from '@root/auth';
 import { prisma } from '@/lib/prisma';
@@ -9,7 +10,7 @@ export async function GET() {
   const subscription = await prisma.subscription.findFirst({
     where: {
       userId: session.user.id,
-      status: { in: ['active', 'pending_downgrade'] },
+      status: { in: ['active', 'upgraded'] },
     },
     include: {
       plan: {
@@ -24,7 +25,7 @@ export async function GET() {
         select: { name: true, tier: true, price: true },
       },
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: { startDate: 'desc' },  // changed from createdAt
   });
 
   if (!subscription) return NextResponse.json(null);
