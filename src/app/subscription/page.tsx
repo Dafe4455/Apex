@@ -74,6 +74,14 @@ const fmtUsd = (n: number, decimals = 2) =>
 const pct = (value: number) =>
     `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 
+const normalizeTier = (tier: string): PlanTier => {
+    const t = tier.toLowerCase().trim();
+    if (t === 'basic' || t === 'starter') return 'basic';
+    if (t === 'advanced' || t === 'growth' || t === 'pro') return 'advanced';
+    if (t === 'platinum' || t === 'elite' || t === 'premium') return 'platinum';
+    return 'basic';
+};
+
 const tierIcon = (tier: PlanTier) => {
     switch (tier) {
         case 'basic': return Shield;
@@ -89,6 +97,8 @@ const tierColor = (tier: PlanTier) => {
         case 'platinum': return 'var(--gold)';
     }
 };
+
+const tierOrder: PlanTier[] = ['basic', 'advanced', 'platinum'];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -117,8 +127,25 @@ export default function SubscriptionPage() {
                 fetch('/api/assets'),
             ]);
 
-            if (plansRes.ok) setPlans(await plansRes.json());
-            if (subRes.ok) setSubscription(await subRes.json());
+            if (plansRes.ok) {
+                const rawPlans = await plansRes.json();
+                // Normalize tier casing from DB
+                setPlans(rawPlans.map((p: any) => ({
+                    ...p,
+                    tier: normalizeTier(p.tier || 'basic'),
+                    features: Array.isArray(p.features) ? p.features : (p.features ? JSON.parse(p.features) : []),
+                })));
+            }
+            if (subRes.ok) {
+                const rawSub = await subRes.json();
+                if (rawSub && rawSub.plan) {
+                    rawSub.plan.tier = normalizeTier(rawSub.plan.tier);
+                    if (rawSub.pendingPlan) {
+                        rawSub.pendingPlan.tier = normalizeTier(rawSub.pendingPlan.tier);
+                    }
+                }
+                setSubscription(rawSub);
+            }
             if (assetsRes.ok) {
                 const data = await assetsRes.json();
                 setPortfolioBalance(data.portfolioBalance ?? 0);
@@ -158,7 +185,7 @@ export default function SubscriptionPage() {
 
     const cancelSubscription = async () => {
         if (!subscription) return;
-        setProcessing(subscription.planId);
+        setProcessing('cancel');
         try {
             const res = await fetch('/api/subscriptions/cancel', { method: 'POST' });
             const data = await res.json();
@@ -223,7 +250,10 @@ export default function SubscriptionPage() {
         [plans, subscription]
     );
 
-    const tierOrder: PlanTier[] = ['basic', 'advanced', 'platinum'];
+    const currentTier = useMemo(() =>
+        normalizeTier(subscription?.plan?.tier || ''),
+        [subscription]
+    );
 
     const getPlanAction = (plan: Plan): {
         label: string;
@@ -250,7 +280,7 @@ export default function SubscriptionPage() {
             return { label: 'Activate Plan', variant: 'activate', handler: () => activatePlan(plan) };
         }
 
-        const currentTierIdx = tierOrder.indexOf(currentPlan?.tier ?? 'basic');
+        const currentTierIdx = tierOrder.indexOf(currentTier);
         const planTierIdx = tierOrder.indexOf(plan.tier);
 
         if (planTierIdx > currentTierIdx) {
@@ -276,6 +306,8 @@ export default function SubscriptionPage() {
         if (!currentPlan) return 0;
         return portfolioBalance * (currentPlan.weeklyReturnRate / 100);
     }, [currentPlan, portfolioBalance]);
+
+    const hasActiveSubscription = subscription?.status === 'active';
 
     // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -392,7 +424,7 @@ export default function SubscriptionPage() {
                                 <CheckCircle2 size={13} style={{ marginRight: 6 }} />
                                 Current Subscription
                             </span>
-                            {subscription && subscription.status === 'active' ? (
+                            {hasActiveSubscription ? (
                                 <>
                                     <span style={styles.summaryValue}>{subscription.plan.name}</span>
                                     <span style={styles.summarySmall}>
@@ -405,19 +437,18 @@ export default function SubscriptionPage() {
                                             </span>
                                         )}
                                     </span>
-                                    {subscription.autoRenew && (
-                                        <button
-                                            className="cancel-btn"
-                                            onClick={() => setConfirmAction({ type: 'cancel' })}
-                                            disabled={processing === subscription.planId}
-                                        >
-                                            {processing === subscription.planId ? (
-                                                <Loader2 className="spin" size={13} />
-                                            ) : (
-                                                'Cancel Subscription'
-                                            )}
-                                        </button>
-                                    )}
+                                    {/* Cancel button always visible for active subscriptions */}
+                                    <button
+                                        className="cancel-btn"
+                                        onClick={() => setConfirmAction({ type: 'cancel' })}
+                                        disabled={processing === 'cancel'}
+                                    >
+                                        {processing === 'cancel' ? (
+                                            <Loader2 className="spin" size={13} />
+                                        ) : (
+                                            'Cancel Subscription'
+                                        )}
+                                    </button>
                                 </>
                             ) : (
                                 <>
