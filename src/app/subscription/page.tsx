@@ -202,10 +202,19 @@ export default function SubscriptionPage() {
     };
 
     const recommendedPlan = useMemo(() => {
-
         return plans.find(p =>
             p.name.toLowerCase().includes('pro')
         );
+    }, [plans]);  // ← Add closing }) and dependency array
+
+    return (
+        <>
+            <Toaster position="top-center" />
+
+            <div className="sub-wrap">
+                <div className="sub-inner">
+
+                    
 
      <style jsx global>{`
 :root{
