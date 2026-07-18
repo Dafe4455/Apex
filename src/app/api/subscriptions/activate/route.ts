@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
 
   const existingActive = await prisma.subscription.findFirst({
     where: { userId: user.id, status: 'active' },
+    include: { plan: true },
   });
 
   if (existingActive) {
@@ -34,35 +35,51 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const now = new Date();
+  try {
+    const now = new Date();
 
-  await prisma.$transaction([
-    prisma.user.update({
-      where: { id: user.id },
-      data: { portfolioBalance: { decrement: plan.price } },
-    }),
-    prisma.transaction.create({
-      data: {
-        type: 'SubscriptionFee',
-        amount: plan.price,
-        userId: user.id,
-        status: 'COMPLETED',
-        description: `Activated ${plan.name} plan`,
-      },
-    }),
-    prisma.subscription.create({
-      data: {
-        userId: user.id,
-        planId: plan.id,
-        status: 'active',
-        startDate: now,
-        currentPeriodStart: now,
-        currentPeriodEnd: calculatePeriodEnd(now, plan.interval),
-        nextBillingDate: calculatePeriodEnd(now, plan.interval),
-        autoRenew: true,
-      },
-    }),
-  ]);
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: user.id },
+        data: { portfolioBalance: { decrement: plan.price } },
+      }),
+      prisma.transaction.create({
+        data: {
+          type: 'SubscriptionFee',
+          amount: plan.price,
+          userId: user.id,
+          status: 'COMPLETED',
+          description: `Activated ${plan.name} plan`,
+        },
+      }),
+      prisma.subscription.create({
+        data: {
+          userId: user.id,
+          planId: plan.id,
+          status: 'active',
+          startDate: now,
+          currentPeriodStart: now,
+          currentPeriodEnd: calculatePeriodEnd(now, plan.interval),
+          nextBillingDate: calculatePeriodEnd(now, plan.interval),
+          autoRenew: true,
+        },
+      }),
+    ]);
 
-  return NextResponse.json({ success: true, message: `${plan.name} activated` });
+    return NextResponse.json({ success: true, message: `${plan.name} activated` });
+  } catch (error: any) {
+    // Handle unique constraint error (P2002)
+    if (error.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'This subscription already exists. Please refresh and try again.' },
+        { status: 409 }
+      );
+    }
+    
+    console.error('Subscription activation error:', error);
+    return NextResponse.json(
+      { error: 'Failed to activate subscription' },
+      { status: 500 }
+    );
+  }
 }
