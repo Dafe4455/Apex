@@ -308,6 +308,7 @@ export default function SubscriptionPage() {
     }, [currentPlan, portfolioBalance]);
 
     const hasActiveSubscription = subscription?.status === 'active';
+const hasAnyPlan = subscription?.status === 'active' || subscription?.status === 'cancelled';
 
     // ─── Render ────────────────────────────────────────────────────────────────
 
