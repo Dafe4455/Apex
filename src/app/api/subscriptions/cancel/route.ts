@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
   await prisma.subscription.update({
     where: { id: currentSub.id },
     data: {
+      status: 'cancelled',        // ADD THIS
       autoRenew: false,
       cancelledAt: now,
       pendingPlanId: null,
