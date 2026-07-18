@@ -1,3 +1,4 @@
+// src/app/api/subscriptions/upgrade/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@root/auth';
 import { prisma } from '@/lib/prisma';
@@ -13,9 +14,10 @@ export async function POST(req: NextRequest) {
   if (!planId) return NextResponse.json({ error: 'Missing planId' }, { status: 400 });
 
   const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-  const newPlan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
+  if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
-  if (!user || !newPlan || !newPlan.isActive) {
+  const newPlan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
+  if (!newPlan || !newPlan.isActive) {
     return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
   }
 
@@ -28,7 +30,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'No active subscription. Use activate instead.' }, { status: 400 });
   }
 
-  // Validate it's actually an upgrade
   const currentTierIdx = TIER_ORDER.indexOf(currentSub.plan.tier);
   const newTierIdx = TIER_ORDER.indexOf(newPlan.tier);
 
@@ -36,7 +37,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Not an upgrade. Use downgrade for lower tiers.' }, { status: 400 });
   }
 
-  // Calculate prorated amount
   const now = new Date();
   const periodStart = currentSub.currentPeriodStart;
   const periodEnd = currentSub.currentPeriodEnd;
@@ -56,12 +56,10 @@ export async function POST(req: NextRequest) {
   }
 
   await prisma.$transaction([
-    // Deduct prorated difference
     prisma.user.update({
       where: { id: user.id },
       data: { portfolioBalance: { decrement: chargeAmount } },
     }),
-    // Log the upgrade transaction
     prisma.transaction.create({
       data: {
         type: 'SubscriptionUpgrade',
@@ -71,7 +69,6 @@ export async function POST(req: NextRequest) {
         description: `Upgraded from ${currentSub.plan.name} to ${newPlan.name} (prorated)`,
       },
     }),
-    // Cancel old subscription
     prisma.subscription.update({
       where: { id: currentSub.id },
       data: {
@@ -80,7 +77,6 @@ export async function POST(req: NextRequest) {
         cancelledAt: now,
       },
     }),
-    // Create new subscription with same period end (no double billing)
     prisma.subscription.create({
       data: {
         userId: user.id,
@@ -88,7 +84,7 @@ export async function POST(req: NextRequest) {
         status: 'active',
         startDate: now,
         currentPeriodStart: now,
-        currentPeriodEnd: periodEnd, // Same billing cycle
+        currentPeriodEnd: periodEnd,
         nextBillingDate: periodEnd,
         autoRenew: true,
         previousSubscriptionId: currentSub.id,
