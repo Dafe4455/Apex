@@ -1,1221 +1,720 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import {
-  Users, MessageSquare, Send, X, ChevronRight,
-  CheckCircle, XCircle, ArrowUpToLine, Search,
-  Edit, Loader2, Bell, ShieldAlert,
-  Clock, KeyRound, InboxIcon, CheckCircle2,
-  RefreshCw, Circle, MessageCircle, Settings,
-  TrendingUp, Plus, Trash2, ToggleLeft, ToggleRight, ChevronLeft,
-  ShieldCheck, Eye, FileText, Camera, CreditCard,
-} from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Toaster, toast } from 'react-hot-toast';
+import {
+    ArrowLeft,
+    Plus,
+    Loader2,
+    Trash2,
+    Edit2,
+    CheckCircle2,
+    XCircle,
+    Save,
+    X,
+    Shield,
+    Zap,
+    Crown,
+    RefreshCw,
+} from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface Subscription {
-  id: string;
-  userId: string;
-  plan: string;
-  status: 'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'EXPIRED';
-  startDate: string;
-  renewalDate: string;
-  amount: number;
-  currency: string;
-  user: { name?: string; email?: string };
-}
 
-interface Ticket {
-  id: string;
-  subject: string;
-  status: 'OPEN' | 'CLOSED';
-  updatedAt: string;
-  createdAt: string;
-  user?: { id: string; email: string; name?: string | null };
-  messages?: { id: string; sender: 'USER' | 'ADMIN'; body: string; createdAt: string }[];
-}
-
-interface Withdrawal {
-  id: string;
-  amount: number;
-  currency: string;
-  status: string;
-  note?: string;
-  adminNote?: string;
-  createdAt: string;
-  updatedAt: string;
-  user: { name?: string; email?: string };
-}
-
-interface Deposit {
-  id: string;
-  amount: number;
-  currency: string;
-  status: 'PENDING' | 'COMPLETED' | 'REJECTED';
-  methodLabel?: string;
-  note?: string;
-  adminNote?: string;
-  createdAt: string;
-  updatedAt: string;
-  user: { name?: string; email?: string };
-}
-
-interface DepositMethod {
-  id: string;
-  label: string;
-  icon: string;
-  address: string;
-  network: string | null;
-  note: string | null;
-  isActive: boolean;
-  sortOrder: number;
-  createdAt: string;
-}
-
-interface KYCSubmission {
-  id: string;
-  userId: string;
-  status: string;
-  documentType: string;
-  frontUrl?: string | null;
-  backUrl?: string | null;
-  selfieUrl?: string | null;
-  notes?: string | null;
-  submittedAt: string;
-  reviewedAt?: string | null;
-  user: { name?: string | null; email?: string | null };
-}
-
-type FormState = {
-  label: string; icon: string; address: string;
-  network: string; note: string; isActive: boolean; sortOrder: number;
+type Plan = {
+    id: string;
+    name: string;
+    tier: string;
+    description: string;
+    price: number;
+    minInvestment: number;
+    weeklyReturnRate: number;
+    interval: string;
+    features: string[];
+    isActive: boolean;
+    highlight?: string | null;
+    createdAt: string;
 };
 
-const EMPTY_FORM: FormState = {
-  label: '', icon: '₿', address: '', network: '', note: '', isActive: true, sortOrder: 0,
+const emptyPlan: Omit<Plan, 'id' | 'createdAt'> = {
+    name: '',
+    tier: 'basic',
+    description: '',
+    price: 0,
+    minInvestment: 0,
+    weeklyReturnRate: 0,
+    interval: 'WEEKLY',
+    features: [],
+    isActive: true,
+    highlight: '',
 };
-const ICON_PRESETS = ['₿', 'Ξ', '◎', '💳', '🏦', 'T', '$', '🔗'];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function countUnread(tickets: Ticket[]) {
-  let n = 0;
-  for (const t of tickets) {
-    if (t.status === 'CLOSED') continue;
-    const msgs = t.messages ?? [];
-    const lastAdmin = msgs.map(m => m.sender).lastIndexOf('ADMIN');
-    n += msgs.filter((m, i) => m.sender === 'USER' && i > lastAdmin).length;
-  }
-  return n;
-}
 
-function cn(...c: (string | boolean | undefined)[]) { return c.filter(Boolean).join(' '); }
-function fmtTime(d: string) { return new Date(d).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
-function fmtDate(d: string) {
-  const dt = new Date(d), today = new Date(), yest = new Date();
-  yest.setDate(today.getDate() - 1);
-  if (dt.toDateString() === today.toDateString()) return 'Today';
-  if (dt.toDateString() === yest.toDateString()) return 'Yesterday';
-  return dt.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
-}
-function groupByDate(msgs: NonNullable<Ticket['messages']>) {
-  const g: { date: string; messages: typeof msgs }[] = [];
-  msgs.forEach(m => {
-    const d = new Date(m.createdAt).toDateString();
-    const last = g[g.length - 1];
-    if (last?.date === d) last.messages.push(m);
-    else g.push({ date: d, messages: [m] });
-  });
-  return g;
-}
-function initials(name?: string | null, email?: string) {
-  if (name) return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
-  if (email) return email.slice(0, 2).toUpperCase();
-  return '??';
-}
+const fmtUsd = (n: number) =>
+    new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: 'USD',
+        minimumFractionDigits: 2, maximumFractionDigits: 2,
+    }).format(n);
 
-function parseWithdrawalNote(note?: string): { userNote: string | null; details: Record<string, string> } {
-  if (!note) return { userNote: null, details: {} };
-  const parts = note.split(' — ');
-  const detailsStr = parts.length > 1 ? parts[1] : parts[0];
-  const userNote   = parts.length > 1 ? parts[0] : null;
-  const details: Record<string, string> = {};
-  detailsStr.split(' | ').forEach(pair => {
-    const idx = pair.indexOf(': ');
-    if (idx !== -1) {
-      const key = pair.slice(0, idx).trim();
-      const val = pair.slice(idx + 2).trim();
-      if (key && val) details[key] = val;
-    }
-  });
-  return { userNote, details };
-}
+const tierIcon = (tier: string) => {
+    const t = tier.toLowerCase();
+    if (t === 'platinum') return Crown;
+    if (t === 'advanced') return Zap;
+    return Shield;
+};
 
-function WithdrawalDetails({ note }: { note?: string }) {
-  const { userNote, details } = parseWithdrawalNote(note);
-  const method = details['Coin'] ? 'crypto' : details['Account Name'] ? 'bank' : details['Cardholder Name'] ? 'card' : null;
-  if (!Object.keys(details).length && !userNote) return null;
-  return (
-    <div style={{ marginTop: 12, padding: '12px 14px', background: 'var(--surface)', borderRadius: 10, border: '1px solid var(--line-strong)', display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {method && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-          <span style={{ fontSize: '0.52rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', fontFamily: 'var(--mono)', padding: '2px 8px', borderRadius: 20, background: method === 'crypto' ? 'rgba(247,147,26,0.12)' : 'rgba(99,102,241,0.12)', color: method === 'crypto' ? '#f7931a' : 'var(--accent)' }}>
-            {method === 'crypto' ? '₿ Crypto' : method === 'bank' ? '🏦 Bank' : '💳 Card'}
-          </span>
-        </div>
-      )}
-      {details['Coin'] && (<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}><DetailRow label="Coin" value={details['Coin']} /><DetailRow label="Network" value={details['Network']} /><DetailRow label="Wallet" value={details['Wallet Address']} mono /></div>)}
-      {details['Account Name'] && (<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}><DetailRow label="Account Name" value={details['Account Name']} /><DetailRow label="Bank" value={details['Bank Name']} /><DetailRow label="Account No." value={details['Account Number']} mono /><DetailRow label="Routing" value={details['Routing / Sort Code']} mono /></div>)}
-      {details['Cardholder Name'] && (<div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}><DetailRow label="Cardholder" value={details['Cardholder Name']} /><DetailRow label="Card" value={`•••• ${details['Card Number (last 4)']}`} mono /><DetailRow label="Expiry" value={details['Expiry']} mono /></div>)}
-      {userNote && (<p style={{ fontSize: '0.65rem', color: 'var(--ink-dim)', fontStyle: 'italic', paddingTop: 4, borderTop: '1px solid var(--line)' }}>"{userNote}"</p>)}
-    </div>
-  );
-}
+const tierColor = (tier: string) => {
+    const t = tier.toLowerCase();
+    if (t === 'platinum') return 'var(--gold)';
+    if (t === 'advanced') return 'var(--accent)';
+    return 'var(--ink-faint)';
+};
 
-function DetailRow({ label, value, mono }: { label: string; value?: string; mono?: boolean }) {
-  if (!value) return null;
-  return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
-      <span style={{ fontSize: '0.55rem', fontWeight: 600, color: 'var(--ink-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: 'var(--mono)', minWidth: 72, paddingTop: 1, flexShrink: 0 }}>{label}</span>
-      <span style={{ fontSize: mono ? '0.65rem' : '0.72rem', fontFamily: mono ? 'var(--mono)' : 'var(--sans)', color: 'var(--ink)', wordBreak: 'break-all', lineHeight: 1.5 }}>{value}</span>
-    </div>
-  );
-}
+// ── Component ─────────────────────────────────────────────────────────────────
 
-function WithdrawalActions({ id, onDone }: { id: string; onDone: () => void }) {
-  const [note, setNote]   = useState('');
-  const [loading, setL]   = useState<'APPROVED' | 'REJECTED' | null>(null);
-  const [error, setError] = useState('');
-  const [done, setDone]   = useState(false);
-  const act = async (action: 'APPROVED' | 'REJECTED') => {
-    setL(action); setError('');
-    const res = await fetch(`/api/admin/withdrawals/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, adminNote: note || undefined }) });
-    setL(null);
-    if (!res.ok) { setError((await res.json()).error ?? 'Failed'); return; }
-    setDone(true); onDone();
-  };
-  if (done) return <p className="adm-done-ok">✓ Processed</p>;
-  return (
-    <div className="adm-action-wrap">
-      <input value={note} onChange={e => setNote(e.target.value)} maxLength={200} placeholder="Admin note (optional)" className="adm-note-input" />
-      {error && <p className="adm-err">{error}</p>}
-      <div className="adm-action-btns">
-        <button onClick={() => act('APPROVED')} disabled={!!loading} className="adm-btn-approve">{loading === 'APPROVED' ? <Loader2 className="adm-spin" size={14} /> : <CheckCircle size={14} />} Approve</button>
-        <button onClick={() => act('REJECTED')} disabled={!!loading} className="adm-btn-reject">{loading === 'REJECTED' ? <Loader2 className="adm-spin" size={14} /> : <XCircle size={14} />} Reject</button>
-      </div>
-    </div>
-  );
-}
+export default function AdminSubscriptionsPage() {
+    const router = useRouter();
+    const [plans, setPlans] = useState<Plan[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
+    const [isCreating, setIsCreating] = useState(false);
+    const [featureInput, setFeatureInput] = useState('');
 
-function DepositActions({ id, onDone }: { id: string; onDone: () => void }) {
-  const [note, setNote]   = useState('');
-  const [loading, setL]   = useState<'COMPLETED' | 'REJECTED' | null>(null);
-  const [error, setError] = useState('');
-  const [done, setDone]   = useState(false);
-  const act = async (action: 'COMPLETED' | 'REJECTED') => {
-    setL(action); setError('');
-    const res = await fetch(`/api/admin/deposits/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action, adminNote: note || undefined }) });
-    setL(null);
-    if (!res.ok) { setError((await res.json()).error ?? 'Failed'); return; }
-    setDone(true); onDone();
-  };
-  if (done) return <p className="adm-done-ok">✓ Processed</p>;
-  return (
-    <div className="adm-action-wrap">
-      <input value={note} onChange={e => setNote(e.target.value)} maxLength={200} placeholder="Admin note (optional)" className="adm-note-input" />
-      {error && <p className="adm-err">{error}</p>}
-      <div className="adm-action-btns">
-        <button onClick={() => act('COMPLETED')} disabled={!!loading} className="adm-btn-approve">{loading === 'COMPLETED' ? <Loader2 className="adm-spin" size={14} /> : <CheckCircle size={14} />} Confirm</button>
-        <button onClick={() => act('REJECTED')} disabled={!!loading} className="adm-btn-reject">{loading === 'REJECTED' ? <Loader2 className="adm-spin" size={14} /> : <XCircle size={14} />} Reject</button>
-      </div>
-    </div>
-  );
-}
+    const loadPlans = useCallback(async () => {
+        try {
+            const res = await fetch('/api/admin/subscriptions/plans');
+            if (!res.ok) throw new Error();
+            setPlans(await res.json());
+        } catch {
+            toast.error('Failed to load plans');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-// ── KYC Actions Component ─────────────────────────────────────────────────────
-function KYCActions({ submission, onDone }: { submission: KYCSubmission; onDone: () => void }) {
-  const [note, setNote]   = useState('');
-  const [loading, setL]   = useState<'APPROVED' | 'REJECTED' | null>(null);
-  const [error, setError] = useState('');
-  const [done, setDone]   = useState(false);
-  const [preview, setPreview] = useState<string | null>(null);
+    useEffect(() => { loadPlans(); }, [loadPlans]);
 
-  const act = async (action: 'APPROVED' | 'REJECTED') => {
-    setL(action); setError('');
-    const res = await fetch(`/api/admin/kyc/${submission.id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, notes: note || undefined }),
-    });
-    setL(null);
-    if (!res.ok) { setError((await res.json()).error ?? 'Failed'); return; }
-    setDone(true); onDone();
-  };
-
-  const docLabel = submission.documentType === 'PASSPORT' ? 'Passport'
-    : submission.documentType === 'NATIONAL_ID' ? 'National ID'
-    : 'Driver\'s License';
-
-  if (done) return <p className="adm-done-ok">✓ Reviewed</p>;
-
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Document images */}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        {submission.frontUrl && (
-          <div className="kyc-img-wrap" onClick={() => setPreview(submission.frontUrl!)}>
-            <img src={submission.frontUrl} alt="Front" className="kyc-thumb" />
-            <span className="kyc-img-label">Front</span>
-          </div>
-        )}
-        {submission.backUrl && (
-          <div className="kyc-img-wrap" onClick={() => setPreview(submission.backUrl!)}>
-            <img src={submission.backUrl} alt="Back" className="kyc-thumb" />
-            <span className="kyc-img-label">Back</span>
-          </div>
-        )}
-        {submission.selfieUrl && (
-          <div className="kyc-img-wrap" onClick={() => setPreview(submission.selfieUrl!)}>
-            <img src={submission.selfieUrl} alt="Selfie" className="kyc-thumb" />
-            <span className="kyc-img-label">Selfie</span>
-          </div>
-        )}
-      </div>
-
-      {/* Already reviewed */}
-      {(submission.status === 'APPROVED' || submission.status === 'REJECTED') && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', borderRadius: 10, background: submission.status === 'APPROVED' ? 'var(--green-l)' : 'var(--red-l)', border: `1px solid ${submission.status === 'APPROVED' ? 'var(--green)' : 'var(--red)'}` }}>
-          {submission.status === 'APPROVED'
-            ? <CheckCircle2 size={13} style={{ color: 'var(--green)', flexShrink: 0 }} />
-            : <XCircle size={13} style={{ color: 'var(--red)', flexShrink: 0 }} />}
-          <span style={{ fontSize: '0.7rem', color: submission.status === 'APPROVED' ? 'var(--green)' : 'var(--red)', fontFamily: 'var(--mono)' }}>
-            {submission.status === 'APPROVED' ? 'Approved' : `Rejected${submission.notes ? ` — ${submission.notes}` : ''}`}
-          </span>
-        </div>
-      )}
-
-      {/* Actions — only for PENDING */}
-      {submission.status === 'PENDING' && (
-        <div className="adm-action-wrap" style={{ paddingTop: 0, borderTop: 'none', marginTop: 0 }}>
-          <input
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            maxLength={300}
-            placeholder="Rejection reason (required if rejecting)"
-            className="adm-note-input"
-          />
-          {error && <p className="adm-err">{error}</p>}
-          <div className="adm-action-btns">
-            <button onClick={() => act('APPROVED')} disabled={!!loading} className="adm-btn-approve">
-              {loading === 'APPROVED' ? <Loader2 className="adm-spin" size={14} /> : <ShieldCheck size={14} />} Approve
-            </button>
-            <button onClick={() => act('REJECTED')} disabled={!!loading || !note.trim()} className="adm-btn-reject">
-              {loading === 'REJECTED' ? <Loader2 className="adm-spin" size={14} /> : <XCircle size={14} />} Reject
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Image preview modal */}
-      {preview && (
-        <>
-          <div className="adm-overlay" onClick={() => setPreview(null)} />
-          <div style={{ position: 'fixed', inset: 0, zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-            <div style={{ position: 'relative', maxWidth: 600, width: '100%' }}>
-              <img src={preview} alt="Document" style={{ width: '100%', borderRadius: 14, maxHeight: '80vh', objectFit: 'contain' }} />
-              <button onClick={() => setPreview(null)} style={{ position: 'absolute', top: -12, right: -12, width: 32, height: 32, borderRadius: '50%', background: 'var(--card-adm)', border: '1px solid var(--line-strong)', color: 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                <X size={14} />
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
-// ── Main ──────────────────────────────────────────────────────────────────────
-export default function AdminDashboard() {
-  type Tab = 'chat' | 'users' | 'deposits' | 'withdrawals' | 'kyc' | 'subscriptions' | 'settings';
-  const [tab, setTab] = useState<Tab>('chat');
-
-  // Support
-  const [tickets, setTickets]       = useState<Ticket[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [statusFilter, setFilter]   = useState<'OPEN' | 'CLOSED'>('OPEN');
-  const [loadingTix, setLoadingTix] = useState(true);
-  const [detailLoading, setDL]      = useState(false);
-  const [tixErr, setTixErr]         = useState('');
-  const [detailErr, setDetailErr]   = useState('');
-  const [reply, setReply]           = useState('');
-  const [replying, setReplying]     = useState(false);
-  const bottomRef    = useRef<HTMLDivElement>(null);
-  const textareaRef  = useRef<HTMLTextAreaElement>(null);
-  const prevMsgCount = useRef<number>(0);
-
-  // Users
-  const [users, setUsers]         = useState<any[]>([]);
-  const [search, setSearch]       = useState('');
-  const [loadingUsers, setLUsers] = useState(true);
-
-  // Deposits
-  const [deposits, setDeposits] = useState<Deposit[]>([]);
-  const [loadingDep, setLDep]   = useState(true);
-
-  // Withdrawals
-  const [pendingV, setPendingV]   = useState<Withdrawal[]>([]);
-  const [pending, setPending]     = useState<Withdrawal[]>([]);
-  const [processed, setProcessed] = useState<Withdrawal[]>([]);
-  const [loadingWd, setLWd]       = useState(true);
-
-  // KYC
-  const [kycList, setKycList]       = useState<KYCSubmission[]>([]);
-  const [kycFilter, setKycFilter]   = useState<'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
-  const [loadingKyc, setLoadingKyc] = useState(true);
-
-  // Subscriptions
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [subFilter, setSubFilter]         = useState<'ACTIVE' | 'PAUSED' | 'CANCELLED' | 'EXPIRED'>('ACTIVE');
-  const [loadingSub, setLoadingSub]       = useState(true);
-
-  // Settings
-  const [methods, setMethods]   = useState<DepositMethod[]>([]);
-  const [loadingM, setLM]       = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId]     = useState<string | null>(null);
-  const [form, setForm]         = useState<FormState>(EMPTY_FORM);
-  const [saving, setSaving]     = useState(false);
-  const [deleting, setDeleting] = useState<string | null>(null);
-  const [toast, setToast]       = useState<{ msg: string; ok: boolean } | null>(null);
-
-  const selectedTicket = useMemo(() => tickets.find(t => t.id === selectedId) ?? null, [tickets, selectedId]);
-  const unread         = countUnread(tickets);
-  const pendingDeps    = deposits.filter(d => d.status === 'PENDING');
-  const actionableWd   = pendingV.length + pending.length;
-  const pendingKyc     = kycList.filter(k => k.status === 'PENDING').length;
-
-  // ── Fetchers ──
-  const fetchTickets = useCallback(async (f = statusFilter, silent = false) => {
-    if (!silent) setLoadingTix(true);
-    setTixErr('');
-    try {
-      const res  = await fetch(`/api/admin/support/tickets?status=${f}`, { cache: 'no-store' });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setTixErr(data.error || 'Failed'); return; }
-      setTickets(Array.isArray(data?.tickets) ? data.tickets : []);
-    } catch { setTixErr('Network error'); }
-    finally { if (!silent) setLoadingTix(false); }
-  }, [statusFilter]);
-
-  const fetchTicketDetail = useCallback(async (id: string, silent = false) => {
-    if (!silent) setDL(true);
-    setDetailErr('');
-    try {
-      const res  = await fetch(`/api/admin/support/tickets/${id}`, { cache: 'no-store' });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) { setDetailErr(data.error || 'Failed'); return; }
-      const t = data?.ticket as Ticket | undefined;
-      if (!t) { setDetailErr('Not found'); return; }
-      setTickets(prev => prev.map(x => x.id === t.id ? t : x));
-    } catch { setDetailErr('Network error'); }
-    finally { if (!silent) setDL(false); }
-  }, []);
-
-  const fetchUsers = useCallback(async () => {
-    try {
-      const res  = await fetch('/api/admin/users', { cache: 'no-store' });
-      const data = await res.json();
-      if (Array.isArray(data)) setUsers(data);
-    } catch {} finally { setLUsers(false); }
-  }, []);
-
-  const fetchDeposits = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/deposits');
-      if (res.ok) { const d = await res.json(); setDeposits(d.deposits ?? []); }
-    } catch {} finally { setLDep(false); }
-  }, []);
-
-  const fetchWithdrawals = useCallback(async () => {
-    try {
-      const res = await fetch('/api/admin/withdrawals');
-      if (res.ok) {
-        const all: Withdrawal[] = (await res.json()).withdrawals ?? [];
-        setPendingV(all.filter(w => w.status === 'PENDING_VERIFICATION'));
-        setPending(all.filter(w => w.status === 'PENDING'));
-        setProcessed(all.filter(w => w.status === 'APPROVED' || w.status === 'REJECTED'));
-      }
-    } catch {} finally { setLWd(false); }
-  }, []);
-
-  const fetchKyc = useCallback(async () => {
-    setLoadingKyc(true);
-    try {
-      const res = await fetch('/api/admin/kyc');
-      if (res.ok) { const d = await res.json(); setKycList(d.submissions ?? []); }
-    } catch {} finally { setLoadingKyc(false); }
-  }, []);
-
-  const fetchSubscriptions = useCallback(async () => {
-    setLoadingSub(true);
-    try {
-      const res = await fetch('/api/admin/subscriptions');
-      if (res.ok) { const d = await res.json(); setSubscriptions(d.subscriptions ?? []); }
-    } catch {} finally { setLoadingSub(false); }
-  }, []);
-
-  const fetchMethods = useCallback(async () => {
-    setLM(true);
-    try {
-      const res = await fetch('/api/admin/deposit-methods/manage');
-      if (res.ok) setMethods(await res.json());
-    } catch {} finally { setLM(false); }
-  }, []);
-
-  // ── Effects ──
-  useEffect(() => { fetchUsers(); fetchDeposits(); fetchWithdrawals(); fetchMethods(); fetchKyc(); fetchSubscriptions(); }, []);
-  useEffect(() => { fetchTickets(statusFilter); }, [statusFilter]);
-  useEffect(() => {
-    const i = setInterval(() => fetchTickets(statusFilter, true), 10_000);
-    return () => clearInterval(i);
-  }, [fetchTickets, statusFilter]);
-  useEffect(() => {
-    if (!selectedId) return;
-    const i = setInterval(() => fetchTicketDetail(selectedId, true), 5_000);
-    return () => clearInterval(i);
-  }, [fetchTicketDetail, selectedId]);
-  useEffect(() => {
-    const msgs = selectedTicket?.messages ?? [];
-    if (msgs.length > prevMsgCount.current) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-    prevMsgCount.current = msgs.length;
-  }, [selectedTicket?.messages]);
-  useEffect(() => { prevMsgCount.current = 0; }, [selectedId]);
-
-  // ── Support handlers ──
-  const handleSelect = (id: string) => { setSelectedId(id); fetchTicketDetail(id); };
-  const handleBack   = () => setSelectedId(null);
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setReply(e.target.value);
-    const el = textareaRef.current;
-    if (el) { el.style.height = 'auto'; el.style.height = `${Math.min(el.scrollHeight, 120)}px`; }
-  };
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleReply(); }
-  };
-  const handleReply = async () => {
-    if (!selectedTicket || !reply.trim() || replying) return;
-    setReplying(true); setDetailErr('');
-    try {
-      const res = await fetch(`/api/admin/support/tickets/${selectedTicket.id}/messages`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body: reply }),
-      });
-      if (!res.ok) { setDetailErr((await res.json().catch(() => ({}))).error || 'Failed'); return; }
-      setReply('');
-      if (textareaRef.current) textareaRef.current.style.height = 'auto';
-      await fetchTicketDetail(selectedTicket.id);
-      await fetchTickets(statusFilter);
-    } catch { setDetailErr('Network error'); }
-    finally { setReplying(false); }
-  };
-  const handleStatus = async (next: 'OPEN' | 'CLOSED') => {
-    if (!selectedTicket) return;
-    await fetch(`/api/admin/support/tickets/${selectedTicket.id}`, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: next }),
-    });
-    await fetchTicketDetail(selectedTicket.id);
-    await fetchTickets(statusFilter);
-  };
-
-  // ── Settings handlers ──
-  const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3000); };
-  const openNew   = () => { setEditId(null); setForm(EMPTY_FORM); setShowForm(true); };
-  const openEdit  = (m: DepositMethod) => {
-    setEditId(m.id);
-    setForm({ label: m.label, icon: m.icon, address: m.address, network: m.network ?? '', note: m.note ?? '', isActive: m.isActive, sortOrder: m.sortOrder });
-    setShowForm(true);
-  };
-  const f = (k: keyof FormState, v: string | boolean | number) => setForm(p => ({ ...p, [k]: v }));
-
-  const saveMethods = async () => {
-    if (!form.label.trim() || !form.address.trim()) { showToast('Label and address required', false); return; }
-    setSaving(true);
-    try {
-      const body = { ...form, network: form.network || null, note: form.note || null, ...(editId ? { id: editId } : {}) };
-      const res  = await fetch('/api/admin/deposit-methods/manage', {
-        method: editId ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (res.ok) { showToast(editId ? 'Method updated' : 'Method created'); setShowForm(false); fetchMethods(); }
-      else showToast((await res.json()).error ?? 'Failed', false);
-    } finally { setSaving(false); }
-  };
-
-  const toggleActive = async (m: DepositMethod) => {
-    await fetch('/api/admin/deposit-methods/manage', {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: m.id, isActive: !m.isActive }),
-    });
-    fetchMethods();
-  };
-
-  const removeMethod = async (id: string) => {
-    if (!confirm('Delete this deposit method?')) return;
-    setDeleting(id);
-    const res = await fetch(`/api/admin/deposit-methods/manage?id=${id}`, { method: 'DELETE' });
-    if (res.ok) { showToast('Deleted'); fetchMethods(); } else showToast('Failed', false);
-    setDeleting(null);
-  };
-
-  const grouped    = groupByDate(selectedTicket?.messages ?? []);
-  const filteredKyc = kycList.filter(k => k.status === kycFilter);
-  const filteredSubs = subscriptions.filter(s => s.status === subFilter);
-
-  const tabs = [
-    { id: 'chat',        label: 'Support',     icon: MessageSquare, badge: unread,             color: '#e85c0d' },
-    { id: 'users',       label: 'Users',       icon: Users,         badge: users.length,       color: '#6b5ce7' },
-    { id: 'deposits',    label: 'Deposits',    icon: TrendingUp,    badge: pendingDeps.length, color: '#2e7d4f' },
-    { id: 'withdrawals', label: 'Withdrawals', icon: ArrowUpToLine, badge: actionableWd,       color: '#b85c0d' },
-    { id: 'kyc',         label: 'KYC',         icon: ShieldCheck,   badge: pendingKyc,         color: '#0369a1' },
-    { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard, badge: subscriptions.filter(s => s.status === 'ACTIVE').length, color: '#7c3aed' },
-    { id: 'settings',    label: 'Settings',    icon: Settings,      badge: 0,                  color: '#6b6457' },
-  ];
-
-  return (
-    <>
-      <style>{`
-        .adm { max-width: 900px; margin: 0 auto; padding: 24px 16px 40px; font-family: var(--sans); color: var(--ink); background: var(--bg-adm); min-height: 100vh; }
-        .adm-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 22px; }
-        .adm-brand { font-family: var(--mono); font-size: 0.58rem; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; }
-        .adm-title { font-size: 1.4rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
-        .adm-bell { position: relative; width: 38px; height: 38px; border-radius: 50%; background: var(--card-adm); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .adm-bell-badge { position: absolute; top: -3px; right: -3px; width: 18px; height: 18px; background: var(--accent); border-radius: 50%; color: var(--bg-adm); font-size: 0.52rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-        .adm-tabs { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-bottom: 20px; }
-        .adm-tab { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 14px 8px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--card-adm); font-family: var(--sans); font-size: 0.65rem; font-weight: 600; color: var(--ink-faint); cursor: pointer; transition: all 0.15s; }
-        .adm-tab:hover { border-color: var(--accent); color: var(--ink-dim); }
-        .adm-tab.active { color: #fff; border-color: transparent; }
-        .adm-tab-badge { position: absolute; top: 8px; right: 8px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; font-size: 0.5rem; font-weight: 700; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.25); color: #fff; }
-        .adm-tab:not(.active) .adm-tab-badge { background: var(--accent); color: var(--bg-adm); }
-        .adm-card { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; padding: 18px 20px; margin-bottom: 10px; position: relative; overflow: hidden; }
-        .adm-card-stripe { position: absolute; top: 0; left: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px; }
-        .adm-action-wrap { display: flex; flex-direction: column; gap: 10px; padding-top: 14px; border-top: 1px solid var(--line-strong); margin-top: 14px; }
-        .adm-note-input { width: 100%; padding: 9px 13px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--surface); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
-        .adm-note-input:focus { border-color: var(--accent); }
-        .adm-note-input::placeholder { color: var(--ink-faint); }
-        .adm-action-btns { display: flex; gap: 8px; }
-        .adm-btn-approve { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: var(--green); color: var(--bg-adm); border: none; font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
-        .adm-btn-approve:hover { opacity: 0.85; }
-        .adm-btn-approve:disabled { opacity: 0.4; cursor: not-allowed; }
-        .adm-btn-reject { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px; border-radius: 10px; background: transparent; color: var(--red); border: 1px solid var(--red); font-family: var(--sans); font-size: 0.72rem; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-        .adm-btn-reject:hover { background: var(--red-l); }
-        .adm-btn-reject:disabled { opacity: 0.4; cursor: not-allowed; }
-        .adm-done-ok { font-size: 0.72rem; font-weight: 600; color: var(--green); text-align: center; padding: 8px 0; }
-        .adm-err { font-size: 0.65rem; color: var(--red); }
-        .adm-spin { animation: spin 0.7s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .adm-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; color: var(--bg-adm); font-size: 0.7rem; font-weight: 700; flex-shrink: 0; }
-        .adm-avatar.green { background: var(--green); }
-        .adm-status { font-family: var(--mono); font-size: 0.52rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 20px; display: inline-block; }
-        .adm-status.pending { background: var(--gold-l); color: var(--gold); }
-        .adm-status.ok      { background: var(--green-l); color: var(--green); }
-        .adm-status.bad     { background: var(--red-l); color: var(--red); }
-        .adm-status.grey    { background: var(--surface); color: var(--ink-faint); }
-        .adm-sec-label { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-        .adm-sec-label span { font-size: 0.6rem; font-weight: 700; color: var(--ink-dim); text-transform: uppercase; letter-spacing: 0.1em; }
-        .adm-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; gap: 8px; background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; }
-        .adm-empty p { font-size: 0.72rem; color: var(--ink-faint); font-weight: 300; }
-        .adm-search-wrap { position: relative; }
-        .adm-search-wrap svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--ink-faint); }
-        .adm-search { width: 100%; padding: 8px 12px 8px 34px; border: 1.5px solid var(--line-strong); border-radius: 10px; background: var(--card-adm); font-family: var(--sans); font-size: 0.75rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
-        .adm-search:focus { border-color: var(--accent); }
-        .adm-chat-grid { display: grid; grid-template-columns: 280px 1fr; gap: 12px; min-height: 600px; }
-        .adm-ticket-list { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
-        .adm-ticket-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
-        .adm-ticket-head-title { font-size: 0.75rem; font-weight: 700; color: var(--ink); }
-        .adm-filter-toggle { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 2px; }
-        .adm-filter-btn { padding: 4px 10px; border-radius: 6px; border: none; background: transparent; font-family: var(--sans); font-size: 0.6rem; font-weight: 600; color: var(--ink-faint); cursor: pointer; transition: all 0.12s; }
-        .adm-filter-btn.active-open     { background: var(--accent); color: var(--bg-adm); }
-        .adm-filter-btn.active-closed   { background: var(--surface-hover); color: var(--ink-dim); }
-        .adm-filter-btn.active-pending  { background: var(--gold); color: var(--bg-adm); }
-        .adm-filter-btn.active-approved { background: var(--green); color: var(--bg-adm); }
-        .adm-filter-btn.active-rejected { background: var(--red); color: white; }
-        .adm-filter-btn.active-active   { background: var(--green); color: var(--bg-adm); }
-        .adm-filter-btn.active-paused   { background: var(--gold); color: var(--bg-adm); }
-        .adm-filter-btn.active-cancelled { background: var(--red); color: white; }
-        .adm-filter-btn.active-expired  { background: var(--ink-faint); color: var(--bg-adm); }
-        .adm-ticket-scroll { flex: 1; overflow-y: auto; background: var(--card-adm); }
-        .adm-ticket-item { width: 100%; text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); background: transparent; border-left: 3px solid transparent; border-right: none; border-top: none; cursor: pointer; transition: background 0.12s, border-left-color 0.12s; display: flex; align-items: flex-start; gap: 10px; min-height: 68px; }
-        .adm-ticket-item:hover { background: var(--surface); }
-        .adm-ticket-item.sel { background: rgba(56, 189, 248, 0.12); border-left-color: #38bdf8; }
-        .adm-ticket-item-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-        .adm-ticket-item-row1 { display: flex; justify-content: space-between; align-items: center; gap: 4px; }
-        .adm-thread { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; min-height: 600px; }
-        .adm-thread-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--line-strong); flex-shrink: 0; }
-        .adm-thread-msgs { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 4px; min-height: 0; }
-        .adm-thread-input { border-top: 1px solid var(--line-strong); padding: 12px 14px; display: flex; gap: 10px; align-items: flex-end; flex-shrink: 0; }
-        .adm-textarea { flex: 1; resize: none; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 9px 13px; font-family: var(--sans); font-size: 0.78rem; color: var(--ink); outline: none; transition: all 0.15s; min-height: 40px; max-height: 120px; }
-        .adm-textarea:focus { border-color: var(--accent); background: var(--card-adm); }
-        .adm-send-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--accent); color: var(--bg-adm); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; }
-        .adm-send-btn:hover { opacity: 0.85; }
-        .adm-send-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .adm-msg-row { display: flex; align-items: flex-end; gap: 6px; margin-bottom: 6px; }
-        .adm-msg-row.admin { justify-content: flex-end; }
-        .adm-msg-col { display: flex; flex-direction: column; max-width: 75%; }
-        .adm-msg-col.admin { align-items: flex-end; }
-        .adm-msg-col.user  { align-items: flex-start; }
-        .adm-bubble { width: fit-content; max-width: 100%; padding: 9px 13px; border-radius: 14px; font-size: 0.78rem; line-height: 1.5; word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap; }
-        .adm-bubble.user  { background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink); border-bottom-left-radius: 4px; }
-        .adm-bubble.admin { background: var(--accent); color: var(--bg-adm); border-bottom-right-radius: 4px; }
-        .adm-msg-time { font-size: 0.55rem; color: var(--ink-faint); margin-top: 3px; padding: 0 2px; }
-        .adm-divider { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
-        .adm-divider-line { flex: 1; height: 1px; background: var(--line-strong); }
-        .adm-divider-label { font-size: 0.58rem; color: var(--ink-faint); font-weight: 500; }
-        .adm-status-btn { display: flex; align-items: center; gap: 5px; font-size: 0.62rem; font-weight: 600; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--line-strong); background: transparent; color: var(--ink-faint); cursor: pointer; transition: all 0.15s; }
-        .adm-status-btn:hover { border-color: var(--accent); color: var(--accent); }
-        .adm-back-btn { display: none; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-dim); cursor: pointer; flex-shrink: 0; transition: all 0.12s; }
-        .adm-back-btn:hover { background: var(--surface-hover); color: var(--ink); }
-
-        /* KYC */
-        .kyc-img-wrap { position: relative; cursor: pointer; border-radius: 10px; overflow: hidden; border: 1px solid var(--line-strong); flex-shrink: 0; }
-        .kyc-thumb { width: 100px; height: 70px; object-fit: cover; display: block; transition: opacity 0.15s; }
-        .kyc-img-wrap:hover .kyc-thumb { opacity: 0.8; }
-        .kyc-img-label { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6); font-size: 0.52rem; font-family: var(--mono); color: white; padding: 3px 6px; text-align: center; }
-
-        @media (max-width: 700px) {
-          .adm-chat-grid { grid-template-columns: 1fr; }
-          .adm-tabs { grid-template-columns: repeat(3, 1fr); }
-          .adm-ticket-list.has-selection { display: none; }
-          .adm-thread.no-selection { display: none; }
-          .adm-back-btn { display: flex; }
+    const savePlan = async () => {
+        if (!editingPlan) return;
+        if (!editingPlan.name || editingPlan.price < 0) {
+            toast.error('Name and valid price required');
+            return;
         }
 
-        .adm-method-card { background: var(--card-adm); border: 1px solid var(--line-strong); border-radius: 14px; padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: center; gap: 14px; position: relative; overflow: hidden; }
-        .adm-method-ico { width: 42px; height: 42px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line-strong); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-        .adm-method-addr { margin-top: 6px; padding: 7px 10px; background: var(--surface); border-radius: 7px; font-family: var(--mono); font-size: 0.6rem; color: var(--ink-dim); word-break: break-all; line-height: 1.6; }
-        .adm-icon-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line-strong); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; transition: all 0.12s; color: var(--ink-dim); flex-shrink: 0; }
-        .adm-icon-btn:hover { background: var(--surface-hover); color: var(--ink); }
-        .adm-icon-btn.danger:hover { background: var(--red-l); border-color: var(--red); color: var(--red); }
-        .adm-toggle { position: relative; width: 36px; height: 20px; cursor: pointer; flex-shrink: 0; }
-        .adm-toggle input { opacity: 0; width: 0; height: 0; }
-        .adm-toggle-track { position: absolute; inset: 0; background: var(--surface-hover); border-radius: 10px; transition: background 0.2s; }
-        .adm-toggle-track::before { content: ''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: var(--ink-faint); border-radius: 50%; transition: transform 0.2s; }
-        .adm-toggle input:checked + .adm-toggle-track { background: var(--green); }
-        .adm-toggle input:checked + .adm-toggle-track::before { transform: translateX(16px); background: var(--bg-adm); }
-        .adm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; backdrop-filter: blur(2px); animation: fadein 0.2s; }
-        @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
-        .adm-drawer { position: fixed; bottom: 0; left: 0; right: 0; max-width: 560px; margin: 0 auto; background: var(--card-adm); border-radius: 22px 22px 0 0; border-top: 1px solid var(--line-strong); padding: 0 22px 44px; z-index: 201; max-height: 92vh; overflow-y: auto; animation: slideup 0.3s cubic-bezier(0.32,0.72,0,1); }
-        @keyframes slideup { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .adm-drawer-handle { width: 36px; height: 4px; background: var(--line-strong); border-radius: 2px; margin: 12px auto 20px; }
-        .adm-drawer-title { font-size: 1rem; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; margin-bottom: 20px; }
-        .adm-field { margin-bottom: 14px; }
-        .adm-field-label { display: block; font-size: 0.58rem; font-weight: 600; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
-        .adm-input { width: 100%; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; padding: 10px 13px; font-family: var(--sans); font-size: 0.8rem; color: var(--ink); outline: none; transition: border-color 0.15s; }
-        .adm-input:focus { border-color: var(--accent); }
-        .adm-input::placeholder { color: var(--ink-faint); }
-        textarea.adm-input { resize: vertical; min-height: 76px; line-height: 1.5; font-family: var(--mono); font-size: 0.7rem; }
-        .adm-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .adm-icon-row { display: flex; gap: 6px; flex-wrap: wrap; }
-        .adm-icon-pick { width: 36px; height: 36px; border-radius: 8px; background: var(--surface); border: 1.5px solid var(--line-strong); display: flex; align-items: center; justify-content: center; font-size: 1rem; cursor: pointer; transition: all 0.12px; }
-        .adm-icon-pick.sel { border-color: var(--accent); background: var(--surface-hover); }
-        .adm-checkbox-row { display: flex; align-items: center; gap: 10px; padding: 11px 13px; background: var(--surface); border: 1.5px solid var(--line-strong); border-radius: 10px; cursor: pointer; }
-        .adm-checkbox-row input { width: 15px; height: 15px; accent-color: var(--accent); cursor: pointer; }
-        .adm-drawer-footer { display: flex; gap: 10px; margin-top: 20px; }
-        .adm-btn-save { flex: 1; background: var(--accent); color: var(--bg-adm); border: none; border-radius: 10px; padding: 12px; font-family: var(--sans); font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
-        .adm-btn-save:hover { opacity: 0.88; }
-        .adm-btn-save:disabled { opacity: 0.4; cursor: not-allowed; }
-        .adm-btn-cancel { background: var(--surface); color: var(--ink-dim); border: 1px solid var(--line-strong); border-radius: 10px; padding: 12px 18px; font-family: var(--sans); font-size: 0.78rem; font-weight: 600; cursor: pointer; }
-        .adm-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--card-adm); border: 1px solid var(--line-strong); color: var(--ink); padding: 9px 18px; border-radius: 20px; z-index: 300; font-size: 0.72rem; font-weight: 500; white-space: nowrap; animation: fadein 0.2s; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-        .adm-toast.ok  { background: var(--green-l); color: var(--green); border-color: var(--green); }
-        .adm-toast.err { background: var(--red-l); color: var(--red); border-color: var(--red); }
-        .adm-add-btn { display: flex; align-items: center; gap: 6px; padding: 9px 16px; background: var(--accent); color: var(--bg-adm); border: none; border-radius: 10px; font-family: var(--sans); font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s; }
-        .adm-add-btn:hover { opacity: 0.88; }
-      `}</style>
+        setSaving(true);
+        try {
+            const res = await fetch('/api/admin/subscriptions/plans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editingPlan),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            toast.success(isCreating ? 'Plan created' : 'Plan updated');
+            setEditingPlan(null);
+            setIsCreating(false);
+            await loadPlans();
+            router.refresh();
+        } catch (err: any) {
+            toast.error(err.message || 'Save failed');
+        } finally {
+            setSaving(false);
+        }
+    };
 
-      <div className="adm">
-        <div className="adm-hdr">
-          <div>
-            <p className="adm-brand">Apex · Markets</p>
-            <h1 className="adm-title">Admin Panel</h1>
-          </div>
-          {unread > 0 && (
-            <div className="adm-bell" onClick={() => setTab('chat')}>
-              <Bell size={16} color="var(--ink-dim)" />
-              <span className="adm-bell-badge">{unread}</span>
-            </div>
-          )}
-        </div>
+    const deletePlan = async (id: string) => {
+        if (!confirm('Delete this plan? If active subscribers exist, it will be deactivated instead.')) return;
+        try {
+            const res = await fetch(`/api/admin/subscriptions/plans?id=${id}`, { method: 'DELETE' });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            toast.success(data.message || 'Plan removed');
+            await loadPlans();
+            router.refresh();
+        } catch (err: any) {
+            toast.error(err.message || 'Delete failed');
+        }
+    };
 
-        <div className="adm-tabs">
-          {tabs.map(({ id, label, icon: Icon, badge, color }) => (
-            <button key={id} className={`adm-tab${tab === id ? ' active' : ''}`} style={tab === id ? { background: color, borderColor: color } : {}} onClick={() => setTab(id as Tab)}>
-              {badge > 0 && <span className="adm-tab-badge">{badge}</span>}
-              <Icon size={18} strokeWidth={1.75} />
-              {label}
-            </button>
-          ))}
-        </div>
+    const toggleActive = async (plan: Plan) => {
+        try {
+            const res = await fetch('/api/admin/subscriptions/plans/toggle', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: plan.id, isActive: !plan.isActive }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error);
+            toast.success(plan.isActive ? 'Plan deactivated' : 'Plan activated');
+            await loadPlans();
+            router.refresh();
+        } catch (err: any) {
+            toast.error(err.message || 'Toggle failed');
+        }
+    };
 
-        {/* ══ Support ══ */}
-        {tab === 'chat' && (
-          <div className="adm-chat-grid">
-            <div className={`adm-ticket-list${selectedId ? ' has-selection' : ''}`}>
-              <div className="adm-ticket-head">
-                <span className="adm-ticket-head-title">Conversations</span>
-                <div className="adm-filter-toggle">
-                  {(['OPEN', 'CLOSED'] as const).map(s => (
-                    <button key={s} className={`adm-filter-btn${statusFilter === s ? (s === 'OPEN' ? ' active-open' : ' active-closed') : ''}`} onClick={() => { setFilter(s); setSelectedId(null); }}>
-                      {s === 'OPEN' ? 'Open' : 'Closed'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div className="adm-ticket-scroll">
-                {tixErr && <p style={{ padding: '12px 16px', fontSize: '0.65rem', color: 'var(--red)' }}>{tixErr}</p>}
-                {loadingTix ? (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px', gap: 8, color: 'var(--ink-faint)' }}><Loader2 size={16} className="adm-spin" /> Loading…</div>
-                ) : tickets.length === 0 ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '40px 20px', gap: 8, color: 'var(--ink-faint)' }}><MessageCircle size={24} style={{ opacity: 0.3 }} /><p style={{ fontSize: '0.72rem' }}>No {statusFilter.toLowerCase()} tickets</p></div>
-                ) : tickets.map(t => {
-                  const last = t.messages?.[t.messages.length - 1];
-                  const isSelected = selectedId === t.id;
-                  return (
-                    <button key={t.id} className={`adm-ticket-item${isSelected ? ' sel' : ''}`} onClick={() => handleSelect(t.id)}>
-                      <div className="adm-avatar" style={{ width: 34, height: 34, fontSize: '0.62rem', flexShrink: 0 }}>{initials(t.user?.name, t.user?.email)}</div>
-                      <div className="adm-ticket-item-body">
-                        <div className="adm-ticket-item-row1">
-                          <p style={{ fontSize: '0.73rem', fontWeight: 700, color: isSelected ? '#38bdf8' : 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{t.user?.name || t.user?.email || 'Unknown'}</p>
-                          <span style={{ fontSize: '0.55rem', color: 'var(--ink-faint)', flexShrink: 0, marginLeft: 6 }}>{fmtTime(t.updatedAt)}</span>
-                        </div>
-                        <p style={{ fontSize: '0.63rem', color: 'var(--ink-dim)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.subject}</p>
-                        {last && <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{last.sender === 'ADMIN' ? 'You: ' : ''}{last.body}</p>}
-                      </div>
-                      <Circle size={8} style={{ fill: t.status === 'OPEN' ? 'var(--accent)' : 'var(--line-strong)', color: t.status === 'OPEN' ? 'var(--accent)' : 'var(--line-strong)', flexShrink: 0, marginTop: 4 }} />
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+    const startCreate = () => {
+        setIsCreating(true);
+        setEditingPlan({ ...emptyPlan, id: '', createdAt: '' } as Plan);
+        setFeatureInput('');
+    };
 
-            <div className={`adm-thread${!selectedTicket ? ' no-selection' : ''}`}>
-              {!selectedTicket ? (
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '40px', color: 'var(--ink-faint)' }}>
-                  <MessageCircle size={28} style={{ opacity: 0.25 }} />
-                  <p style={{ fontSize: '0.75rem', fontWeight: 500 }}>Select a conversation</p>
-                </div>
-              ) : (
-                <>
-                  <div className="adm-thread-head">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <button className="adm-back-btn" onClick={handleBack}><ChevronLeft size={16} /></button>
-                      <div className="adm-avatar" style={{ width: 34, height: 34, fontSize: '0.62rem' }}>{initials(selectedTicket.user?.name, selectedTicket.user?.email)}</div>
-                      <div>
-                        <p style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--ink)' }}>{selectedTicket.user?.name || selectedTicket.user?.email || 'Unknown'}</p>
-                        <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)' }}>{selectedTicket.user?.email}</p>
-                      </div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span className={`adm-status ${selectedTicket.status === 'OPEN' ? 'ok' : 'grey'}`}>{selectedTicket.status === 'OPEN' ? '● Open' : 'Closed'}</span>
-                      {selectedTicket.status === 'OPEN'
-                        ? <button className="adm-status-btn" onClick={() => handleStatus('CLOSED')}><CheckCircle2 size={12} /> Close</button>
-                        : <button className="adm-status-btn" onClick={() => handleStatus('OPEN')}><RefreshCw size={12} /> Reopen</button>}
-                    </div>
-                  </div>
-                  <div className="adm-thread-msgs">
-                    {detailLoading && <div style={{ display: 'flex', justifyContent: 'center', padding: '20px' }}><Loader2 size={16} className="adm-spin" style={{ color: 'var(--ink-faint)' }} /></div>}
-                    {detailErr && <p style={{ fontSize: '0.65rem', color: 'var(--red)', textAlign: 'center' }}>{detailErr}</p>}
-                    {grouped.map(({ date, messages: dms }) => (
-                      <div key={date}>
-                        <div className="adm-divider"><div className="adm-divider-line" /><span className="adm-divider-label">{fmtDate(dms[0].createdAt)}</span><div className="adm-divider-line" /></div>
-                        {dms.map(msg => {
-                          const isAdm = msg.sender === 'ADMIN';
-                          return (
-                            <div key={msg.id} className={`adm-msg-row${isAdm ? ' admin' : ''}`}>
-                              {!isAdm && <div className="adm-avatar" style={{ width: 26, height: 26, fontSize: '0.52rem', flexShrink: 0 }}>{initials(selectedTicket.user?.name, selectedTicket.user?.email)}</div>}
-                              <div className={`adm-msg-col ${isAdm ? 'admin' : 'user'}`}>
-                                <div className={`adm-bubble ${isAdm ? 'admin' : 'user'}`}>{msg.body}</div>
-                                <span className="adm-msg-time">{isAdm ? 'You · ' : ''}{fmtTime(msg.createdAt)}</span>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
+    const startEdit = (plan: Plan) => {
+        setIsCreating(false);
+        setEditingPlan({ ...plan });
+        setFeatureInput('');
+    };
+
+    const addFeature = () => {
+        if (!featureInput.trim() || !editingPlan) return;
+        setEditingPlan({
+            ...editingPlan,
+            features: [...editingPlan.features, featureInput.trim()],
+        });
+        setFeatureInput('');
+    };
+
+    const removeFeature = (idx: number) => {
+        if (!editingPlan) return;
+        setEditingPlan({
+            ...editingPlan,
+            features: editingPlan.features.filter((_, i) => i !== idx),
+        });
+    };
+
+    const updateField = <K extends keyof Plan>(field: K, value: Plan[K]) => {
+        if (!editingPlan) return;
+        setEditingPlan({ ...editingPlan, [field]: value });
+    };
+
+    // ── Render ────────────────────────────────────────────────────────────────
+
+    if (loading) {
+        return (
+            <div style={styles.page}>
+                <div style={styles.inner}>
+                    <div style={{ ...styles.skeletonBox, width: 200, height: 28 }} />
+                    {[1, 2, 3].map(i => (
+                        <div key={i} style={{ ...styles.card, height: 100, ...styles.skeletonBox, marginTop: 12 }} />
                     ))}
-                    <div ref={bottomRef} />
-                  </div>
-                  <div className="adm-thread-input">
-                    <textarea ref={textareaRef} value={reply} onChange={handleInputChange} onKeyDown={handleKeyDown} rows={1} placeholder="Reply… (Enter to send)" className="adm-textarea" />
-                    <button className="adm-send-btn" disabled={!reply.trim() || replying} onClick={handleReply}>
-                      {replying ? <Loader2 size={14} className="adm-spin" /> : <Send size={14} />}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ══ Users ══ */}
-        {tab === 'users' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-              <p style={{ fontSize: '0.72rem', color: 'var(--ink-faint)' }}>{users.length} total users</p>
-              <div className="adm-search-wrap" style={{ width: 200 }}><Search size={13} /><input className="adm-search" placeholder="Search…" value={search} onChange={e => setSearch(e.target.value)} /></div>
-            </div>
-            <div style={{ background: 'var(--card-adm)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
-              {loadingUsers ? (
-                <div style={{ display: 'flex', justifyContent: 'center', padding: 32, gap: 8, color: 'var(--ink-faint)' }}><Loader2 size={16} className="adm-spin" /> Loading…</div>
-              ) : users.filter(u => u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
-                <p style={{ padding: '32px', textAlign: 'center', fontSize: '0.72rem', color: 'var(--ink-faint)' }}>No users found</p>
-              ) : users.filter(u => u.email?.toLowerCase().includes(search.toLowerCase()) || u.name?.toLowerCase().includes(search.toLowerCase())).map((u: any) => (
-                <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 18px', borderBottom: '1px solid var(--line-strong)' }}>
-                  <div className="adm-avatar">{u.name ? u.name[0].toUpperCase() : 'U'}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.name || 'Unnamed'}</p>
-                    <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</p>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                    <p style={{ fontFamily: 'var(--mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink)' }}>${(u.portfolioBalance || 0).toLocaleString()}</p>
-                    <Link href={`/dashboard/admin/users/${u.id}`} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', background: 'var(--surface)', color: 'var(--ink-dim)', borderRadius: 6, fontSize: '0.6rem', fontWeight: 600, textDecoration: 'none', border: '1px solid var(--line-strong)' }}><Edit size={10} /> Edit</Link>
-                  </div>
                 </div>
-              ))}
             </div>
-          </div>
-        )}
+        );
+    }
 
-        {/* ══ Deposits ══ */}
-        {tab === 'deposits' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {loadingDep ? (
-              <div className="adm-empty"><Loader2 size={18} className="adm-spin" style={{ color: 'var(--ink-faint)' }} /></div>
-            ) : pendingDeps.length === 0 && deposits.filter(d => d.status !== 'PENDING').length === 0 ? (
-              <div className="adm-empty"><TrendingUp size={28} style={{ opacity: 0.25 }} /><p>No deposit submissions yet</p></div>
-            ) : (
-              <>
-                {pendingDeps.length > 0 && (
-                  <div>
-                    <div className="adm-sec-label"><Clock size={13} style={{ color: 'var(--gold)' }} /><span>Awaiting Confirmation</span><span className="adm-status pending">{pendingDeps.length}</span></div>
-                    {pendingDeps.map(d => (
-                      <div key={d.id} className="adm-card">
-                        <div className="adm-card-stripe" style={{ background: 'var(--gold)' }} />
-                        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div className="adm-avatar">{(d.user?.name || d.user?.email || '?')[0].toUpperCase()}</div>
-                            <div>
-                              <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)' }}>{d.user?.name || 'Unknown'}</p>
-                              <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)' }}>{d.user?.email}</p>
-                              {d.methodLabel && <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', marginTop: 2 }}>via {d.methodLabel}</p>}
-                              <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', marginTop: 2 }}>{new Date(d.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                            </div>
-                          </div>
-                          <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                            <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ink)' }}>${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                            <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)' }}>{d.currency || 'USD'}</p>
-                          </div>
-                        </div>
-                        {d.note && <p style={{ marginTop: 10, padding: '7px 12px', background: 'var(--gold-l)', borderRadius: 8, fontSize: '0.65rem', color: 'var(--gold)', fontStyle: 'italic' }}>"{d.note}"</p>}
-                        <DepositActions id={d.id} onDone={fetchDeposits} />
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {deposits.filter(d => d.status !== 'PENDING').length > 0 && (
-                  <div>
-                    <div className="adm-sec-label"><span>Processed</span></div>
-                    <div style={{ background: 'var(--card-adm)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
-                      {deposits.filter(d => d.status !== 'PENDING').slice(0, 20).map(d => (
-                        <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line-strong)' }}>
-                          <div className={`adm-avatar${d.status === 'COMPLETED' ? ' green' : ''}`} style={{ width: 32, height: 32, fontSize: '0.6rem' }}>{d.status === 'COMPLETED' ? <CheckCircle size={14} /> : <XCircle size={14} />}</div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink)' }}>{d.user?.name}</p>
-                            <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)' }}>{new Date(d.updatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                          </div>
-                          <div style={{ textAlign: 'right' }}>
-                            <p style={{ fontFamily: 'var(--mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink)' }}>${d.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                            <span className={`adm-status ${d.status === 'COMPLETED' ? 'ok' : 'bad'}`}>{d.status}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* ══ Withdrawals ══ */}
-        {tab === 'withdrawals' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            {pendingV.length > 0 && (
-              <div>
-                <div className="adm-sec-label"><ShieldAlert size={13} style={{ color: 'var(--red)' }} /><span>Awaiting Verification</span><span className="adm-status bad">{pendingV.length}</span></div>
-                {pendingV.map(w => (
-                  <div key={w.id} className="adm-card">
-                    <div className="adm-card-stripe" style={{ background: 'var(--red)' }} />
-                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                        <div className="adm-avatar">{(w.user?.name || '?')[0].toUpperCase()}</div>
-                        <div>
-                          <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)' }}>{w.user?.name || 'Unknown'}</p>
-                          <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)' }}>{w.user?.email}</p>
-                          <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', marginTop: 2 }}>{new Date(w.createdAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                        </div>
-                      </div>
-                      <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ink)', flexShrink: 0 }}>${w.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                    </div>
-                    <WithdrawalDetails note={w.note} />
-                    {w.adminNote && <p style={{ marginTop: 8, fontSize: '0.65rem', color: 'var(--ink-faint)', fontStyle: 'italic' }}>Admin note: "{w.adminNote}"</p>}
-                    <WithdrawalActions id={w.id} onDone={fetchWithdrawals} />
-                  </div>
-                ))}
-              </div>
-            )}
-            <div>
-              <div className="adm-sec-label"><Clock size={13} style={{ color: 'var(--gold)' }} /><span>Pending</span>{pending.length > 0 && <span className="adm-status pending">{pending.length}</span>}</div>
-              {loadingWd ? (
-                <div className="adm-empty"><Loader2 size={18} className="adm-spin" style={{ color: 'var(--ink-faint)' }} /></div>
-              ) : pending.length === 0 ? (
-                <div className="adm-empty"><InboxIcon size={24} style={{ opacity: 0.25 }} /><p>No pending withdrawals</p></div>
-              ) : pending.map(w => (
-                <div key={w.id} className="adm-card">
-                  <div className="adm-card-stripe" style={{ background: 'var(--gold)' }} />
-                  <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div className="adm-avatar">{(w.user?.name || '?')[0].toUpperCase()}</div>
-                      <div>
-                        <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)' }}>{w.user?.name || 'Unknown'}</p>
-                        <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)' }}>{w.user?.email}</p>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--ink)', flexShrink: 0 }}>${w.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                  </div>
-                  <WithdrawalDetails note={w.note} />
-                  <WithdrawalActions id={w.id} onDone={fetchWithdrawals} />
-                </div>
-              ))}
-            </div>
-            {processed.length > 0 && (
-              <div>
-                <div className="adm-sec-label"><span>Recently Processed</span></div>
-                <div style={{ background: 'var(--card-adm)', border: '1px solid var(--line-strong)', borderRadius: 14, overflow: 'hidden' }}>
-                  {processed.slice(0, 20).map(w => (
-                    <div key={w.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: '1px solid var(--line-strong)' }}>
-                      <div className="adm-avatar" style={{ width: 32, height: 32, fontSize: '0.6rem', background: w.status === 'APPROVED' ? 'var(--green)' : 'var(--red)' }}>{w.status === 'APPROVED' ? <CheckCircle size={14} /> : <XCircle size={14} />}</div>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink)' }}>{w.user?.name}</p>
-                        <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)' }}>{new Date(w.updatedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                        {w.adminNote && <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', fontStyle: 'italic' }}>"{w.adminNote}"</p>}
-                      </div>
-                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <p style={{ fontFamily: 'var(--mono)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink)' }}>${w.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                        <span className={`adm-status ${w.status === 'APPROVED' ? 'ok' : 'bad'}`}>{w.status}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ══ KYC ══ */}
-        {tab === 'kyc' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-              <p style={{ fontSize: '0.72rem', color: 'var(--ink-faint)' }}>
-                {kycList.filter(k => k.status === 'PENDING').length} pending review
-              </p>
-              <div className="adm-filter-toggle">
-                {(['PENDING', 'APPROVED', 'REJECTED'] as const).map(s => (
-                  <button
-                    key={s}
-                    className={`adm-filter-btn${kycFilter === s ? ` active-${s.toLowerCase()}` : ''}`}
-                    onClick={() => setKycFilter(s)}
-                  >
-                    {s === 'PENDING' ? 'Pending' : s === 'APPROVED' ? 'Approved' : 'Rejected'}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {loadingKyc ? (
-              <div className="adm-empty"><Loader2 size={18} className="adm-spin" style={{ color: 'var(--ink-faint)' }} /></div>
-            ) : filteredKyc.length === 0 ? (
-              <div className="adm-empty">
-                <ShieldCheck size={28} style={{ opacity: 0.25 }} />
-                <p>No {kycFilter.toLowerCase()} submissions</p>
-              </div>
-            ) : filteredKyc.map(k => (
-              <div key={k.id} className="adm-card">
-                <div className="adm-card-stripe" style={{
-                  background: k.status === 'PENDING' ? 'var(--gold)'
-                    : k.status === 'APPROVED' ? 'var(--green)'
-                    : 'var(--red)'
-                }} />
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 14 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div className="adm-avatar">{(k.user?.name || k.user?.email || '?')[0].toUpperCase()}</div>
-                    <div>
-                      <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)' }}>{k.user?.name || 'Unknown'}</p>
-                      <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)' }}>{k.user?.email}</p>
-                      <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', marginTop: 2 }}>
-                        {k.documentType === 'PASSPORT' ? 'Passport'
-                          : k.documentType === 'NATIONAL_ID' ? 'National ID'
-                          : "Driver's License"}
-                        {' · '}
-                        {new Date(k.submittedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </p>
-                    </div>
-                  </div>
-                  <span className={`adm-status ${k.status === 'PENDING' ? 'pending' : k.status === 'APPROVED' ? 'ok' : 'bad'}`}>
-                    {k.status}
-                  </span>
-                </div>
-                <KYCActions submission={k} onDone={fetchKyc} />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ══ Subscriptions ══ */}
-        {tab === 'subscriptions' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-              <p style={{ fontSize: '0.72rem', color: 'var(--ink-faint)' }}>
-                {subscriptions.filter(s => s.status === 'ACTIVE').length} active subscriptions
-              </p>
-              <div className="adm-filter-toggle">
-                {(['ACTIVE', 'PAUSED', 'CANCELLED', 'EXPIRED'] as const).map(s => (
-                  <button
-                    key={s}
-                    className={`adm-filter-btn${subFilter === s ? ` active-${s.toLowerCase()}` : ''}`}
-                    onClick={() => setSubFilter(s)}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {loadingSub ? (
-              <div className="adm-empty"><Loader2 size={18} className="adm-spin" style={{ color: 'var(--ink-faint)' }} /></div>
-            ) : filteredSubs.length === 0 ? (
-              <div className="adm-empty">
-                <CreditCard size={28} style={{ opacity: 0.25 }} />
-                <p>No {subFilter.toLowerCase()} subscriptions</p>
-              </div>
-            ) : filteredSubs.map(s => (
-              <div key={s.id} className="adm-card">
-                <div className="adm-card-stripe" style={{
-                  background: s.status === 'ACTIVE' ? 'var(--green)'
-                    : s.status === 'PAUSED' ? 'var(--gold)'
-                    : s.status === 'CANCELLED' ? 'var(--red)'
-                    : 'var(--ink-faint)'
-                }} />
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 8 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div className="adm-avatar">{(s.user?.name || s.user?.email || '?')[0].toUpperCase()}</div>
-                    <div>
-                      <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink)' }}>{s.user?.name || 'Unknown'}</p>
-                      <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)' }}>{s.user?.email}</p>
-                      <p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', marginTop: 2 }}>
-                        {s.plan}
-                        {' · '}
-                        {new Date(s.renewalDate).toLocaleString([], { month: 'short', day: 'numeric', year: '2-digit' })}
-                      </p>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <p style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--ink)' }}>${s.amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}</p>
-                    <span className={`adm-status ${s.status === 'ACTIVE' ? 'ok' : s.status === 'PAUSED' ? 'pending' : 'bad'}`}>
-                      {s.status}
-                    </span>
-                  </div>
-                </div>
-                <Link href={`/dashboard/admin/subscriptions/${s.id}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 12px', background: 'var(--surface)', color: 'var(--ink-dim)', borderRadius: 8, fontSize: '0.65rem', fontWeight: 600, textDecoration: 'none', border: '1px solid var(--line-strong)', marginTop: 10 }}><Eye size={11} /> View Details</Link>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* ══ Settings ══ */}
-        {tab === 'settings' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <p style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--ink)' }}>Deposit Methods</p>
-                <p style={{ fontSize: '0.65rem', color: 'var(--ink-faint)', marginTop: 2 }}>Addresses shown to users on the deposit sheet</p>
-              </div>
-              <button className="adm-add-btn" onClick={openNew}><Plus size={12} /> Add Method</button>
-            </div>
-            {loadingM ? (
-              <div className="adm-empty"><Loader2 size={18} className="adm-spin" style={{ color: 'var(--ink-faint)' }} /></div>
-            ) : methods.length === 0 ? (
-              <div className="adm-empty" style={{ border: '1.5px dashed var(--line-strong)' }}><Settings size={24} style={{ opacity: 0.2 }} /><p>No deposit methods yet — add one above</p></div>
-            ) : methods.map(m => (
-              <div key={m.id} className="adm-method-card">
-                <div className="adm-card-stripe" style={{ background: m.isActive ? 'var(--accent)' : 'var(--line-strong)' }} />
-                <div className="adm-method-ico">{m.icon}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <p style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)' }}>{m.label}</p>
-                    {m.network && <span className="adm-status grey" style={{ fontSize: '0.48rem' }}>{m.network}</span>}
-                    <span className={`adm-status ${m.isActive ? 'ok' : 'grey'}`} style={{ fontSize: '0.48rem' }}>{m.isActive ? 'Active' : 'Inactive'}</span>
-                  </div>
-                  <div className="adm-method-addr">{m.address}</div>
-                  {m.note && <p style={{ marginTop: 5, fontSize: '0.6rem', color: 'var(--gold)', background: 'var(--gold-l)', padding: '4px 8px', borderRadius: 6 }}>⚠️ {m.note}</p>}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                  <label className="adm-toggle" title={m.isActive ? 'Deactivate' : 'Activate'}><input type="checkbox" checked={m.isActive} onChange={() => toggleActive(m)} /><span className="adm-toggle-track" /></label>
-                  <button className="adm-icon-btn" onClick={() => openEdit(m)}><Edit size={13} /></button>
-                  <button className="adm-icon-btn danger" onClick={() => removeMethod(m.id)} disabled={deleting === m.id}>{deleting === m.id ? <Loader2 size={13} className="adm-spin" /> : <Trash2 size={13} />}</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Drawer */}
-      {showForm && (
+    return (
         <>
-          <div className="adm-overlay" onClick={() => setShowForm(false)} />
-          <div className="adm-drawer">
-            <div className="adm-drawer-handle" />
-            <p className="adm-drawer-title">{editId ? 'Edit Method' : 'New Deposit Method'}</p>
-            <div className="adm-field">
-              <label className="adm-field-label">Icon</label>
-              <div className="adm-icon-row">
-                {ICON_PRESETS.map(ic => (<div key={ic} className={`adm-icon-pick${form.icon === ic ? ' sel' : ''}`} onClick={() => f('icon', ic)}>{ic}</div>))}
-                <input className="adm-input" style={{ width: 72, padding: '6px 10px', textAlign: 'center' }} value={form.icon} maxLength={4} onChange={e => f('icon', e.target.value)} placeholder="Custom" />
-              </div>
-            </div>
-            <div className="adm-field"><label className="adm-field-label">Label *</label><input className="adm-input" value={form.label} onChange={e => f('label', e.target.value)} placeholder="e.g. Bitcoin (BTC)" /></div>
-            <div className="adm-field"><label className="adm-field-label">Address / Account Details *</label><textarea className="adm-input" value={form.address} onChange={e => f('address', e.target.value)} placeholder="Wallet address, IBAN, or payment details" /></div>
-            <div className="adm-row-2">
-              <div className="adm-field"><label className="adm-field-label">Network (optional)</label><input className="adm-input" value={form.network} onChange={e => f('network', e.target.value)} placeholder="e.g. ERC-20" /></div>
-              <div className="adm-field"><label className="adm-field-label">Display Order</label><input className="adm-input" type="number" value={form.sortOrder} onChange={e => f('sortOrder', Number(e.target.value))} min={0} /></div>
-            </div>
-            <div className="adm-field"><label className="adm-field-label">Warning Note (optional)</label><input className="adm-input" value={form.note} onChange={e => f('note', e.target.value)} placeholder="e.g. Min deposit $50" /></div>
-            <div className="adm-field">
-              <label className="adm-checkbox-row" onClick={() => f('isActive', !form.isActive)}>
-                <input type="checkbox" checked={form.isActive} readOnly />
-                <div><p style={{ fontSize: '0.78rem', fontWeight: 500, color: 'var(--ink)' }}>Active</p><p style={{ fontSize: '0.6rem', color: 'var(--ink-faint)', marginTop: 1 }}>Show this method to users on the deposit sheet</p></div>
-              </label>
-            </div>
-            <div className="adm-drawer-footer">
-              <button className="adm-btn-cancel" onClick={() => setShowForm(false)}>Cancel</button>
-              <button className="adm-btn-save" disabled={saving} onClick={saveMethods}>{saving ? 'Saving…' : editId ? 'Save Changes' : 'Create Method'}</button>
-            </div>
-          </div>
-        </>
-      )}
+            <Toaster position="top-center" />
 
-      {toast && <div className={`adm-toast ${toast.ok ? 'ok' : 'err'}`}>{toast.ok ? '✓' : '✕'} {toast.msg}</div>}
-    </>
-  );
+            <div style={styles.page}>
+                <div style={styles.inner}>
+
+                    {/* Header */}
+                    <div style={styles.header}>
+                        <div style={styles.headerLeft}>
+                            <Link href="/dashboard/admin" style={styles.backLink}>
+                                <ArrowLeft size={14} />
+                                <span>Admin</span>
+                            </Link>
+                            <h1 style={styles.pageTitle}>Subscription Plans</h1>
+                            <p style={styles.pageSub}>
+                                {plans.filter(p => p.isActive).length} active · {plans.length} total
+                            </p>
+                        </div>
+                        <button style={styles.createBtn} onClick={startCreate}>
+                            <Plus size={14} />
+                            New Plan
+                        </button>
+                    </div>
+
+                    {/* Plans List */}
+                    {plans.map(plan => {
+                        const Icon = tierIcon(plan.tier);
+                        const tColor = tierColor(plan.tier);
+
+                        return (
+                            <div key={plan.id} style={{
+                                ...styles.card,
+                                opacity: plan.isActive ? 1 : 0.6,
+                                borderColor: plan.isActive ? 'var(--line-strong)' : 'var(--line)',
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14 }}>
+                                    <div style={{ ...styles.planIcon, color: tColor }}>
+                                        <Icon size={20} />
+                                    </div>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                            <span style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink)' }}>
+                                                {plan.name}
+                                            </span>
+                                            <span style={{
+                                                fontFamily: 'var(--mono)', fontSize: '0.58rem',
+                                                textTransform: 'uppercase', letterSpacing: '0.08em',
+                                                color: 'var(--ink-faint)',
+                                            }}>
+                                                {plan.tier}
+                                            </span>
+                                            {plan.highlight && (
+                                                <span style={{
+                                                    background: 'var(--accent-l)', color: 'var(--accent)',
+                                                    border: '1px solid var(--accent)', opacity: 0.9,
+                                                    borderRadius: 6, padding: '1px 8px',
+                                                    fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700,
+                                                }}>
+                                                    {plan.highlight}
+                                                </span>
+                                            )}
+                                            {!plan.isActive && (
+                                                <span style={{
+                                                    background: 'var(--red-l)', color: 'var(--red)',
+                                                    border: '1px solid var(--red)', opacity: 0.85,
+                                                    borderRadius: 6, padding: '1px 8px',
+                                                    fontFamily: 'var(--mono)', fontSize: '0.55rem', fontWeight: 700,
+                                                }}>
+                                                    Inactive
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <div style={{
+                                            display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                                            gap: 8, marginTop: 10,
+                                        }}>
+                                            <div>
+                                                <span style={styles.metricLabel}>Price</span>
+                                                <span style={styles.metricValue}>{fmtUsd(plan.price)}</span>
+                                            </div>
+                                            <div>
+                                                <span style={styles.metricLabel}>Min. investment</span>
+                                                <span style={styles.metricValue}>{fmtUsd(plan.minInvestment)}</span>
+                                            </div>
+                                            <div>
+                                                <span style={styles.metricLabel}>Weekly return</span>
+                                                <span style={{ ...styles.metricValue, color: 'var(--green)' }}>
+                                                    +{plan.weeklyReturnRate.toFixed(2)}%
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span style={styles.metricLabel}>Interval</span>
+                                                <span style={styles.metricValue}>{plan.interval}</span>
+                                            </div>
+                                        </div>
+
+                                        <p style={{ fontSize: '0.78rem', color: 'var(--ink-dim)', marginTop: 8, lineHeight: 1.5 }}>
+                                            {plan.description}
+                                        </p>
+
+                                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+                                            {plan.features.map((f, i) => (
+                                                <span key={i} style={{
+                                                    fontFamily: 'var(--mono)', fontSize: '0.6rem',
+                                                    color: 'var(--ink-dim)', background: 'var(--surface)',
+                                                    border: '1px solid var(--line-strong)', borderRadius: 6,
+                                                    padding: '3px 8px',
+                                                }}>
+                                                    {f}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0 }}>
+                                        <button style={styles.iconBtn} onClick={() => startEdit(plan)} title="Edit">
+                                            <Edit2 size={14} />
+                                        </button>
+                                        <button style={styles.iconBtn} onClick={() => toggleActive(plan)} title={plan.isActive ? 'Deactivate' : 'Activate'}>
+                                            {plan.isActive ? <XCircle size={14} color="var(--red)" /> : <CheckCircle2 size={14} color="var(--green)" />}
+                                        </button>
+                                        <button style={styles.iconBtn} onClick={() => deletePlan(plan.id)} title="Delete">
+                                            <Trash2 size={14} color="var(--red)" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    <div style={{ height: 40 }} />
+                </div>
+            </div>
+
+            {/* Edit/Create Modal */}
+            {editingPlan && (
+                <div className="modal-overlay" onClick={() => { setEditingPlan(null); setIsCreating(false); }}>
+                    <div className="modal-card" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">{isCreating ? 'New Plan' : 'Edit Plan'}</h3>
+                            <button className="modal-close" onClick={() => { setEditingPlan(null); setIsCreating(false); }}>
+                                <X size={16} />
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                            <div style={styles.fieldRow}>
+                                <label style={styles.label}>Name</label>
+                                <input
+                                    style={styles.input}
+                                    value={editingPlan.name}
+                                    onChange={e => updateField('name', e.target.value)}
+                                    placeholder="e.g. Growth"
+                                />
+                            </div>
+
+                            <div style={styles.fieldRow}>
+                                <label style={styles.label}>Tier</label>
+                                <select
+                                    style={styles.input}
+                                    value={editingPlan.tier}
+                                    onChange={e => updateField('tier', e.target.value)}
+                                >
+                                    <option value="basic">Basic</option>
+                                    <option value="advanced">Advanced</option>
+                                    <option value="platinum">Platinum</option>
+                                </select>
+                            </div>
+
+                            <div style={styles.fieldRow}>
+                                <label style={styles.label}>Description</label>
+                                <input
+                                    style={styles.input}
+                                    value={editingPlan.description}
+                                    onChange={e => updateField('description', e.target.value)}
+                                    placeholder="What this plan offers..."
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                                <div style={styles.fieldRow}>
+                                    <label style={styles.label}>Price ($)</label>
+                                    <input
+                                        style={styles.input}
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={editingPlan.price}
+                                        onChange={e => updateField('price', parseFloat(e.target.value) || 0)}
+                                    />
+                                </div>
+                                <div style={styles.fieldRow}>
+                                    <label style={styles.label}>Min Investment ($)</label>
+                                    <input
+                                        style={styles.input}
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={editingPlan.minInvestment}
+                                        onChange={e => updateField('minInvestment', parseFloat(e.target.value) || 0)}
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                                <div style={styles.fieldRow}>
+                                    <label style={styles.label}>Weekly Return (%)</label>
+                                    <input
+                                        style={styles.input}
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        value={editingPlan.weeklyReturnRate}
+                                        onChange={e => updateField('weeklyReturnRate', parseFloat(e.target.value) || 0)}
+                                    />
+                                </div>
+                                <div style={styles.fieldRow}>
+                                    <label style={styles.label}>Interval</label>
+                                    <select
+                                        style={styles.input}
+                                        value={editingPlan.interval}
+                                        onChange={e => updateField('interval', e.target.value)}
+                                    >
+                                        <option value="DAILY">Daily</option>
+                                        <option value="WEEKLY">Weekly</option>
+                                        <option value="MONTHLY">Monthly</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style={styles.fieldRow}>
+                                <label style={styles.label}>Highlight Badge (optional)</label>
+                                <input
+                                    style={styles.input}
+                                    value={editingPlan.highlight || ''}
+                                    onChange={e => updateField('highlight', e.target.value || null)}
+                                    placeholder="e.g. Most Popular"
+                                />
+                            </div>
+
+                            <div style={styles.fieldRow}>
+                                <label style={styles.label}>Features</label>
+                                <div style={{ display: 'flex', gap: 6 }}>
+                                    <input
+                                        style={{ ...styles.input, flex: 1 }}
+                                        value={featureInput}
+                                        onChange={e => setFeatureInput(e.target.value)}
+                                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addFeature())}
+                                        placeholder="Add feature..."
+                                    />
+                                    <button style={styles.addFeatureBtn} onClick={addFeature}>
+                                        <Plus size={14} />
+                                    </button>
+                                </div>
+                                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                                    {editingPlan.features.map((f, i) => (
+                                        <span key={i} style={{
+                                            display: 'flex', alignItems: 'center', gap: 4,
+                                            fontFamily: 'var(--mono)', fontSize: '0.62rem',
+                                            color: 'var(--ink-dim)', background: 'var(--surface)',
+                                            border: '1px solid var(--line-strong)', borderRadius: 6,
+                                            padding: '3px 8px',
+                                        }}>
+                                            {f}
+                                            <button onClick={() => removeFeature(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--red)', display: 'flex' }}>
+                                                <X size={10} />
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                                <input
+                                    type="checkbox"
+                                    id="isActive"
+                                    checked={editingPlan.isActive}
+                                    onChange={e => updateField('isActive', e.target.checked)}
+                                    style={{ accentColor: 'var(--accent)', width: 16, height: 16 }}
+                                />
+                                <label htmlFor="isActive" style={{ fontSize: '0.82rem', color: 'var(--ink-dim)', cursor: 'pointer' }}>
+                                    Active (visible to users)
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="modal-actions" style={{ marginTop: 20 }}>
+                            <button className="btn-secondary" onClick={() => { setEditingPlan(null); setIsCreating(false); }}>
+                                Cancel
+                            </button>
+                            <button className="btn-primary" onClick={savePlan} disabled={saving}>
+                                {saving ? <Loader2 className="spin" size={14} /> : <><Save size={14} /> Save</>}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            <style>{`
+                @keyframes spin { to { transform: rotate(360deg); } }
+                @keyframes shimmer { to { background-position: -200% 0; } }
+
+                .modal-overlay {
+                    position: fixed; inset: 0;
+                    background: rgba(0, 0, 0, 0.55);
+                    display: flex; justify-content: center; align-items: center;
+                    z-index: 100; padding: 16px;
+                    backdrop-filter: blur(4px);
+                }
+                .modal-card {
+                    background: var(--card);
+                    border: 1px solid var(--line-strong);
+                    border-radius: 14px; padding: 24px;
+                    max-width: 480px; width: 100%;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    max-height: 90vh; overflow-y: auto;
+                }
+                .modal-header {
+                    display: flex; align-items: center; gap: 10px;
+                    margin-bottom: 18px;
+                }
+                .modal-title {
+                    font-size: 1.05rem; font-weight: 600; flex: 1;
+                    color: var(--ink); font-family: var(--sans);
+                }
+                .modal-close {
+                    background: none; border: none; cursor: pointer;
+                    color: var(--ink-faint); padding: 4px; border-radius: 6px;
+                    transition: 0.15s;
+                }
+                .modal-close:hover { color: var(--ink-dim); background: var(--surface); }
+                .modal-actions {
+                    display: flex; gap: 10px; margin-top: 16px;
+                }
+                .modal-actions button {
+                    flex: 1; padding: 10px 14px; border-radius: 10px;
+                    border: none; font-weight: 600; cursor: pointer;
+                    transition: 0.15s; font-size: 0.82rem;
+                    display: flex; justify-content: center; align-items: center; gap: 5px;
+                    font-family: var(--sans);
+                }
+                .btn-secondary {
+                    background: var(--surface); color: var(--ink-dim);
+                    border: 1px solid var(--line-strong);
+                }
+                .btn-secondary:hover { background: var(--surface-hover); color: var(--ink); }
+                .btn-primary {
+                    background: var(--accent); color: var(--bg);
+                }
+                .btn-primary:hover { opacity: 0.9; }
+                .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+            `}</style>
+        </>
+    );
 }
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const styles: Record<string, React.CSSProperties> = {
+    page: {
+        minHeight: '100vh',
+        background: 'var(--bg)',
+        padding: '20px 16px',
+    },
+    inner: {
+        maxWidth: 900,
+        margin: '0 auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+    },
+    header: {
+        display: 'flex',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+        marginBottom: 4,
+    },
+    headerLeft: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 2,
+    },
+    backLink: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 6,
+        textDecoration: 'none',
+        color: 'var(--ink-faint)',
+        fontFamily: 'var(--mono)',
+        fontSize: '0.6rem',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase' as const,
+        marginBottom: 10,
+        transition: '0.15s',
+    },
+    pageTitle: {
+        fontFamily: 'var(--sans)',
+        fontSize: '1.45rem',
+        fontWeight: 700,
+        color: 'var(--ink)',
+    },
+    pageSub: {
+        fontFamily: 'var(--mono)',
+        fontSize: '0.62rem',
+        color: 'var(--ink-faint)',
+        letterSpacing: '0.08em',
+        marginTop: 4,
+    },
+    createBtn: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        background: 'var(--accent)',
+        color: 'var(--bg)',
+        border: 'none',
+        borderRadius: 10,
+        padding: '10px 16px',
+        fontFamily: 'var(--sans)',
+        fontSize: '0.82rem',
+        fontWeight: 600,
+        cursor: 'pointer',
+        transition: '0.15s',
+    },
+    skeletonBox: {
+        background: 'linear-gradient(90deg, var(--bg-3) 25%, var(--card) 50%, var(--bg-3) 75%)',
+        backgroundSize: '200% 100%',
+        animation: 'shimmer 1.4s infinite',
+        borderRadius: 10,
+    },
+    card: {
+        background: 'var(--card)',
+        border: '1px solid var(--line-strong)',
+        borderRadius: 14,
+        padding: '18px',
+        transition: '0.15s',
+    },
+    planIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 10,
+        background: 'var(--surface)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        flexShrink: 0,
+    },
+    metricLabel: {
+        display: 'block',
+        fontFamily: 'var(--mono)',
+        fontSize: '0.55rem',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase' as const,
+        color: 'var(--ink-faint)',
+        marginBottom: 2,
+    },
+    metricValue: {
+        display: 'block',
+        fontFamily: 'var(--mono)',
+        fontSize: '0.88rem',
+        fontWeight: 700,
+        color: 'var(--ink)',
+        fontVariantNumeric: 'tabular-nums',
+    },
+    iconBtn: {
+        background: 'var(--surface)',
+        border: '1px solid var(--line-strong)',
+        borderRadius: 8,
+        padding: '7px',
+        cursor: 'pointer',
+        color: 'var(--ink-dim)',
+        transition: '0.15s',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    fieldRow: {
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+    },
+    label: {
+        fontFamily: 'var(--mono)',
+        fontSize: '0.58rem',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase' as const,
+        color: 'var(--ink-faint)',
+    },
+    input: {
+        background: 'var(--bg)',
+        border: '1px solid var(--line-strong)',
+        borderRadius: 8,
+        padding: '9px 12px',
+        color: 'var(--ink)',
+        fontFamily: 'var(--sans)',
+        fontSize: '0.85rem',
+        outline: 'none',
+        transition: '0.15s',
+    },
+    addFeatureBtn: {
+        background: 'var(--accent)',
+        color: 'var(--bg)',
+        border: 'none',
+        borderRadius: 8,
+        padding: '9px 12px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: '0.15s',
+    },
+};
