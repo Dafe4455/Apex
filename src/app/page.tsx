@@ -89,7 +89,6 @@ function CandleChart({ candles }: { candles: { open: number; close: number; high
 }
 
 /* ─── Live Market Data ──────────────────────────────────────────── */
-// Symbols returned by the crypto leg of /api/market (vs. plain stock tickers).
 const CRYPTO_SET = new Set(['BTC', 'ETH', 'SOL', 'BNB']);
 
 function fmtPrice(price: number) {
@@ -109,8 +108,6 @@ async function fetchAssets() {
   return res.json();
 }
 
-// /api/market gives us a top-of-book price + 24h change, not real depth, so we
-// synthesize a 5-level ladder around the live mid price purely for the visual.
 function buildBook(mid: number) {
   const unit = Math.max(mid * 0.00003, 0.01);
   const level = () => ({ size: (0.25 + Math.random() * 1.1).toFixed(3), pct: Math.round(14 + Math.random() * 38) });
@@ -124,7 +121,6 @@ export default function HomePage() {
   const [candles] = useState(makeCandles);
   const [assets, setAssets] = useState<any[]>([]);
 
-  // Poll our own /api/market route (CoinGecko + Finnhub under the hood) every 30s.
   useEffect(() => {
     let active = true;
     async function load() {
@@ -220,7 +216,7 @@ export default function HomePage() {
                 <em>YOUR CALL</em><br/>
                 AT ALL TIMES
               </h1>
-              <p className="ap-hero-sub">
+              <p className="ap-hero-sub ap-text-base">
                 Trade equities, crypto, FX, and derivatives from a single platform. Regulated, transparent, and made to handle whatever the market throws at you.
               </p>
               <div className="ap-hero-ctas">
@@ -383,29 +379,46 @@ export default function HomePage() {
   );
 }
 
-/* ─── Styles ──────────────────────────────────────────────────────── */
+/* ─── Enhanced Design System ───────────────────────────────────── */
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&family=Fira+Code:wght@400;500&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --void:    #0f2535;
-  --panel:   rgba(255,255,255,0.03);
-  --rim:     rgba(255,255,255,0.07);
-  --rim2:    rgba(255,255,255,0.12);
-  --elec:    #49A5B6;
-  --elec-hi: #6BC4D4;
-  --elec-lo: rgba(73,165,182,0.12);
-  --mint:    #00D68A;
-  --coral:   #FF5252;
-  --amber:   #FFB800;
-  --t1:      #EDF0FF;
-  --t2:      #6B7A9B;
-  --t3:      #2A3150;
-  --sans:    'DM Sans', system-ui, sans-serif;
-  --disp:    'Barlow Condensed', sans-serif;
-  --mono:    'Fira Code', 'Courier New', monospace;
+  --void:      #040a12;
+  --void-2:    #060f1a;
+  --surface:   rgba(255,255,255,0.035);
+  --surface-2: rgba(255,255,255,0.06);
+  --surface-3: rgba(255,255,255,0.09);
+  
+  --rim:        rgba(255,255,255,0.07);
+  --rim-strong: rgba(255,255,255,0.16);
+  
+  --elec:      #4FA3C4;
+  --elec-hi:   #6FB8D8;
+  --elec-lo:   rgba(79,163,196,0.14);
+  
+  --mint:      #00D68A;
+  --mint-lo:   rgba(0,214,138,0.14);
+  --coral:     #FF6B6B;
+  --amber:     #FFC02A;
+  
+  --t1:        #F2F4FF;
+  --t2:        #8A93B8;
+  --t3:        #3A445C;
+  
+  --glass:     rgba(6,15,26,0.72);
+  
+  --sans:      'DM Sans', system-ui, sans-serif;
+  --disp:      'Barlow Condensed', sans-serif;
+  --mono:      'Fira Code', 'Courier New', monospace;
+  
+  --glow-elec: 0 0 40px rgba(79,163,196,0.12);
+  --glow-mint:  0 0 30px rgba(0,214,138,0.10);
+  
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .ap-root {
@@ -414,15 +427,24 @@ const CSS = `
   font-family: var(--sans);
   overflow-x: hidden;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ── Utilities ── */
+/* Utilities */
 .ap-up  { color: var(--mint); }
 .ap-dn  { color: var(--coral); }
 .ap-tr  { text-align: right; }
 .ap-tc  { text-align: center; }
 
-/* ── NAV ── */
+/* Typography Scale */
+.ap-text-xs   { font-size: clamp(0.58rem, 0.6vw + 0.5rem, 0.7rem); line-height: 1.65; }
+.ap-text-sm   { font-size: clamp(0.7rem, 0.8vw + 0.5rem, 0.85rem); line-height: 1.6; }
+.ap-text-base { font-size: clamp(0.85rem, 1vw + 0.55rem, 0.95rem); line-height: 1.75; }
+.ap-text-lg   { font-size: clamp(1rem, 1.2vw + 0.6rem, 1.15rem); line-height: 1.65; }
+.ap-text-xl   { font-size: clamp(1.25rem, 1.5vw + 0.7rem, 1.6rem); line-height: 1.2; }
+
+/* NAV */
 .ap-nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   display: flex; align-items: center; gap: 24px;
@@ -450,7 +472,7 @@ const CSS = `
 }
 .ap-ticker-track {
   display: flex; white-space: nowrap;
-  animation: apTicker 44s linear infinite;
+  animation: apTicker 50s linear infinite;
 }
 .ap-ticker-item {
   display: inline-flex; align-items: center; gap: 8px;
@@ -490,7 +512,7 @@ const CSS = `
 }
 .ap-nav-cta:hover { background: var(--elec-hi); }
 
-/* ── HERO ── */
+/* HERO */
 .ap-hero {
   position: relative; min-height: 100vh;
   padding-top: 58px; overflow: hidden;
@@ -498,7 +520,7 @@ const CSS = `
   justify-content: flex-start;
 }
 .ap-hero-grid {
-  position: absolute; inset: 0; pointer-events: none;
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
   background-image:
     linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
@@ -506,7 +528,7 @@ const CSS = `
 }
 .ap-hero-chart {
   position: absolute; bottom: 0; left: 0; right: 0;
-  height: 230px; pointer-events: none; opacity: 0.42;
+  height: 230px; pointer-events: none; opacity: 0.42; z-index: 1;
 }
 .ap-hero-inner {
   position: relative; z-index: 2;
@@ -515,37 +537,53 @@ const CSS = `
   flex: 1; align-items: center;
 }
 
+/* Entrance choreography tied to hero-inner children */
+.ap-hero-inner .ap-eyebrow,
+.ap-hero-inner .ap-h1,
+.ap-hero-inner .ap-hero-sub,
+.ap-hero-inner .ap-hero-ctas,
+.ap-hero-inner .ap-hero-right {
+  opacity: 0;
+  animation: apFadeUp 0.9s var(--ease-expo) forwards;
+}
+.ap-hero-inner .ap-eyebrow   { animation-delay: 0.1s; }
+.ap-hero-inner .ap-h1       { animation-delay: 0.25s; }
+.ap-hero-inner .ap-hero-sub { animation-delay: 0.4s; }
+.ap-hero-inner .ap-hero-ctas{ animation-delay: 0.55s; }
+.ap-hero-inner .ap-hero-right { animation: apFadeIn 1.1s var(--ease-soft) 0.7s forwards; }
+
 .ap-eyebrow {
   font-family: var(--mono); font-size: 0.61rem;
   letter-spacing: 0.2em; text-transform: uppercase;
   color: var(--elec); margin-bottom: 22px;
-  opacity: 0; animation: apFadeUp 0.6s ease 0.1s forwards;
 }
 .ap-h1 {
-  font-family: var(--disp); font-size: clamp(3.6rem, 7.5vw, 7rem);
-  font-weight: 800; line-height: 0.92;
-  text-transform: uppercase; letter-spacing: 0.01em;
-  color: var(--t1); margin-bottom: 28px;
-  opacity: 0; animation: apFadeUp 0.7s ease 0.25s forwards;
+  font-family: var(--disp); font-size: clamp(3.2rem, 6.5vw, 6.8rem);
+  font-weight: 800; line-height: 0.9;
+  letter-spacing: -0.02em; text-transform: uppercase;
+  color: var(--t1); margin-bottom: 24px;
 }
 .ap-h1 em { font-style: italic; color: var(--elec); font-weight: 700; }
 .ap-hero-sub {
-  font-size: 0.97rem; line-height: 1.75;
-  color: var(--t2); font-weight: 300; max-width: 420px; margin-bottom: 40px;
-  opacity: 0; animation: apFadeUp 0.7s ease 0.4s forwards;
+  font-size: var(--text-base);
+  line-height: 1.75; color: var(--t2); font-weight: 300;
+  max-width: 42ch; margin-bottom: 40px;
 }
 .ap-hero-ctas {
   display: flex; align-items: center; gap: 24px;
-  opacity: 0; animation: apFadeUp 0.7s ease 0.55s forwards;
 }
 .ap-btn-primary {
   display: inline-block; background: var(--elec); color: #fff;
   font-family: var(--mono); font-size: 0.73rem; font-weight: 500;
   letter-spacing: 0.1em; text-transform: uppercase;
   padding: 14px 28px; text-decoration: none;
-  transition: background 0.2s, transform 0.15s;
+  transition: transform 0.25s var(--ease-soft), box-shadow 0.25s var(--ease-soft), background 0.2s;
 }
-.ap-btn-primary:hover { background: var(--elec-hi); transform: translateY(-1px); }
+.ap-btn-primary:hover {
+  background: var(--elec-hi);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(79,163,196,0.35);
+}
 .ap-btn-ghost {
   font-family: var(--mono); font-size: 0.71rem;
   letter-spacing: 0.1em; text-transform: uppercase;
@@ -555,16 +593,18 @@ const CSS = `
 }
 .ap-btn-ghost:hover { color: var(--t1); border-color: var(--t2); }
 
-/* ── ORDER BOOK ── */
+/* ORDER BOOK */
 .ap-hero-right {
-  opacity: 0; animation: apFadeIn 1s ease 0.8s forwards;
+  /* animation applied above */
 }
 .ap-book {
-  background: rgba(9,13,24,0.96);
-  border: 1px solid var(--rim2);
+  background: linear-gradient(180deg, rgba(9,13,24,0.92), rgba(5,9,18,0.96));
+  border: 1px solid rgba(255,255,255,0.08);
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   padding: 20px 20px 18px;
-  box-shadow: 0 28px 64px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.05);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05),
+              0 24px 60px rgba(0,0,0,0.7),
+              var(--glow-elec);
 }
 .ap-book-head {
   display: flex; justify-content: space-between; align-items: flex-start;
@@ -579,7 +619,7 @@ const CSS = `
 .ap-live-dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--mint); flex-shrink: 0;
-  animation: apPulse 2s ease-in-out infinite;
+  animation: apPulse 2.4s ease-in-out infinite;
 }
 .ap-book-px {
   font-family: var(--mono); font-size: 1.5rem; font-weight: 500;
@@ -604,7 +644,9 @@ const CSS = `
   display: grid; grid-template-columns: 82px 1fr 58px;
   align-items: center; gap: 8px; padding: 3.5px 0;
   font-family: var(--mono); font-size: 0.67rem; font-variant-numeric: tabular-nums;
+  transition: background 0.15s ease;
 }
+.ap-book-row:hover { background: rgba(255,255,255,0.015); }
 .ap-depth {
   position: relative; height: 13px;
   background: rgba(255,255,255,0.03);
@@ -633,7 +675,7 @@ const CSS = `
 .ap-tbuy  { background: var(--mint);  color: #021a0f; }
 .ap-tsell { background: var(--coral); color: #200808; }
 
-/* ── SHARED SECTION ── */
+/* SHARED SECTION */
 .ap-section {
   padding: 96px 60px; border-top: 1px solid var(--rim); position: relative;
 }
@@ -643,16 +685,17 @@ const CSS = `
   color: var(--elec); margin-bottom: 14px;
 }
 .ap-h2 {
-  font-family: var(--disp); font-size: clamp(2rem, 3.8vw, 3.2rem);
-  font-weight: 700; line-height: 1.05; text-transform: uppercase;
-  letter-spacing: 0.01em; color: var(--t1); margin-bottom: 16px;
+  font-family: var(--disp); font-size: clamp(1.9rem, 3.2vw, 2.8rem);
+  font-weight: 700; line-height: 1.05; letter-spacing: -0.01em;
+  text-transform: uppercase; color: var(--t1); margin-bottom: 16px;
 }
 .ap-body {
-  font-size: 0.93rem; line-height: 1.75;
-  color: var(--t2); font-weight: 300; max-width: 480px; margin-bottom: 36px;
+  font-size: var(--text-base); line-height: 1.75;
+  color: var(--t2); font-weight: 300;
+  max-width: 44ch; margin-bottom: 36px;
 }
 
-/* ── PLATFORM ── */
+/* PLATFORM */
 .ap-platform {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 72px; align-items: center;
@@ -662,9 +705,14 @@ const CSS = `
 .ap-feat-row {
   display: grid; grid-template-columns: 32px 1fr; gap: 16px;
   padding: 18px 0; border-bottom: 1px solid var(--rim);
-  transition: padding-left 0.2s; cursor: default;
+  transition: padding-left 0.25s var(--ease-soft), background 0.25s var(--ease-soft);
+  cursor: default;
 }
-.ap-feat-row:hover { padding-left: 6px; }
+.ap-feat-row:hover {
+  padding-left: 6px;
+  background: linear-gradient(90deg, var(--elec-lo), transparent);
+  border-left: 2px solid var(--elec);
+}
 .ap-feat-n {
   font-family: var(--mono); font-size: 0.57rem;
   color: var(--elec); font-weight: 500; padding-top: 3px;
@@ -681,18 +729,18 @@ const CSS = `
 }
 .ap-plat-overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(73,165,182,0.22) 0%, transparent 55%);
+  background: linear-gradient(135deg, rgba(79,163,196,0.22) 0%, transparent 55%);
 }
 .ap-plat-badge {
   position: absolute; bottom: 16px; left: 16px;
   display: flex; align-items: center; gap: 8px;
-  background: rgba(7,11,20,0.88); border: 1px solid var(--rim2);
+  background: rgba(7,11,20,0.88); border: 1px solid var(--rim-strong);
   padding: 8px 14px; backdrop-filter: blur(8px);
   font-family: var(--mono); font-size: 0.61rem;
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--t1);
 }
 
-/* ── MARKETS ── */
+/* MARKETS */
 .ap-mkt-sec { overflow: hidden; }
 .ap-mkt-bg {
   position: absolute; inset: 0; z-index: 0;
@@ -703,7 +751,7 @@ const CSS = `
 }
 .ap-mkt-inner { position: relative; z-index: 1; max-width: 820px; }
 .ap-mkt-table {
-  background: rgba(11,21,27,0.78); border: 1px solid var(--rim2);
+  background: rgba(11,21,27,0.78); border: 1px solid var(--rim-strong);
   backdrop-filter: blur(8px); margin-bottom: 22px; overflow: hidden;
 }
 .ap-mkt-head {
@@ -718,7 +766,7 @@ const CSS = `
   padding: 14px 20px; border-bottom: 1px solid var(--rim);
   font-family: var(--mono); font-size: 0.75rem;
   align-items: center; font-variant-numeric: tabular-nums;
-  transition: background 0.15s; cursor: default;
+  transition: background 0.15s ease; cursor: default;
 }
 .ap-mkt-row:last-child { border-bottom: none; }
 .ap-mkt-row:hover { background: rgba(255,255,255,0.025); }
@@ -734,16 +782,16 @@ const CSS = `
 }
 .ap-ilink:hover { opacity: 0.7; }
 
-/* ── BEGIN ── */
+/* BEGIN */
 .ap-begin-sec {
-  background: linear-gradient(135deg, rgba(73,165,182,0.05) 0%, transparent 60%);
-  border-top: 1px solid rgba(73,165,182,0.18);
+  background: linear-gradient(135deg, rgba(79,163,196,0.05) 0%, transparent 60%);
+  border-top: 1px solid rgba(79,163,196,0.18);
 }
 .ap-begin-inner { max-width: 520px; }
 .ap-cta-form { display: flex; margin-bottom: 22px; }
 .ap-cta-input {
   flex: 1; background: rgba(255,255,255,0.04);
-  border: 1px solid var(--rim2); border-right: none;
+  border: 1px solid var(--rim-strong); border-right: none;
   padding: 13px 17px;
   font-family: var(--mono); font-size: 0.75rem; color: var(--t1);
   outline: none; transition: border-color 0.2s;
@@ -766,7 +814,7 @@ const CSS = `
 }
 .ap-dot { margin: 0 8px; color: var(--elec); opacity: 0.4; }
 
-/* ── FOOTER ── */
+/* FOOTER */
 .ap-footer {
   background: rgba(4,6,12,0.8); border-top: 1px solid var(--rim);
   padding: 24px 60px;
@@ -787,16 +835,33 @@ const CSS = `
 .ap-footer-links a:hover { color: var(--t1); }
 .ap-footer-legal { font-family: var(--mono); font-size: 0.57rem; color: var(--t3); }
 
-/* ── ANIMATIONS ── */
-@keyframes apFadeUp  { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
-@keyframes apFadeIn  { from { opacity: 0; } to { opacity: 1; } }
-@keyframes apPulse   { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
-@keyframes apTicker  { 0% { transform: translateX(0); } 100% { transform: translateX(-33.333%); } }
+/* ANIMATIONS */
+@keyframes apFadeUp {
+  from { opacity: 0; transform: translateY(22px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes apFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes apPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,214,138,0.35); }
+  45%      { opacity: 0.9; box-shadow: 0 0 0 4px rgba(0,214,138,0); }
+  50%      { opacity: 1; box-shadow: 0 0 0 0 rgba(0,214,138,0); }
+}
+@keyframes apTicker {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-33.333%); }
+}
 
-.aprx { opacity: 0; transform: translateY(24px); transition: opacity 0.75s ease, transform 0.75s ease; }
-.aprx.apv { opacity: 1; transform: none; }
+.aprx {
+  opacity: 0; transform: translateY(28px);
+  transition: opacity 0.9s var(--ease-expo), transform 0.9s var(--ease-expo);
+}
+.aprx.apv {
+  opacity: 1; transform: translateY(0);
+}
 
-/* ── RESPONSIVE ── */
 @media (max-width: 1000px) {
   .ap-ticker-wrap { display: none; }
   .ap-hero-inner  { grid-template-columns: 1fr; align-items: start; }
@@ -814,9 +879,10 @@ const CSS = `
   .ap-footer { padding: 20px 24px; flex-direction: column; align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .ap-eyebrow,.ap-h1,.ap-hero-sub,.ap-hero-ctas,.ap-hero-right,.aprx {
+  .ap-eyebrow, .ap-h1, .ap-hero-sub, .ap-hero-ctas, .ap-hero-right, .aprx {
     animation: none !important; opacity: 1 !important; transform: none !important;
   }
-  .ap-live-dot,.ap-ticker-track { animation: none !important; }
+  .ap-live-dot, .ap-ticker-track { animation: none !important; }
+  .ap-feat-row:hover { padding-left: 0 !important; }
 }
 `;
