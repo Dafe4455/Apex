@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth"; // the real instance — providers, adapter, idle-timeout jwt/session callbacks
+import { auth } from "@root/auth"; // the real instance — providers, adapter, idle-timeout jwt/session callbacks
 
 const publicRoutes = ["/", "/login", "/signup", "/admin/login", "/manifest.json", "/sw.js", "/icon-192.png", "/icon-512.png", "/offline"];
 const authRoutes   = ["/login", "/signup"];
