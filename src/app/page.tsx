@@ -593,24 +593,34 @@ const CSS = `
 .ap-btn-ghost:hover { color: var(--t1); border-color: var(--t2); }
 
 /* ORDER BOOK */
+/* ORDER BOOK */
 .ap-book {
-  background: linear-gradient(180deg, rgba(9,13,24,0.92), rgba(5,9,18,0.96));
-  border: 1px solid rgba(255,255,255,0.08);
+  background: #080f1d;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-  padding: 20px 20px 18px;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05),
-              0 24px 60px rgba(0,0,0,0.7),
-              var(--glow-elec);
+  padding: 24px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 .ap-book-head {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  padding-bottom: 14px; margin-bottom: 10px; border-bottom: 1px solid var(--rim);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 .ap-book-pair {
-  display: flex; align-items: center; gap: 8px;
-  font-family: var(--mono); font-size: 0.59rem;
-  letter-spacing: 0.15em; text-transform: uppercase;
-  color: var(--t2); margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--t2);
+  margin-bottom: 4px;
 }
 .ap-live-dot {
   width: 6px; height: 6px; border-radius: 50%;
@@ -618,58 +628,162 @@ const CSS = `
   animation: apPulse 2.4s ease-in-out infinite;
 }
 .ap-book-px {
-  font-family: var(--mono); font-size: 1.5rem; font-weight: 500;
-  color: var(--t1); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--t1);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
-.ap-book-chg { font-family: var(--mono); font-size: 0.65rem; margin-top: 4px; }
-.ap-book-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-.ap-meta-item { display: flex; flex-direction: column; align-items: flex-end; }
+.ap-book-chg {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  margin-top: 4px;
+  font-weight: 500;
+}
+.ap-book-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.ap-meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
 .ap-ml {
-  font-family: var(--mono); font-size: 0.51rem;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--t2); margin-bottom: 2px;
+  font-family: var(--mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: 2px;
 }
-.ap-mv { font-family: var(--mono); font-size: 0.79rem; color: var(--t1); font-weight: 500; }
+.ap-mv {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--t2);
+  font-weight: 500;
+}
 .ap-book-cols {
-  display: grid; grid-template-columns: 82px 1fr 58px; gap: 8px;
-  padding: 3px 0 8px;
-  font-family: var(--mono); font-size: 0.51rem;
-  letter-spacing: 0.12em; text-transform: uppercase; color: var(--t2);
+  display: grid;
+  grid-template-columns: 85px 1fr 65px;
+  gap: 12px;
+  padding: 6px 0;
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--t3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  margin-bottom: 6px;
 }
 .ap-book-row {
-  display: grid; grid-template-columns: 82px 1fr 58px;
-  align-items: center; gap: 8px; padding: 3.5px 0;
-  font-family: var(--mono); font-size: 0.67rem; font-variant-numeric: tabular-nums;
+  display: grid;
+  grid-template-columns: 85px 1fr 65px;
+  align-items: center;
+  gap: 12px;
+  padding: 4.5px 0;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
   transition: background 0.15s ease;
 }
-.ap-book-row:hover { background: rgba(255,255,255,0.015); }
+.ap-book-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Elegant Dynamic Depth Tracks */
 .ap-depth {
-  position: relative; height: 13px;
-  background: rgba(255,255,255,0.03);
+  position: relative;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 3px;
+  overflow: hidden;
 }
-.ap-dfill { position: absolute; top: 0; height: 100%; opacity: 0.22; }
-.ap-dask  { right: 0; background: var(--coral); }
-.ap-dbid  { left: 0;  background: var(--mint); }
-.ap-bsz   { text-align: right; color: var(--t2); }
+.ap-dfill {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 3px;
+  opacity: 0.45;
+}
+.ap-dask {
+  right: 0;
+  background: linear-gradient(90deg, transparent, var(--coral));
+}
+.ap-dbid {
+  left: 0;
+  background: linear-gradient(90deg, var(--mint), transparent);
+}
+.ap-bsz {
+  text-align: right;
+  color: var(--t2);
+  font-weight: 400;
+}
+
+/* Styled Mid-Market Spread Banner */
 .ap-spread {
-  display: flex; justify-content: center; gap: 12px;
-  padding: 7px 0; margin: 3px 0;
-  border-top: 1px dashed var(--rim); border-bottom: 1px dashed var(--rim);
-  font-family: var(--mono); font-size: 0.55rem;
-  letter-spacing: 0.08em; text-transform: uppercase; color: var(--t2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin: 10px 0;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--t2);
 }
-.ap-spread strong { color: var(--t1); font-weight: 500; }
+.ap-spread strong {
+  color: var(--t1);
+  font-weight: 500;
+}
+
+/* Premium Interactive Execution Buttons */
 .ap-trade-btns {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
 }
 .ap-tbtn {
-  font-family: var(--mono); font-size: 0.68rem; font-weight: 500;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  padding: 11px 8px; border: none; cursor: pointer; transition: opacity 0.2s;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 12px 14px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-soft);
 }
-.ap-tbtn:hover { opacity: 0.85; }
-.ap-tbuy  { background: var(--mint);  color: #021a0f; }
-.ap-tsell { background: var(--coral); color: #200808; }
+.ap-tbuy {
+  background: rgba(0, 214, 138, 0.08);
+  color: var(--mint);
+  border-color: rgba(0, 214, 138, 0.15);
+}
+.ap-tbuy:hover {
+  background: var(--mint);
+  color: #021a0f;
+  box-shadow: 0 4px 20px rgba(0, 214, 138, 0.25);
+}
+.ap-tsell {
+  background: rgba(255, 107, 107, 0.08);
+  color: var(--coral);
+  border-color: rgba(255, 107, 107, 0.15);
+}
+.ap-tsell:hover {
+  background: var(--coral);
+  color: #200808;
+  box-shadow: 0 4px 20px rgba(255, 107, 107, 0.25);
+}
 
 /* MARKETS */
 .ap-mkt-sec {
