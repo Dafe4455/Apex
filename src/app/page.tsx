@@ -268,7 +268,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── MARKETS (moved directly below Hero) ── */}
+        {/* ── MARKETS ── */}
         <section className="ap-section ap-mkt-sec" id="markets">
           <div className="ap-mkt-bg">
             <img
@@ -593,9 +593,6 @@ const CSS = `
 .ap-btn-ghost:hover { color: var(--t1); border-color: var(--t2); }
 
 /* ORDER BOOK */
-.ap-hero-right {
-  /* animation applied above */
-}
 .ap-book {
   background: linear-gradient(180deg, rgba(9,13,24,0.92), rgba(5,9,18,0.96));
   border: 1px solid rgba(255,255,255,0.08);
@@ -685,7 +682,6 @@ const CSS = `
   position: absolute;
   inset: 0;
   z-index: 0;
-  /* keep image only behind content, not in the top padding gap */
   opacity: 0.06;
 }
 .ap-mkt-bg-img {
@@ -879,8 +875,22 @@ const CSS = `
 
 @media (max-width: 1000px) {
   .ap-ticker-wrap { display: none; }
-  .ap-hero-inner  { grid-template-columns: 1fr; align-items: start; }
-  .ap-hero-right  { display: none; }
+  
+  /* Layout tweaks to fill the space cleanly and stack the Order Book */
+  .ap-hero { min-height: auto; }
+  .ap-hero-inner { 
+    grid-template-columns: 1fr; 
+    align-items: start; 
+    gap: 48px; 
+    padding: 60px 24px 120px; 
+  }
+  .ap-hero-right { 
+    display: block; 
+    width: 100%; 
+    max-width: 440px; 
+    margin: 0 auto; 
+  }
+  
   .ap-platform    { grid-template-columns: 1fr; gap: 40px; }
   .ap-plat-img    { aspect-ratio: 16/9; }
   .ap-mkt-head, .ap-mkt-row { grid-template-columns: 70px 1fr 100px; }
@@ -890,7 +900,7 @@ const CSS = `
   .ap-nav    { padding: 0 20px; gap: 16px; }
   .ap-nav-links { display: none; }
   .ap-section, .ap-mkt-sec { padding: 64px 24px; }
-  .ap-hero-inner { padding: 56px 24px 40px; }
+  .ap-hero-inner { padding: 56px 24px 100px; }
   .ap-footer { padding: 20px 24px; flex-direction: column; align-items: flex-start; }
 }
 @media (prefers-reduced-motion: reduce) {
