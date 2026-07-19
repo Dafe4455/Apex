@@ -100,7 +100,6 @@ function fmtChange(pct: number) {
   return `${pct >= 0 ? '+' : '−'}${Math.abs(pct).toFixed(2)}%`;
 }
 
-// Fixed display formatting safely
 function displaySym(sym: string) {
   return CRYPTO_SET.has(sym) ? `${sym}/USD` : sym;
 }
@@ -131,7 +130,7 @@ export default function HomePage() {
         const data = await fetchAssets();
         if (active && Array.isArray(data) && data.length) setAssets(data);
       } catch {
-        // Keeps fallback UI data in case of dynamic data loading issues
+        // Keeps fallback UI data safely intact
       }
     }
     load();
@@ -155,7 +154,6 @@ export default function HomePage() {
   const midChange = btc ? btc.changePercent : 2.38;
   const book = useMemo(() => buildBook(midPrice), [midPrice]);
 
-  // Reveal animations setup
   useEffect(() => {
     const io = new IntersectionObserver(
       entries => entries.forEach(e => {
@@ -423,6 +421,8 @@ const CSS = `
   
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  
+  --radius-m:  8px;
 }
 
 .ap-root {
@@ -451,8 +451,8 @@ const CSS = `
 /* NAV Styling */
 .ap-nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; gap: 24px;
-  padding: 0 48px; height: 58px;
+  display: flex; align-items: center; gap: 32px;
+  padding: 0 48px; height: 68px;
   background: rgba(7,11,20,0.92);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--rim);
@@ -462,7 +462,7 @@ const CSS = `
   background: linear-gradient(90deg, transparent, var(--elec) 30%, var(--mint) 70%, transparent);
 }
 .ap-logo {
-  font-family: var(--disp); font-size: 1.05rem; font-weight: 700;
+  font-family: var(--disp); font-size: 1.2rem; font-weight: 700;
   letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--t1); text-decoration: none; flex-shrink: 0;
 }
@@ -481,7 +481,7 @@ const CSS = `
 .ap-ticker-item {
   display: inline-flex; align-items: center; gap: 8px;
   padding: 0 20px;
-  font-family: var(--mono); font-size: 0.62rem;
+  font-family: var(--mono); font-size: 0.68rem;
   color: var(--t2); border-right: 1px solid var(--rim);
 }
 .ap-tsym { color: var(--t1); font-weight: 500; letter-spacing: 0.06em; }
@@ -492,34 +492,49 @@ const CSS = `
   display: flex; gap: 28px; list-style: none; flex-shrink: 0;
 }
 .ap-nav-links a {
-  font-family: var(--mono); font-size: 0.63rem;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--mono); font-size: 0.78rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--t2); text-decoration: none; transition: color 0.2s;
 }
 .ap-nav-links a:hover { color: var(--t1); }
 
+/* Unified Auth Component Balance */
 .ap-nav-auth {
-  display: flex; align-items: center; gap: 18px; flex-shrink: 0;
+  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
 }
 .ap-nav-login {
-  font-family: var(--mono); font-size: 0.63rem;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--t2); text-decoration: none; transition: color 0.2s;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.75rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--t1); text-decoration: none;
+  padding: 10px 20px; height: 38px;
+  border: 1px solid var(--rim-strong); border-radius: var(--radius-m);
+  background: rgba(255, 255, 255, 0.02);
+  transition: all 0.2s var(--ease-soft);
 }
-.ap-nav-login:hover { color: var(--t1); }
+.ap-nav-login:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--t2);
+}
 .ap-nav-cta {
-  font-family: var(--mono); font-size: 0.63rem;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 0.75rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
   background: var(--elec); color: #fff;
-  padding: 9px 18px; text-decoration: none;
-  transition: background 0.2s; flex-shrink: 0;
+  padding: 10px 22px; height: 38px; text-decoration: none;
+  border-radius: var(--radius-m);
+  box-shadow: 0 2px 8px rgba(79, 163, 196, 0.15);
+  transition: all 0.2s var(--ease-soft); flex-shrink: 0;
 }
-.ap-nav-cta:hover { background: var(--elec-hi); }
+.ap-nav-cta:hover {
+  background: var(--elec-hi);
+  box-shadow: 0 4px 16px rgba(79, 163, 196, 0.3);
+}
 
 /* HERO Styling */
 .ap-hero {
   position: relative; min-height: 100vh;
-  padding-top: 58px; overflow: hidden;
+  padding-top: 68px; overflow: hidden;
   display: flex; flex-direction: column;
   justify-content: flex-start;
 }
@@ -573,13 +588,14 @@ const CSS = `
   max-width: 42ch; margin-bottom: 40px;
 }
 .ap-hero-ctas {
-  display: flex; align-items: center; gap: 24px;
+  display: flex; align-items: center; gap: 16px;
 }
 .ap-btn-primary {
   display: inline-block; background: var(--elec); color: #fff;
-  font-family: var(--mono); font-size: 0.73rem; font-weight: 500;
-  letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--mono); font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
   padding: 14px 28px; text-decoration: none;
+  border-radius: var(--radius-m);
   transition: transform 0.25s var(--ease-soft), box-shadow 0.25s var(--ease-soft), background 0.2s;
 }
 .ap-btn-primary:hover {
@@ -588,19 +604,25 @@ const CSS = `
   box-shadow: 0 8px 24px rgba(79,163,196,0.35);
 }
 .ap-btn-ghost {
-  font-family: var(--mono); font-size: 0.71rem;
-  letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--t2); text-decoration: none;
-  border-bottom: 1px solid var(--t3); padding-bottom: 2px;
-  transition: color 0.2s, border-color 0.2s;
+  display: inline-block;
+  font-family: var(--mono); font-size: 0.78rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--t1); text-decoration: none;
+  border: 1px solid var(--rim-strong);
+  padding: 13px 28px; border-radius: var(--radius-m);
+  background: rgba(255, 255, 255, 0.01);
+  transition: all 0.2s var(--ease-soft);
 }
-.ap-btn-ghost:hover { color: var(--t1); border-color: var(--t2); }
+.ap-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--t2);
+}
 
 /* ORDER BOOK Styling */
 .ap-book {
   background: #080f1d;
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
+  border-radius: var(--radius-m);
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
   padding: 24px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
@@ -665,7 +687,7 @@ const CSS = `
 .ap-tbtn {
   font-family: var(--mono); font-size: 0.7rem; font-weight: 600;
   letter-spacing: 0.08em; text-transform: uppercase;
-  padding: 12px 14px; border-radius: 4px; border: 1px solid transparent;
+  padding: 12px 14px; border-radius: var(--radius-m); border: 1px solid transparent;
   cursor: pointer; transition: all 0.2s var(--ease-soft);
 }
 .ap-tbuy { background: rgba(0, 214, 138, 0.08); color: var(--mint); border-color: rgba(0, 214, 138, 0.15); }
@@ -678,7 +700,7 @@ const CSS = `
 .ap-mkt-bg { position: absolute; inset: 0; z-index: 0; opacity: 0.06; }
 .ap-mkt-bg-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.07; filter: saturate(0) brightness(1.2); }
 .ap-mkt-inner { position: relative; z-index: 1; max-width: 820px; }
-.ap-mkt-table { background: rgba(11,21,27,0.78); border: 1px solid var(--rim-strong); backdrop-filter: blur(8px); margin-bottom: 22px; overflow: hidden; }
+.ap-mkt-table { background: rgba(11,21,27,0.78); border: 1px solid var(--rim-strong); backdrop-filter: blur(8px); margin-bottom: 22px; overflow: hidden; border-radius: var(--radius-m); }
 .ap-mkt-head {
   display: grid; grid-template-columns: 80px 1fr 130px 130px;
   padding: 11px 20px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--rim);
@@ -722,13 +744,13 @@ const CSS = `
 .ap-feat-t { font-size: 0.91rem; font-weight: 500; color: var(--t1); margin-bottom: 5px; }
 .ap-feat-d { font-size: 0.79rem; line-height: 1.65; color: var(--t2); font-weight: 300; }
 
-.ap-plat-media { position: relative; border: 1px solid var(--rim); overflow: hidden; }
+.ap-plat-media { position: relative; border: 1px solid var(--rim); overflow: hidden; border-radius: var(--radius-m); }
 .ap-plat-img { display: block; width: 100%; aspect-ratio: 4/3; object-fit: cover; filter: saturate(0.45) brightness(0.6); }
 .ap-plat-overlay { position: absolute; inset: 0; background: linear-gradient(135deg, rgba(79,163,196,0.22) 0%, transparent 55%); }
 .ap-plat-badge {
   position: absolute; bottom: 16px; left: 16px; display: flex; align-items: center; gap: 8px;
   background: rgba(7,11,20,0.88); border: 1px solid var(--rim-strong); padding: 8px 14px;
-  backdrop-filter: blur(8px); font-family: var(--mono); font-size: 0.61rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--t1);
+  backdrop-filter: blur(8px); font-family: var(--mono); font-size: 0.61rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--t1); border-radius: 4px;
 }
 
 /* BEGIN SECTION Styling */
@@ -738,6 +760,7 @@ const CSS = `
 .ap-cta-input {
   flex: 1; background: rgba(255,255,255,0.04); border: 1px solid var(--rim-strong); border-right: none;
   padding: 13px 17px; font-family: var(--mono); font-size: 0.75rem; color: var(--t1); outline: none; transition: border-color 0.2s;
+  border-top-left-radius: var(--radius-m); border-bottom-left-radius: var(--radius-m);
 }
 .ap-cta-input::placeholder { color: var(--t2); }
 .ap-cta-input:focus { border-color: var(--elec); }
@@ -746,6 +769,7 @@ const CSS = `
   font-family: var(--mono); font-size: 0.69rem; font-weight: 500; letter-spacing: 0.1em;
   text-transform: uppercase; cursor: pointer; white-space: nowrap; transition: background 0.2s;
   display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
+  border-top-right-radius: var(--radius-m); border-bottom-right-radius: var(--radius-m);
 }
 .ap-cta-submit:hover { background: var(--elec-hi); }
 .ap-trust-badges { display: flex; flex-wrap: wrap; gap: 4px 0; font-size: 0.74rem; color: var(--t2); align-items: center; }
@@ -776,7 +800,7 @@ const CSS = `
 /* RESPONSIVE MEDIA QUERIES */
 @media (max-width: 1000px) {
   .ap-ticker-wrap { display: none; }
-  .ap-hero { min-height: auto; }
+  .ap-hero { min-height: auto; padding-top: 68px; }
   .ap-hero-inner { grid-template-columns: 1fr; align-items: start; gap: 48px; padding: 60px 24px 120px; }
   .ap-hero-right { display: block; width: 100%; max-width: 440px; margin: 0 auto; }
   .ap-platform { grid-template-columns: 1fr; gap: 40px; }
