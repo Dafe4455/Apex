@@ -1,8 +1,5 @@
-import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
-import { authConfig } from "@root/auth.config";
-
-const { auth } = NextAuth(authConfig);
+import { auth } from "@/auth"; // the real instance — providers, adapter, idle-timeout jwt/session callbacks
 
 const publicRoutes = ["/", "/login", "/signup", "/admin/login", "/manifest.json", "/sw.js", "/icon-192.png", "/icon-512.png", "/offline"];
 const authRoutes   = ["/login", "/signup"];
@@ -23,16 +20,26 @@ export default auth((req) => {
   }
 
   if (!isPublicRoute && !isLoggedIn) {
-    return NextResponse.redirect(new URL("/login", nextUrl));
+    const response = NextResponse.redirect(new URL("/login", nextUrl));
+    // Belt-and-suspenders: stop the browser/bfcache from serving a
+    // stale authenticated page on back-navigation.
+    response.headers.set("Cache-Control", "no-store, must-revalidate");
+    return response;
   }
 
   if (isAdminRoute && role !== "ADMIN") {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  if (!isPublicRoute) {
+    // Protected pages shouldn't be cached — this is what typically
+    // causes "logged out but back button still shows the dashboard."
+    response.headers.set("Cache-Control", "no-store, must-revalidate");
+  }
+  return response;
 });
 
 export const config = {
-  matcher: ["/((?!api/|_next/static|_next/image|favicon.ico|icons/).*)" ],
+  matcher: ["/((?!api/|_next/static|_next/image|favicon.ico|icons/).*)"],
 };
