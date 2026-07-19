@@ -128,6 +128,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
   }, []);
 
+  useEffect(() => {
+  console.log('DashboardLayout mounted');
+}, []);
+
+useEffect(() => {
+  console.log('sidebarOpen changed to', sidebarOpen);
+}, [sidebarOpen]);
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
