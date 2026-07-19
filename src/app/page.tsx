@@ -268,40 +268,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── PLATFORM ── */}
-        <section className="ap-section" id="platform">
-          <div className="ap-platform aprx">
-            <div className="ap-plat-text">
-              <p className="ap-label">01 · Platform</p>
-              <h2 className="ap-h2">Every edge,<br/>engineered.</h2>
-              <p className="ap-body">Six years of iteration toward a single goal — zero friction between your signal and the market.</p>
-              <div className="ap-feat-list">
-                {FEATURES.map(f => (
-                  <div className="ap-feat-row" key={f.n}>
-                    <span className="ap-feat-n">{f.n}</span>
-                    <div>
-                      <div className="ap-feat-t">{f.title}</div>
-                      <div className="ap-feat-d">{f.desc}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="ap-plat-media">
-              <img
-                src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=720&auto=format&fit=crop&q=85"
-                alt="Professional trading terminal with multiple chart windows"
-                className="ap-plat-img"
-              />
-              <div className="ap-plat-overlay"/>
-              <div className="ap-plat-badge">
-                <span className="ap-live-dot"/><span>Live execution engine</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── MARKETS ── */}
+        {/* ── MARKETS (moved directly below Hero) ── */}
         <section className="ap-section ap-mkt-sec" id="markets">
           <div className="ap-mkt-bg">
             <img
@@ -341,6 +308,39 @@ export default function HomePage() {
               ))}
             </div>
             <a href="/signup" className="ap-ilink">View all 180+ instruments →</a>
+          </div>
+        </section>
+
+        {/* ── PLATFORM ── */}
+        <section className="ap-section" id="platform">
+          <div className="ap-platform aprx">
+            <div className="ap-plat-text">
+              <p className="ap-label">01 · Platform</p>
+              <h2 className="ap-h2">Every edge,<br/>engineered.</h2>
+              <p className="ap-body">Six years of iteration toward a single goal — zero friction between your signal and the market.</p>
+              <div className="ap-feat-list">
+                {FEATURES.map(f => (
+                  <div className="ap-feat-row" key={f.n}>
+                    <span className="ap-feat-n">{f.n}</span>
+                    <div>
+                      <div className="ap-feat-t">{f.title}</div>
+                      <div className="ap-feat-d">{f.desc}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="ap-plat-media">
+              <img
+                src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=720&auto=format&fit=crop&q=85"
+                alt="Professional trading terminal with multiple chart windows"
+                className="ap-plat-img"
+              />
+              <div className="ap-plat-overlay"/>
+              <div className="ap-plat-badge">
+                <span className="ap-live-dot"/><span>Live execution engine</span>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -537,7 +537,6 @@ const CSS = `
   flex: 1; align-items: center;
 }
 
-/* Entrance choreography tied to hero-inner children */
 .ap-hero-inner .ap-eyebrow,
 .ap-hero-inner .ap-h1,
 .ap-hero-inner .ap-hero-sub,
@@ -546,10 +545,10 @@ const CSS = `
   opacity: 0;
   animation: apFadeUp 0.9s var(--ease-expo) forwards;
 }
-.ap-hero-inner .ap-eyebrow   { animation-delay: 0.1s; }
-.ap-hero-inner .ap-h1       { animation-delay: 0.25s; }
-.ap-hero-inner .ap-hero-sub { animation-delay: 0.4s; }
-.ap-hero-inner .ap-hero-ctas{ animation-delay: 0.55s; }
+.ap-hero-inner .ap-eyebrow    { animation-delay: 0.1s; }
+.ap-hero-inner .ap-h1        { animation-delay: 0.25s; }
+.ap-hero-inner .ap-hero-sub  { animation-delay: 0.4s; }
+.ap-hero-inner .ap-hero-ctas { animation-delay: 0.55s; }
 .ap-hero-inner .ap-hero-right { animation: apFadeIn 1.1s var(--ease-soft) 0.7s forwards; }
 
 .ap-eyebrow {
@@ -675,6 +674,48 @@ const CSS = `
 .ap-tbuy  { background: var(--mint);  color: #021a0f; }
 .ap-tsell { background: var(--coral); color: #200808; }
 
+/* MARKETS */
+.ap-mkt-sec { overflow: hidden; }
+.ap-mkt-bg {
+  position: absolute; inset: 0; z-index: 0;
+}
+.ap-mkt-bg-img {
+  width: 100%; height: 100%;
+  object-fit: cover; opacity: 0.07; filter: saturate(0) brightness(1.2);
+}
+.ap-mkt-inner { position: relative; z-index: 1; max-width: 820px; }
+.ap-mkt-table {
+  background: rgba(11,21,27,0.78); border: 1px solid var(--rim-strong);
+  backdrop-filter: blur(8px); margin-bottom: 22px; overflow: hidden;
+}
+.ap-mkt-head {
+  display: grid; grid-template-columns: 80px 1fr 130px 130px;
+  padding: 11px 20px; background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid var(--rim);
+  font-family: var(--mono); font-size: 0.54rem;
+  letter-spacing: 0.14em; text-transform: uppercase; color: var(--t2);
+}
+.ap-mkt-row {
+  display: grid; grid-template-columns: 80px 1fr 130px 130px;
+  padding: 14px 20px; border-bottom: 1px solid var(--rim);
+  font-family: var(--mono); font-size: 0.75rem;
+  align-items: center; font-variant-numeric: tabular-nums;
+  transition: background 0.15s ease; cursor: default;
+}
+.ap-mkt-row:last-child { border-bottom: none; }
+.ap-mkt-row:hover { background: rgba(255,255,255,0.025); }
+.ap-mkt-sym   { font-weight: 500; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+.ap-mkt-logo  { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.06); }
+.ap-mkt-name  { font-size: 0.71rem; color: var(--t2); }
+.ap-mkt-price { color: var(--t1); }
+.ap-ilink {
+  font-family: var(--mono); font-size: 0.69rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--elec); text-decoration: none;
+  display: inline-block; transition: opacity 0.2s;
+}
+.ap-ilink:hover { opacity: 0.7; }
+
 /* SHARED SECTION */
 .ap-section {
   padding: 96px 60px; border-top: 1px solid var(--rim); position: relative;
@@ -739,48 +780,6 @@ const CSS = `
   font-family: var(--mono); font-size: 0.61rem;
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--t1);
 }
-
-/* MARKETS */
-.ap-mkt-sec { overflow: hidden; }
-.ap-mkt-bg {
-  position: absolute; inset: 0; z-index: 0;
-}
-.ap-mkt-bg-img {
-  width: 100%; height: 100%;
-  object-fit: cover; opacity: 0.07; filter: saturate(0) brightness(1.2);
-}
-.ap-mkt-inner { position: relative; z-index: 1; max-width: 820px; }
-.ap-mkt-table {
-  background: rgba(11,21,27,0.78); border: 1px solid var(--rim-strong);
-  backdrop-filter: blur(8px); margin-bottom: 22px; overflow: hidden;
-}
-.ap-mkt-head {
-  display: grid; grid-template-columns: 80px 1fr 130px 130px;
-  padding: 11px 20px; background: rgba(255,255,255,0.03);
-  border-bottom: 1px solid var(--rim);
-  font-family: var(--mono); font-size: 0.54rem;
-  letter-spacing: 0.14em; text-transform: uppercase; color: var(--t2);
-}
-.ap-mkt-row {
-  display: grid; grid-template-columns: 80px 1fr 130px 130px;
-  padding: 14px 20px; border-bottom: 1px solid var(--rim);
-  font-family: var(--mono); font-size: 0.75rem;
-  align-items: center; font-variant-numeric: tabular-nums;
-  transition: background 0.15s ease; cursor: default;
-}
-.ap-mkt-row:last-child { border-bottom: none; }
-.ap-mkt-row:hover { background: rgba(255,255,255,0.025); }
-.ap-mkt-sym   { font-weight: 500; color: var(--t1); display: flex; align-items: center; gap: 8px; }
-.ap-mkt-logo  { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.06); }
-.ap-mkt-name  { font-size: 0.71rem; color: var(--t2); }
-.ap-mkt-price { color: var(--t1); }
-.ap-ilink {
-  font-family: var(--mono); font-size: 0.69rem;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--elec); text-decoration: none;
-  display: inline-block; transition: opacity 0.2s;
-}
-.ap-ilink:hover { opacity: 0.7; }
 
 /* BEGIN */
 .ap-begin-sec {
