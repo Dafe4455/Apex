@@ -830,7 +830,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <path d="M3 8h14" stroke="currentColor" strokeWidth="1.3" />
                     <circle cx="10" cy="12" r="1.2" fill="currentColor" />
                   </svg>
-                  Subscription
+                  Investment Plans
                 </Link>
               </div>
               <div className="db-mobile-sidebar-footer">
@@ -980,7 +980,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         </svg>
                       </div>
                       <div className="db-sheet-row-text">
-                        <span className="db-sheet-row-label">Subscription</span>
+                        <span className="db-sheet-row-label">Investment Plans</span>
                         <span className="db-sheet-row-sub">Manage your plan</span>
                       </div>
                       <div className="db-sheet-row-arrow"><ChevronRight /></div>
