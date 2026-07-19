@@ -675,15 +675,31 @@ const CSS = `
 .ap-tsell { background: var(--coral); color: #200808; }
 
 /* MARKETS */
-.ap-mkt-sec { overflow: hidden; }
+.ap-mkt-sec {
+  padding: 40px 60px 80px;
+  border-top: 1px solid var(--rim);
+  position: relative;
+  overflow: hidden;
+}
 .ap-mkt-bg {
-  position: absolute; inset: 0; z-index: 0;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  /* keep image only behind content, not in the top padding gap */
+  opacity: 0.06;
 }
 .ap-mkt-bg-img {
-  width: 100%; height: 100%;
-  object-fit: cover; opacity: 0.07; filter: saturate(0) brightness(1.2);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.07;
+  filter: saturate(0) brightness(1.2);
 }
-.ap-mkt-inner { position: relative; z-index: 1; max-width: 820px; }
+.ap-mkt-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 820px;
+}
 .ap-mkt-table {
   background: rgba(11,21,27,0.78); border: 1px solid var(--rim-strong);
   backdrop-filter: blur(8px); margin-bottom: 22px; overflow: hidden;
