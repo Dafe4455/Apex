@@ -21,7 +21,10 @@ export async function ensureSubscriptionActive(userId: string) {
 
     if (!targetPlan) return null;
 
-    if (user.portfolioBalance < targetPlan.price) {
+    const balance = Number(user.portfolioBalance);
+    const planPrice = Number(targetPlan.price);
+
+    if (balance < planPrice) {
       await prisma.subscription.update({
         where: { id: sub.id },
         data: { status: 'expired', autoRenew: false },
@@ -31,22 +34,50 @@ export async function ensureSubscriptionActive(userId: string) {
 
     const newPeriodEnd = calculatePeriodEnd(now, targetPlan.interval);
 
+    // Check if user already has a subscription for this target plan
+    const existingSub = await prisma.subscription.findFirst({
+      where: { userId, planId: targetPlan.id },
+    });
+
     await prisma.$transaction([
       prisma.user.update({
         where: { id: userId },
-        data: { portfolioBalance: { decrement: targetPlan.price } },
+        data: { portfolioBalance: { decrement: planPrice } },
       }),
       prisma.transaction.create({
         data: {
           type: 'SubscriptionFee',
-          amount: targetPlan.price,
+          amount: planPrice,
           userId,
           status: 'COMPLETED',
           description: `Renewed ${targetPlan.name}`,
         },
       }),
-      sub.pendingPlanId
-        ? prisma.subscription.create({
+      // Mark old sub as upgraded/expired
+      prisma.subscription.update({
+        where: { id: sub.id },
+        data: {
+          status: sub.pendingPlanId ? 'upgraded' : 'expired',
+          autoRenew: false,
+          cancelledAt: now,
+        },
+      }),
+      // Upsert the target subscription (reactivate existing or create new)
+      existingSub
+        ? prisma.subscription.update({
+            where: { id: existingSub.id },
+            data: {
+              status: 'active',
+              startDate: now,
+              currentPeriodStart: now,
+              currentPeriodEnd: newPeriodEnd,
+              nextBillingDate: newPeriodEnd,
+              autoRenew: true,
+              previousSubscriptionId: sub.id,
+              cancelledAt: null,
+            },
+          })
+        : prisma.subscription.create({
             data: {
               userId,
               planId: targetPlan.id,
@@ -57,15 +88,6 @@ export async function ensureSubscriptionActive(userId: string) {
               nextBillingDate: newPeriodEnd,
               autoRenew: true,
               previousSubscriptionId: sub.id,
-            },
-          })
-        : prisma.subscription.update({
-            where: { id: sub.id },
-            data: {
-              currentPeriodStart: now,
-              currentPeriodEnd: newPeriodEnd,
-              nextBillingDate: newPeriodEnd,
-              pendingPlanId: null,
             },
           }),
     ]);
