@@ -133,6 +133,7 @@ export default function SubscriptionPage() {
                 setPlans(rawPlans.map((p: any) => ({
                     ...p,
                     tier: normalizeTier(p.tier || 'basic'),
+                    weeklyReturnRate: Number(p.weeklyReturnRate),
                     features: Array.isArray(p.features) ? p.features : (p.features ? JSON.parse(p.features) : []),
                 })));
             }
