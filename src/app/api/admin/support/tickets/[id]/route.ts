@@ -17,7 +17,7 @@ export async function GET(
   const ticket = await prisma.supportTicket.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, firstName: true, lastName: true, email: true } },
       messages: {
         orderBy: { createdAt: 'asc' },
         select: { id: true, sender: true, body: true, createdAt: true },
@@ -49,7 +49,7 @@ export async function PATCH(
     where: { id },
     data: { status },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, firstName: true, lastName: true, email: true } },
       messages: {
         orderBy: { createdAt: 'asc' },
         select: { id: true, sender: true, body: true, createdAt: true },
