@@ -176,7 +176,7 @@ export default function HomePage() {
         <nav className="ap-nav">
           {/* 2. Swapped text paths out for single inline responsive component configuration */}
           <a href="/" className="ap-logo">
-            <Logo width={190} height={32} />
+            <Logo width={210} height={42} />
           </a>
           <div className="ap-ticker-wrap">
             <div className="ap-ticker-track">
