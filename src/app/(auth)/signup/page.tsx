@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signupAction } from "@/lib/actions";
+import Logo from "@/components/Logo"; // 1. Imported the clean standalone brand layout
 
 export default function SignupPage() {
   const [loading, setLoading] = useState(false);
@@ -82,15 +83,13 @@ export default function SignupPage() {
           border-radius: 50%;
         }
 
+        /* 2. Adjusted brand wrapper for handling custom SVG logo structure */
         .auth-brand {
-          font-family: 'Playfair Display', Georgia, serif;
-          font-size: 1.4rem;
-          font-weight: 900;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: var(--ink);
+          display: flex;
+          align-items: center;
+          text-decoration: none;
+          flex-shrink: 0;
         }
-        .auth-brand span { color: var(--accent); }
 
         .auth-panel-body { position: relative; z-index: 1; }
 
@@ -324,7 +323,10 @@ export default function SignupPage() {
 
       <div className="auth-shell">
         <div className="auth-left">
-          <div className="auth-brand">Apex<span>•</span>Markets</div>
+          {/* 3. Replaced string header path with dynamic Logo routing */}
+          <Link href="/" className="auth-brand">
+            <Logo width={160} height={28} />
+          </Link>
 
           <div className="auth-panel-body">
             <p className="auth-panel-tag">Get started</p>
