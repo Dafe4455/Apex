@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import GoogleTranslate from '@/components/GoogleTranslate';
 import Logo from '@/components/Logo';
+import { useSessionExpiry } from '@/hooks/useSessionExpiry';
 
 const navItems = [
   {
@@ -152,7 +153,10 @@ const MoonIcon = () => (
     <path d="M17 12.3A7 7 0 0 1 7.7 3a7 7 0 1 0 9.3 9.3z" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
-
+export default function DashboardLayout({ children }) {
+  useSessionExpiry() // Add this line
+  // ... rest of component
+}
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
