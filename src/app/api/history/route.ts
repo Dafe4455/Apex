@@ -34,11 +34,12 @@ export async function GET() {
     }),
   ]);
 
-  function deriveOutcome(t: { action: string | null; pnl: number | null }): 'profit' | 'loss' | null {
+  // Derive a unified outcome for trade rows.
+  function deriveOutcome(t: { action: string | null; pnl: Decimal | null }): 'profit' | 'loss' | null {
     const normalizedAction = t.action?.toLowerCase() ?? '';
     if (normalizedAction.includes('loss'))   return 'loss';
     if (normalizedAction.includes('profit')) return 'profit';
-    if (t.pnl !== null) return t.pnl >= 0 ? 'profit' : 'loss';
+    if (t.pnl !== null) return Number(t.pnl) >= 0 ? 'profit' : 'loss';
     return null;
   }
 
