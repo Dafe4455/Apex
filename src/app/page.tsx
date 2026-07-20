@@ -173,7 +173,10 @@ export default function HomePage() {
 
         {/* ── NAV ── */}
         <nav className="ap-nav">
-          <a href="/" className="ap-logo">Apex<span>·</span>Markets</a>
+          <a href="/" className="ap-logo">
+            <span className="ap-logo-mark">A</span>
+            <span className="ap-logo-word">Apex<span>·</span>Markets</span>
+          </a>
           <div className="ap-ticker-wrap">
             <div className="ap-ticker-track">
               {allTickers.map((t, i) => (
@@ -198,6 +201,7 @@ export default function HomePage() {
             <li><a href="#markets">Markets</a></li>
             <li><a href="#begin">Trust</a></li>
           </ul>
+          <a href="/signup" className="ap-nav-cta">Get Started</a>
         </nav>
 
         {/* ── HERO SECTION ── */}
@@ -464,11 +468,39 @@ const CSS = `
   border-bottom: 1px solid var(--rim);
 }
 .ap-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; flex-shrink: 0;
+}
+.ap-logo-mark {
+  display: flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 7px;
+  background: linear-gradient(145deg, var(--elec), #2E7A9C);
+  font-family: var(--disp); font-size: 1rem; font-weight: 800;
+  color: #05141f; letter-spacing: 0;
+  box-shadow: 0 2px 10px rgba(79,163,196,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.ap-logo-word {
   font-family: var(--disp); font-size: 1.2rem; font-weight: 700;
   letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--t1); text-decoration: none; flex-shrink: 0;
+  color: var(--t1);
 }
-.ap-logo span { color: var(--elec); }
+.ap-logo-word span { color: var(--elec); }
+
+.ap-nav-cta {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center;
+  background: var(--elec); color: #fff;
+  font-family: var(--mono); font-size: 0.72rem; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 9px 20px; border-radius: var(--radius-m);
+  text-decoration: none;
+  transition: transform 0.2s var(--ease-soft), box-shadow 0.2s var(--ease-soft), background 0.2s;
+}
+.ap-nav-cta:hover {
+  background: var(--elec-hi);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(79,163,196,0.3);
+}
 
 .ap-ticker-wrap {
   flex: 1; overflow: hidden; height: 100%;
@@ -781,6 +813,7 @@ const CSS = `
 @media (max-width: 640px) {
   .ap-nav { padding: 0 20px; gap: 16px; }
   .ap-nav-links { display: none; }
+  .ap-nav-cta { padding: 8px 14px; font-size: 0.65rem; }
   .ap-section, .ap-mkt-sec { padding: 64px 24px; }
   .ap-hero-inner { padding: 56px 24px 100px; }
   .ap-footer { padding: 20px 24px; flex-direction: column; align-items: flex-start; }
