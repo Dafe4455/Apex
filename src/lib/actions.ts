@@ -9,12 +9,16 @@ import { AuthError } from "next-auth";
 const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email address"),
+  phone: z.string().optional(),
+  country: z.string().optional(),
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 export async function signupAction(formData: {
   name: string;
   email: string;
+  phone?: string;
+  country?: string;
   password: string;
 }) {
   const parsed = signupSchema.safeParse(formData);
@@ -22,7 +26,7 @@ export async function signupAction(formData: {
     return { error: parsed.error.errors[0].message };
   }
 
-  const { name, email, password } = parsed.data;
+  const { name, email, phone, country, password } = parsed.data;
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -31,8 +35,20 @@ export async function signupAction(formData: {
 
   const hashedPassword = await bcrypt.hash(password, 12);
 
+  // Split full name into firstName + lastName
+  const nameParts = name.trim().split(/\s+/);
+  const firstName = nameParts[0];
+  const lastName = nameParts.slice(1).join(" ") || null;
+
   await prisma.user.create({
-    data: { name, email, password: hashedPassword },
+    data: {
+      firstName,
+      lastName,
+      email,
+      phone: phone || null,
+      country: country || null,
+      password: hashedPassword,
+    },
   });
 
   // Auto sign in after signup
