@@ -12,7 +12,7 @@ export async function GET() {
 
   const withdrawals = await prisma.withdrawal.findMany({
     orderBy: { createdAt: 'desc' },
-    include: { user: { select: { name: true, email: true } } },
+    include: { user: { select: { firstName: true, lastName: true, email: true } } },
   });
 
   return NextResponse.json({ withdrawals });
