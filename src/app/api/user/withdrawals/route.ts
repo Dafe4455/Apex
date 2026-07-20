@@ -25,7 +25,12 @@ export async function GET() {
     },
   });
 
-  return NextResponse.json({ withdrawals });
+  return NextResponse.json({
+    withdrawals: withdrawals.map(w => ({
+      ...w,
+      amount: Number(w.amount),
+    })),
+  });
 }
 
 // POST — submit a new withdrawal request
@@ -102,7 +107,10 @@ export async function POST(req: Request) {
   }
 
   // ── Balance check ──────────────────────────────────────────────────────────
-  if (user.portfolioBalance < Number(amount)) {
+  const balance = Number(user.portfolioBalance);
+  const withdrawalAmount = Number(amount);
+
+  if (balance < withdrawalAmount) {
     return NextResponse.json({ error: 'Insufficient balance' }, { status: 400 });
   }
 
@@ -119,7 +127,7 @@ export async function POST(req: Request) {
     prisma.withdrawal.create({
       data: {
         userId,
-        amount:   Number(amount),
+        amount:   withdrawalAmount,
         currency,
         status:   'PENDING',
         note:     fullNote,
@@ -127,7 +135,7 @@ export async function POST(req: Request) {
     }),
     prisma.user.update({
       where: { id: userId },
-      data:  { portfolioBalance: { decrement: Number(amount) } },
+      data:  { portfolioBalance: { decrement: withdrawalAmount } },
     }),
   ]);
 
@@ -135,7 +143,7 @@ export async function POST(req: Request) {
   await prisma.activityLog.create({
     data: {
       userId,
-      description: `Withdrawal of $${Number(amount).toLocaleString()} requested via ${method}`,
+      description: `Withdrawal of $${withdrawalAmount.toLocaleString()} requested via ${method}`,
     },
   });
 
@@ -143,9 +151,14 @@ export async function POST(req: Request) {
   await prisma.notification.create({
     data: {
       userId,
-      message: `Your withdrawal request of $${Number(amount).toLocaleString()} has been received and is under review`,
+      message: `Your withdrawal request of $${withdrawalAmount.toLocaleString()} has been received and is under review`,
     },
   });
 
-  return NextResponse.json({ withdrawal }, { status: 201 });
+  return NextResponse.json({
+    withdrawal: {
+      ...withdrawal,
+      amount: Number(withdrawal.amount),
+    },
+  }, { status: 201 });
 }
