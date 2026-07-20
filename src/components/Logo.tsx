@@ -5,71 +5,59 @@ interface LogoProps {
   className?: string;
 }
 
-export default function Logo({ width = 180, height = 56, className }: LogoProps) {
+export default function Logo({ width = 240, height = 40, className }: LogoProps) {
   return (
     <svg 
       xmlns="http://www.w3.org/2000/svg" 
-      viewBox="0 0 640 200" 
+      viewBox="0 0 380 60" 
       width={width} 
       height={height} 
       className={className}
     >
       <defs>
-        <linearGradient id="apexPeakGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#4FA3C4" />
-          <stop offset="100%" stopColor="#2E7A9C" />
+        {/* Sleek, vibrant gradient for the primary peak leg */}
+        <linearGradient id="apexPeakGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#2E7A9C" />
+          <stop offset="100%" stopColor="#4FA3C4" />
         </linearGradient>
       </defs>
 
-      {/* Graphical Mark */}
-      <g transform="translate(40, 40)">
+      {/* Simplified, Modern Stroke-Based "A" Mark */}
+      <g fill="none" strokeLinecap="round" strokeLinejoin="round">
+        {/* Outer Minimal Peak / A-Frame */}
         <path 
-          d="M 60 0 L 118 120 L 96 120 L 60 46 L 24 120 L 2 120 Z" 
-          fill="url(#apexPeakGrad)"
+          d="M 14 46 L 32 14 L 50 46" 
+          stroke="url(#apexPeakGrad)" 
+          strokeWidth="6.5" 
         />
+        {/* Sharp, vibrant execution engine crossbar */}
         <path 
-          d="M 8 84 L 46 84 L 60 56 L 74 84 L 112 84" 
-          fill="none" 
+          d="M 22 34 L 42 34" 
           stroke="#00D68A" 
-          strokeWidth={6} 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
+          strokeWidth="4.5" 
         />
       </g>
 
-      {/* Typography Scale linked to global CSS variables */}
+      {/* Single Line Typographic Layout with Resilient tspan Spacing */}
       <text 
-        x="182" 
-        y="92" 
+        x="72" 
+        y="41" 
         fontFamily="'Barlow Condensed', 'DM Sans', system-ui, sans-serif" 
-        fontSize="54" 
+        fontSize="30" 
         fontWeight="800" 
-        letterSpacing="4" 
-        fill="var(--ink)"
+        fill="var(--ink)" 
+        letterSpacing="3"
       >
         APEX
+        <tspan 
+          fontWeight="400" 
+          fill="var(--ink-dim)" 
+          letterSpacing="6" 
+          dx="10"
+        >
+          MARKETS
+        </tspan>
       </text>
-      <text 
-        x="182" 
-        y="124" 
-        fontFamily="'Barlow Condensed', 'DM Sans', system-ui, sans-serif" 
-        fontSize="26" 
-        fontWeight="500" 
-        letterSpacing="11" 
-        fill="var(--ink-dim)"
-      >
-        MARKETS
-      </text>
-
-      {/* Structural Accent Rule */}
-      <line 
-        x1="182" 
-        y1="140" 
-        x2="480" 
-        y2="140" 
-        stroke="var(--line-strong)" 
-        strokeWidth="1.5"
-      />
     </svg>
   );
 }
