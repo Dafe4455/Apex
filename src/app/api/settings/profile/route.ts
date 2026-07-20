@@ -4,20 +4,32 @@ import { prisma } from "@/lib/prisma";
 
 export async function PATCH(req: Request) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  const { name, email } = await req.json().catch(() => ({}));
-  if (!name || !email) return NextResponse.json({ error: "Name and email are required." }, { status: 400 });
+  const { name, email } = await req.json();
 
-  const existing = await prisma.user.findFirst({
-    where: { email, NOT: { id: session.user.id } },
-  });
-  if (existing) return NextResponse.json({ error: "Email already in use." }, { status: 409 });
+  // Split name into firstName + lastName
+  let firstName, lastName;
+  if (name !== undefined) {
+    const parts = name.trim().split(/\s+/);
+    firstName = parts[0];
+    lastName = parts.slice(1).join(" ") || null;
+  }
 
   const user = await prisma.user.update({
     where: { id: session.user.id },
-    data: { name, email },
+    data: {
+      ...(firstName !== undefined && { firstName }),
+      ...(lastName !== undefined && { lastName }),
+      ...(email !== undefined && { email }),
+    },
   });
 
-  return NextResponse.json({ ok: true, name: user.name, email: user.email });
+  const fullName = user.firstName
+    ? `${user.firstName} ${user.lastName || ""}`.trim()
+    : user.email;
+
+  return NextResponse.json({ ok: true, name: fullName, email: user.email });
 }
