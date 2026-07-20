@@ -19,7 +19,8 @@ export async function GET(
     where: { id },
     select: {
       id: true,
-      name: true,
+      firstName: true,
+      lastName: true,
       email: true,
       role: true,
       kycStatus: true,
@@ -47,17 +48,27 @@ export async function PUT(
 
   const validKyc: KycStatus[] = ['NONE', 'PENDING', 'APPROVED', 'REJECTED'];
 
+  // Split name into firstName + lastName if provided
+  let firstName, lastName;
+  if (name !== undefined) {
+    const parts = name.trim().split(/\s+/);
+    firstName = parts[0];
+    lastName = parts.slice(1).join(' ') || null;
+  }
+
   const user = await prisma.user.update({
     where: { id },
     data: {
-  ...(name !== undefined && { name }),
-  ...(email !== undefined && { email }),
-  ...(kycStatus && validKyc.includes(kycStatus) && { kycStatus }),
-  ...(portfolioBalance !== undefined && { portfolioBalance: Number(portfolioBalance) }),
-},
+      ...(firstName !== undefined && { firstName }),
+      ...(lastName !== undefined && { lastName }),
+      ...(email !== undefined && { email }),
+      ...(kycStatus && validKyc.includes(kycStatus) && { kycStatus }),
+      ...(portfolioBalance !== undefined && { portfolioBalance: Number(portfolioBalance) }),
+    },
     select: {
       id: true,
-      name: true,
+      firstName: true,
+      lastName: true,
       email: true,
       role: true,
       kycStatus: true,
