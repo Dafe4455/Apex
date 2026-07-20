@@ -152,6 +152,7 @@ export default function HomePage() {
   const btc = assets.find(a => a.symbol === 'BTC');
   const midPrice = btc ? btc.price : 67420.50;
   const midChange = btc ? btc.changePercent : 2.38;
+  const btcLogo = btc ? btc.logoUrl : undefined;
   const book = useMemo(() => buildBook(midPrice), [midPrice]);
 
   useEffect(() => {
@@ -172,7 +173,6 @@ export default function HomePage() {
 
         {/* ── NAV ── */}
         <nav className="ap-nav">
-          <div className="ap-nav-beam"/>
           <a href="/" className="ap-logo">Apex<span>·</span>Markets</a>
           <div className="ap-ticker-wrap">
             <div className="ap-ticker-track">
@@ -198,10 +198,6 @@ export default function HomePage() {
             <li><a href="#markets">Markets</a></li>
             <li><a href="#begin">Trust</a></li>
           </ul>
-          <div className="ap-nav-auth">
-            <a href="/login" className="ap-nav-login">Log In</a>
-            <a href="/signup" className="ap-nav-cta">Sign Up</a>
-          </div>
         </nav>
 
         {/* ── HERO SECTION ── */}
@@ -231,7 +227,17 @@ export default function HomePage() {
               <div className="ap-book">
                 <div className="ap-book-head">
                   <div>
-                    <div className="ap-book-pair"><span className="ap-live-dot"/>BTC / USD</div>
+                    <div className="ap-book-pair">
+                      {btcLogo && (
+                        <img
+                          src={btcLogo}
+                          alt=""
+                          className="ap-book-logo"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      )}
+                      <span className="ap-live-dot"/>BTC / USD
+                    </div>
                     <div className="ap-book-px">{book.mid}</div>
                     <div className={`ap-book-chg ${midChange >= 0 ? 'ap-up' : 'ap-dn'}`}>
                       {midChange >= 0 ? '▲' : '▼'} {fmtChange(midChange)} today
@@ -457,10 +463,6 @@ const CSS = `
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--rim);
 }
-.ap-nav-beam {
-  position: absolute; top: 0; left: 0; right: 0; height: 2px;
-  background: linear-gradient(90deg, transparent, var(--elec) 30%, var(--mint) 70%, transparent);
-}
 .ap-logo {
   font-family: var(--disp); font-size: 1.2rem; font-weight: 700;
   letter-spacing: 0.12em; text-transform: uppercase;
@@ -497,39 +499,6 @@ const CSS = `
   color: var(--t2); text-decoration: none; transition: color 0.2s;
 }
 .ap-nav-links a:hover { color: var(--t1); }
-
-/* Unified Auth Component Balance */
-.ap-nav-auth {
-  display: flex; align-items: center; gap: 12px; flex-shrink: 0;
-}
-.ap-nav-login {
-  display: inline-flex; align-items: center; justify-content: center;
-  font-family: var(--mono); font-size: 0.75rem;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--t1); text-decoration: none;
-  padding: 10px 20px; height: 38px;
-  border: 1px solid var(--rim-strong); border-radius: var(--radius-m);
-  background: rgba(255, 255, 255, 0.02);
-  transition: all 0.2s var(--ease-soft);
-}
-.ap-nav-login:hover {
-  background: rgba(255, 255, 255, 0.07);
-  border-color: var(--t2);
-}
-.ap-nav-cta {
-  display: inline-flex; align-items: center; justify-content: center;
-  font-family: var(--mono); font-size: 0.75rem;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  background: var(--elec); color: #fff;
-  padding: 10px 22px; height: 38px; text-decoration: none;
-  border-radius: var(--radius-m);
-  box-shadow: 0 2px 8px rgba(79, 163, 196, 0.15);
-  transition: all 0.2s var(--ease-soft); flex-shrink: 0;
-}
-.ap-nav-cta:hover {
-  background: var(--elec-hi);
-  box-shadow: 0 4px 16px rgba(79, 163, 196, 0.3);
-}
 
 /* HERO Styling */
 .ap-hero {
@@ -637,6 +606,7 @@ const CSS = `
   font-family: var(--mono); font-size: 0.62rem; font-weight: 500;
   letter-spacing: 0.1em; color: var(--t2); margin-bottom: 4px;
 }
+.ap-book-logo { width: 16px; height: 16px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.06); }
 .ap-live-dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--mint); flex-shrink: 0;
