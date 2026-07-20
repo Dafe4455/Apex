@@ -8,13 +8,13 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
-
 // ── Enums ─────────────────────────────────────────────────────────────────────
 
 enum Role {
   USER
   ADMIN
+  MODERATOR
+  ANALYST
 }
 
 enum KycStatus {
@@ -22,6 +22,7 @@ enum KycStatus {
   PENDING
   APPROVED
   REJECTED
+  EXPIRED
 }
 
 enum TransactionStatus {
@@ -52,8 +53,37 @@ enum TransactionType {
   Withdrawal
   Trade
   SubscriptionFee
-  SubscriptionUpgrade    // NEW
-  SubscriptionDowngrade  // NEW
+  SubscriptionUpgrade
+  SubscriptionDowngrade
+}
+
+enum RiskLabel {
+  CONSERVATIVE
+  MODERATE
+  AGGRESSIVE
+  SPECULATIVE
+}
+
+enum PositionSide {
+  LONG
+  SHORT
+}
+
+enum PositionStatus {
+  OPEN
+  CLOSED
+  LIQUIDATED
+}
+
+enum BotStatus {
+  RUNNING
+  PAUSED
+  STOPPED
+}
+
+enum TradeSide {
+  BUY
+  SELL
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
@@ -61,18 +91,20 @@ enum TransactionType {
 model User {
   id                     String    @id @default(cuid())
   firstName              String?
-  name                   String?
+  lastName               String?
   email                  String    @unique
   emailVerified          DateTime?
   password               String?
   image                  String?
+  phone                  String?
+  country                String?   // ISO-3166 alpha-2
   role                   Role      @default(USER)
-  portfolioBalance       Float     @default(0)
-  previousBalance        Float     @default(0)
-  portfolioChangePercent Float     @default(0)
-  realisedPnl            Float     @default(0)
-  volatility             Float     @default(0)
-  riskLabel              String    @default("Conservative")
+  portfolioBalance       Decimal   @default(0) @db.Decimal(19, 8)
+  previousBalance        Decimal   @default(0) @db.Decimal(19, 8)
+  portfolioChangePercent Decimal   @default(0) @db.Decimal(19, 8)
+  realisedPnl            Decimal   @default(0) @db.Decimal(19, 8)
+  volatility             Decimal   @default(0) @db.Decimal(19, 8)
+  riskLabel              RiskLabel @default(CONSERVATIVE)
   kycStatus              KycStatus @default(NONE)
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
@@ -89,6 +121,10 @@ model User {
   transactions    Transaction[]
   subscriptions   Subscription[]
   tradingBots     TradingBot[]
+
+  @@index([kycStatus, createdAt])
+  @@index([role])
+  @@index([country])
 }
 
 model Account {
@@ -145,7 +181,7 @@ model DepositMethod {
 model Deposit {
   id          String            @id @default(cuid())
   userId      String
-  amount      Float
+  amount      Decimal           @db.Decimal(19, 8)
   currency    String            @default("USD")
   status      TransactionStatus @default(PENDING)
   methodLabel String?
@@ -160,7 +196,7 @@ model Deposit {
 model Withdrawal {
   id        String           @id @default(cuid())
   userId    String
-  amount    Float
+  amount    Decimal          @db.Decimal(19, 8)
   currency  String           @default("USD")
   status    WithdrawalStatus @default(PENDING)
   note      String?
@@ -179,6 +215,8 @@ model Notification {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
 }
 
 model ActivityLog {
@@ -188,6 +226,8 @@ model ActivityLog {
   createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model KYCSubmission {
@@ -217,6 +257,9 @@ model SupportTicket {
 
   user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages SupportMessage[]
+
+  @@index([userId, status])
+  @@index([status, createdAt])
 }
 
 model SupportMessage {
@@ -227,6 +270,8 @@ model SupportMessage {
   createdAt DateTime      @default(now())
 
   ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
 }
 
 model MarketPrice {
@@ -243,38 +288,44 @@ model MarketPrice {
 }
 
 model Position {
-  id         String    @id @default(cuid())
+  id         String         @id @default(cuid())
   userId     String
   asset      String
   symbol     String
-  quantity   Float     @default(0)
-  entryPrice Float     @default(0)
-  currentPnl Float     @default(0)
-  side       String    @default("LONG")
-  status     String    @default("OPEN")
-  leverage   Float     @default(1)
-  marketType String    @default("CRYPTO")
-  openedAt   DateTime  @default(now())
+  quantity   Decimal        @default(0) @db.Decimal(19, 8)
+  entryPrice Decimal        @default(0) @db.Decimal(19, 8)
+  currentPnl Decimal        @default(0) @db.Decimal(19, 8)
+  side       PositionSide   @default(LONG)
+  status     PositionStatus @default(OPEN)
+  leverage   Decimal        @default(1) @db.Decimal(5, 2)
+  marketType String         @default("CRYPTO")
+  openedAt   DateTime       @default(now())
   closedAt   DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([symbol, status])
 }
 
 model Transaction {
   id          String            @id @default(cuid())
   type        TransactionType
   asset       String?
-  amount      Float
-  price       Float?
+  amount      Decimal           @db.Decimal(19, 8)
+  price       Decimal?          @db.Decimal(19, 8)
   action      String?
-  leverage    Float?
-  pnl         Float?
+  leverage    Decimal?          @db.Decimal(5, 2)
+  pnl         Decimal?          @db.Decimal(19, 8)
   status      TransactionStatus @default(PENDING)
   userId      String
-  description String?             // NEW: human-readable note
-  user        User                @relation(fields: [userId], references: [id])
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  description String?
+  user        User              @relation(fields: [userId], references: [id])
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([userId, createdAt])
+  @@index([type, status])
 }
 
 // ── Subscriptions ─────────────────────────────────────────────────────────────
@@ -284,9 +335,9 @@ model SubscriptionPlan {
   name              String
   tier              String   @default("basic")
   description       String?
-  price             Float
-  minInvestment     Float    @default(0)
-  weeklyReturnRate  Float    @default(0)
+  price             Decimal  @db.Decimal(19, 8)
+  minInvestment     Decimal  @default(0) @db.Decimal(19, 8)
+  weeklyReturnRate  Decimal  @default(0) @db.Decimal(5, 4)
   interval          String   @default("WEEKLY")
   features          Json?
   isActive          Boolean  @default(true)
@@ -300,52 +351,59 @@ model SubscriptionPlan {
 }
 
 model Subscription {
-  id                   String    @id @default(cuid())
-  userId               String
-  planId               String
-  status               String    @default("active")
-  startDate            DateTime
-  currentPeriodStart   DateTime
-  currentPeriodEnd     DateTime
-  nextBillingDate      DateTime
-  autoRenew            Boolean   @default(true)
-  cancelledAt          DateTime?
-  pendingPlanId        String?
+  id                     String    @id @default(cuid())
+  userId                 String
+  planId                 String
+  status                 String    @default("active")
+  startDate              DateTime
+  currentPeriodStart     DateTime
+  currentPeriodEnd       DateTime
+  nextBillingDate        DateTime
+  autoRenew              Boolean   @default(true)
+  cancelledAt            DateTime?
+  pendingPlanId          String?
   previousSubscriptionId String?
 
-  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  plan         SubscriptionPlan  @relation("ActivePlan", fields: [planId], references: [id])
-  pendingPlan  SubscriptionPlan? @relation("PendingPlan", fields: [pendingPlanId], references: [id])
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan        SubscriptionPlan  @relation("ActivePlan", fields: [planId], references: [id])
+  pendingPlan SubscriptionPlan? @relation("PendingPlan", fields: [pendingPlanId], references: [id])
 
   @@index([userId, status])
   @@index([nextBillingDate, autoRenew, status])
 }
 
+// ── Trading Bots ──────────────────────────────────────────────────────────────
 
 model TradingBot {
   id        String    @id @default(cuid())
   userId    String
   name      String
-  strategy  String    // "dca", etc.
+  strategy  String    // "dca", "grid", "momentum", etc.
   config    Json      // { symbol, baseAmount, interval }
-  status    String    @default("stopped") // "running", "paused", "stopped"
+  status    BotStatus @default(STOPPED)
   lastRun   DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
   user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   trades BotTrade[]
+
+  @@index([userId, status])
+  @@index([status, lastRun])
 }
 
 model BotTrade {
   id         String   @id @default(cuid())
   botId      String
   symbol     String
-  side       String   // "BUY" or "SELL"
-  quantity   Float
-  price      Float
-  amount     Float
+  side       TradeSide
+  quantity   Decimal  @db.Decimal(19, 8)
+  price      Decimal  @db.Decimal(19, 8)
+  amount     Decimal  @db.Decimal(19, 8)
   executedAt DateTime @default(now())
 
   bot TradingBot @relation(fields: [botId], references: [id], onDelete: Cascade)
+
+  @@index([botId, executedAt])
+  @@index([symbol, executedAt])
 }
