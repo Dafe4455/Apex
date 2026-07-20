@@ -1,43 +1,58 @@
-// auth.ts
-async jwt({ token, user }) {
+import { NextResponse } from "next/server";
+import { auth } from "@root/auth";
+
+const publicRoutes = ["/", "/login", "/signup", "/admin/login", "/manifest.json", "/sw.js", "/icon-192.png", "/icon-512.png", "/offline"];
+const authRoutes = ["/login", "/signup"];
+
+const INACTIVITY_LIMIT_SECONDS = 60 * 10;
+
+export default auth((req) => {
+  const { nextUrl } = req;
+  const session = req.auth;
+  
   const now = Math.floor(Date.now() / 1000);
-
-  if (user) {
-    token.id = user.id;
-    token.role = (user as any).role;
-    token.firstName = (user as any).firstName;
-    token.lastName = (user as any).lastName;
-    token.lastActive = now;
-    token.expired = false; // mark as fresh
-    return token;
-  }
-
-  const lastActive = (token.lastActive as number) ?? now;
+  const lastActive = (session as any)?.lastActive as number | undefined;
+  const isExpired = !!lastActive && (now - lastActive > INACTIVITY_LIMIT_SECONDS);
   
-  if (now - lastActive > INACTIVITY_LIMIT_SECONDS) {
-    // Instead of returning null, mark as expired
-    // This keeps the token structure but signals it's dead
-    token.expired = true;
-    token.lastActive = now; // prevent repeated checks
-    return token;
+  // Session is valid only if user exists AND not expired
+  const isLoggedIn = !!session?.user && !isExpired;
+  const role = (session?.user as any)?.role as string | undefined;
+
+  const pathname = nextUrl.pathname;
+
+  const isPublicRoute = publicRoutes.includes(pathname);
+  const isAuthRoute = authRoutes.includes(pathname);
+  const isAdminRoute = pathname.startsWith("/dashboard/admin");
+
+  // Logged-in users hitting auth pages → redirect to dashboard
+  if (isAuthRoute && isLoggedIn) {
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
-  token.lastActive = now;
-  token.expired = false;
-  return token;
-},
+  // Unauthenticated or expired users hitting protected routes → redirect to login
+  if (!isPublicRoute && !isLoggedIn) {
+    const loginUrl = new URL("/login", nextUrl);
+    if (isExpired) {
+      loginUrl.searchParams.set("expired", "true");
+    }
+    const response = NextResponse.redirect(loginUrl);
+    response.headers.set("Cache-Control", "no-store, must-revalidate");
+    return response;
+  }
 
-async session({ session, token }) {
-  // If token is expired, return empty session (no throw)
-  if (!token || token.expired) {
-    return { expires: new Date(0).toISOString() } as any;
+  // Admin route protection
+  if (isAdminRoute && role !== "ADMIN") {
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
-  
-  if (session.user) {
-    (session.user as any).id = token.id;
-    (session.user as any).role = token.role;
-    (session.user as any).firstName = token.firstName;
-    (session.user as any).lastName = token.lastName;
+
+  // Allow request through
+  const response = NextResponse.next();
+  if (!isPublicRoute) {
+    response.headers.set("Cache-Control", "no-store, must-revalidate");
   }
-  return session;
-},
+  return response;
+});
+
+export const config = {
+  matcher: ["/((?!api/|_next/static|_next/image|favicon.ico|icons/).*)"],
+};
