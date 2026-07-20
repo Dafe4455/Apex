@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import GoogleTranslate from '@/components/GoogleTranslate';
+import Logo from '@/components/Logo';
 
 const navItems = [
   {
@@ -74,6 +75,48 @@ const navItems = [
         <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
         <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
         <circle cx="6.5" cy="9.5" r="0.6" fill="currentColor" />
+      </svg>
+    ),
+  },
+  {
+    href: '/dashboard/settings',
+    label: 'Settings',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+        <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    href: '/dashboard/notifications',
+    label: 'Alerts',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+        <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    href: '/dashboard/kyc',
+    label: 'KYC',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
+        <circle cx="7.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
+        <path d="M11 8h4M11 11h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    href: '/dashboard/subscription',
+    label: 'Investment Plans',
+    icon: (
+      <svg width="13" height="13" viewBox="0 0 20 20" fill="none">
+        <rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
+        <path d="M3 8h14" stroke="currentColor" strokeWidth="1.3" />
+        <circle cx="10" cy="12" r="1.2" fill="currentColor" />
       </svg>
     ),
   },
@@ -182,25 +225,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .db-sidebar-logo {
           padding: 22px 18px 18px;
           border-bottom: 1px solid var(--line-strong);
-        }
-        .db-logo-text {
-          font-family: var(--mono);
-          font-size: 0.72rem;
-          font-weight: 500;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: var(--ink-2);
-          text-decoration: none;
-          display: block;
-        }
-        .db-logo-text span { color: var(--accent); }
-        .db-logo-sub {
-          font-family: var(--mono);
-          font-size: 0.52rem;
-          letter-spacing: 0.15em;
-          text-transform: uppercase;
-          color: var(--ink-faint);
-          margin-top: 4px;
         }
         .db-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
         .db-nav-item {
@@ -412,7 +436,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           background: rgba(0, 0, 0, 0.6);
           z-index: 55;
           backdrop-filter: blur(4px);
-          /* Hidden by default: no display:none, use opacity/visibility/pointer-events */
           opacity: 0;
           visibility: hidden;
           pointer-events: none;
@@ -435,7 +458,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           padding-bottom: max(env(safe-area-inset-bottom), 16px);
           flex-direction: column;
           transition: transform 0.28s cubic-bezier(0.32,0.72,0,1), opacity 0.2s ease, visibility 0.2s ease;
-          /* Hidden by default — CSS only, no React dependency */
           transform: translateX(-100%);
           opacity: 0;
           visibility: hidden;
@@ -679,7 +701,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
 
         /* ── MOUNTED GUARD ── */
-        /* Prevent any flash before hydration: hide mobile sidebar entirely on server */
         .db-mobile-sidebar-not-mounted {
           display: none !important;
         }
@@ -706,10 +727,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* SIDEBAR */}
         <aside className="db-sidebar">
           <div className="db-sidebar-logo">
-            <Link href="/" className="db-logo-text">
-              APEX<span>•</span>MARKETS
-            </Link>
-            <p className="db-logo-sub">Terminal v1.0</p>
+            <Logo />
           </div>
           <nav className="db-nav">
             {navItems.map((item) => (
@@ -775,7 +793,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="db-content">{children}</div>
         </main>
 
-        {/* MOBILE SIDEBAR — only render after client hydration */}
+        {/* MOBILE SIDEBAR */}
         {mounted && !isAdmin && (
           <>
             <div
@@ -790,48 +808,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </button>
               </div>
               <div className="db-mobile-sidebar-content">
-                <Link href="/dashboard/support" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
-                  <svg width="14" height="14" viewBox="0 0 13 13" fill="none">
-                    <circle cx="6.5" cy="6.5" r="5" stroke="currentColor" strokeWidth="1.1" />
-                    <path d="M6.5 7.5V7c.9 0 1.5-.7 1.5-1.5S7.4 4 6.5 4 5 4.7 5 5.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="square" />
-                    <circle cx="6.5" cy="9.5" r="0.6" fill="currentColor" />
-                  </svg>
-                  Support
-                </Link>
-                <div className="db-mobile-sidebar-divider" />
-                <Link href="/dashboard/settings" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
-                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="2.5" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.22 4.22l1.42 1.42M14.36 14.36l1.42 1.42M4.22 15.78l1.42-1.42M14.36 5.64l1.42-1.42" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
-                  Settings
-                </Link>
-                <div className="db-mobile-sidebar-divider" />
-                <Link href="/dashboard/notifications" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
-                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                    <path d="M10 2a6 6 0 0 1 6 6c0 3 1 4 1 4H3s1-1 1-4a6 6 0 0 1 6-6z" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M8.5 16a1.5 1.5 0 0 0 3 0" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-                  </svg>
-                  Alerts
-                </Link>
-                <div className="db-mobile-sidebar-divider" />
-                <Link href="/dashboard/kyc" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
-                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                    <rect x="3" y="5" width="14" height="10" rx="2" stroke="currentColor" strokeWidth="1.3" />
-                    <circle cx="7.5" cy="9.5" r="1.5" stroke="currentColor" strokeWidth="1.1" />
-                    <path d="M11 8h4M11 11h3" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
-                  </svg>
-                  KYC
-                </Link>
-                <div className="db-mobile-sidebar-divider" />
-                <Link href="/dashboard/subscription" className="db-mobile-sidebar-row" onClick={() => setSidebarOpen(false)}>
-                  <svg width="14" height="14" viewBox="0 0 20 20" fill="none">
-                    <rect x="3" y="4" width="14" height="12" rx="2" stroke="currentColor" strokeWidth="1.3" />
-                    <path d="M3 8h14" stroke="currentColor" strokeWidth="1.3" />
-                    <circle cx="10" cy="12" r="1.2" fill="currentColor" />
-                  </svg>
-                  Investment Plans
-                </Link>
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="db-mobile-sidebar-row"
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', color: 'var(--ink-dim)' }}>
+                      {item.icon}
+                    </span>
+                    {item.label}
+                  </Link>
+                ))}
               </div>
               <div className="db-mobile-sidebar-footer">
                 <button 
