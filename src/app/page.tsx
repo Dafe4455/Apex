@@ -407,7 +407,7 @@ const CSS = `
   --surface:   rgba(255,255,255,0.035);
   --surface-2: rgba(255,255,255,0.06);
   --surface-3: rgba(255,255,255,0.09);
-  
+  --auth:       #0E2A30
   --rim:        rgba(255,255,255,0.07);
   --rim-strong: rgba(255,255,255,0.16);
   
@@ -484,7 +484,7 @@ const CSS = `
 .ap-nav-cta {
   flex-shrink: 0;
   display: inline-flex; align-items: center;
-  background: var(--elec); color: #fff;
+  background: var(--auth); color: #fff;
   font-family: var(--mono); font-size: 0.72rem; font-weight: 500;
   letter-spacing: 0.08em; text-transform: uppercase;
   padding: 9px 20px; border-radius: var(--radius-m);
