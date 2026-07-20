@@ -12,7 +12,7 @@ export async function GET() {
   const deposits = await prisma.deposit.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, firstName: true, lastName: true, email: true } },
     },
   });
 
@@ -44,6 +44,8 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: 'Deposit already processed' }, { status: 409 });
   }
 
+  const depositAmount = Number(deposit.amount);
+
   if (action === 'approve') {
     // Update deposit status + add amount to user balance in one transaction
     await prisma.$transaction([
@@ -58,13 +60,13 @@ export async function PATCH(req: Request) {
       prisma.activityLog.create({
         data: {
           userId:      deposit.userId,
-          description: `Deposit of $${deposit.amount.toLocaleString()} approved`,
+          description: `Deposit of $${depositAmount.toLocaleString()} approved`,
         },
       }),
       prisma.notification.create({
         data: {
           userId:  deposit.userId,
-          message: `Your deposit of $${deposit.amount.toLocaleString()} has been approved`,
+          message: `Your deposit of $${depositAmount.toLocaleString()} has been approved`,
         },
       }),
     ]);
@@ -77,13 +79,13 @@ export async function PATCH(req: Request) {
       prisma.activityLog.create({
         data: {
           userId:      deposit.userId,
-          description: `Deposit of $${deposit.amount.toLocaleString()} rejected`,
+          description: `Deposit of $${depositAmount.toLocaleString()} rejected`,
         },
       }),
       prisma.notification.create({
         data: {
           userId:  deposit.userId,
-          message: `Your deposit of $${deposit.amount.toLocaleString()} was rejected`,
+          message: `Your deposit of $${depositAmount.toLocaleString()} was rejected`,
         },
       }),
     ]);
