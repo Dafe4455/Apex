@@ -34,10 +34,6 @@ export async function GET() {
     }),
   ]);
 
-  // Derive a unified outcome for trade rows.
-  // - Admin P&L settlements write action: 'Profit' | 'Loss' on asset 'USD'.
-  // - Trade executions (BUY/SELL) carry pnl directly on the row (SELL only;
-  //   BUY rows and any pre-migration SELL rows will have pnl === null).
   function deriveOutcome(t: { action: string | null; pnl: number | null }): 'profit' | 'loss' | null {
     const normalizedAction = t.action?.toLowerCase() ?? '';
     if (normalizedAction.includes('loss'))   return 'loss';
@@ -47,8 +43,6 @@ export async function GET() {
   }
 
   function tradeTitle(t: { asset: string | null; action: string | null }) {
-    // Admin settlements: asset is 'USD', action is 'Profit'/'Loss' — show asset as-is.
-    // Trade executions: asset is stored as 'BUY:BTC' / 'SELL:BTC' — strip the prefix.
     if (!t.asset) return t.action ?? 'Trade';
     return t.asset.includes(':') ? t.asset.split(':')[1] : t.asset;
   }
@@ -64,7 +58,7 @@ export async function GET() {
     kind: 'trade' as const,
     title: tradeTitle(t),
     description: tradeDescription(t),
-    amount: t.amount,
+    amount: Number(t.amount),
     outcome: deriveOutcome(t),
     status: t.status,
     createdAt: t.createdAt.toISOString(),
@@ -75,7 +69,7 @@ export async function GET() {
     kind: 'withdrawal' as const,
     title: 'Withdrawal',
     description: w.note ?? 'Withdrawal',
-    amount: w.amount,
+    amount: Number(w.amount),
     outcome: null,
     status: w.status,
     createdAt: w.createdAt.toISOString(),
@@ -86,16 +80,12 @@ export async function GET() {
     kind: 'deposit' as const,
     title: 'Deposit',
     description: d.methodLabel ?? 'Deposit',
-    amount: d.amount,
+    amount: Number(d.amount),
     outcome: null,
     status: d.status,
     createdAt: d.createdAt.toISOString(),
   }));
 
-  // An ActivityLog row is a duplicate if it falls within a small time window of
-  // a trade/withdrawal event for the same user (writes happen back-to-back in
-  // the same request, so a few seconds of tolerance comfortably covers DB skew
-  // without risking false matches against unrelated activity).
   const DEDUP_WINDOW_MS = 5000;
   const coveredTimestamps = [...tradeEvents, ...withdrawalEvents].map(e =>
     new Date(e.createdAt).getTime()
