@@ -35,7 +35,7 @@ export async function GET() {
   ]);
 
   // Derive a unified outcome for trade rows.
-  function deriveOutcome(t: { action: string | null; pnl: Decimal | null }): 'profit' | 'loss' | null {
+  function deriveOutcome(t: { action: string | null; pnl: any }): 'profit' | 'loss' | null {
     const normalizedAction = t.action?.toLowerCase() ?? '';
     if (normalizedAction.includes('loss'))   return 'loss';
     if (normalizedAction.includes('profit')) return 'profit';
