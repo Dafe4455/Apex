@@ -47,10 +47,687 @@ export default function SignupPage() {
 
   return (
     <>
-      <style>{`\n        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');\n\n        .auth-shell {\n          min-height: 100vh;\n          background: var(--bg);\n          font-family: var(--sans);\n          display: flex;\n        }\n\n        /* ── LEFT PANEL (DESKTOP) ── */\n        .auth-left {\n          width: 460px;\n          flex-shrink: 0;\n          background: var(--bg-3);\n          border-right: 1px solid var(--line-strong);\n          padding: 64px 48px;\n          display: flex;\n          flex-direction: column;\n          justify-content: space-between;\n          position: relative;\n          overflow: hidden;\n        }\n        .auth-left::before {\n          content: '';\n          position: absolute;\n          bottom: -80px; right: -80px;\n          width: 320px; height: 320px;\n          border: 1px solid var(--line-strong);\n          border-radius: 50%;\n          opacity: 0.5;\n        }\n        .auth-left::after {\n          content: '';\n          position: absolute;\n          bottom: -40px; right: -40px;\n          width: 220px; height: 220px;\n          border: 1px solid var(--line);\n          border-radius: 50%;\n          opacity: 0.5;\n        }\n\n        .auth-brand {\n          display: flex;\n          align-items: center;\n          text-decoration: none;\n          flex-shrink: 0;\n          z-index: 2;\n        }\n\n        .auth-panel-body { position: relative; z-index: 1; margin: auto 0; }\n\n        .auth-panel-tag {\n          font-family: var(--mono);\n          font-size: 0.65rem;\n          letter-spacing: 0.25em;\n          text-transform: uppercase;\n          color: var(--accent);\n          display: flex;\n          align-items: center;\n          gap: 12px;\n          margin-bottom: 24px;\n        }\n        .auth-panel-tag::before {\n          content: '';\n          display: inline-block;\n          width: 24px; height: 1px;\n          background: var(--accent);\n        }\n\n        .auth-panel-headline {\n          font-family: 'Playfair Display', Georgia, serif;\n          font-size: 2.6rem;\n          font-weight: 900;\n          color: var(--ink);\n          line-height: 1.15;\n          margin-bottom: 24px;\n        }\n        .auth-panel-headline em {\n          font-style: italic;\n          color: var(--accent);\n        }\n\n        .auth-panel-desc {\n          font-size: 0.9rem;\n          line-height: 1.8;\n          color: var(--ink-dim);\n          font-weight: 300;\n          margin-bottom: 44px;\n        }\n\n        .perks { display: flex; flex-direction: column; gap: 18px; }\n        .perk { display: flex; align-items: flex-start; gap: 14px; }\n        .perk-icon {\n          width: 24px; height: 24px;\n          background: var(--surface);\n          border: 1px solid var(--line-strong);\n          display: flex; align-items: center; justify-content: center;\n          flex-shrink: 0;\n          margin-top: 2px;\n          border-radius: 6px;\n        }\n        .perk-text {\n          font-size: 0.85rem;\n          color: var(--ink-dim);\n          line-height: 1.5;\n          font-weight: 300;\n        }\n        .perk-text strong {\n          color: var(--ink);\n          font-weight: 500;\n          display: block;\n          font-family: var(--mono);\n          font-size: 0.72rem;\n          letter-spacing: 0.05em;\n          margin-bottom: 2px;\n          text-transform: uppercase;\n        }\n\n        .auth-panel-footer {\n          font-family: var(--mono);\n          font-size: 0.62rem;\n          letter-spacing: 0.08em;\n          color: var(--ink-faint);\n          line-height: 1.7;\n          z-index: 2;\n        }\n\n        /* ── RIGHT PANEL (FORM CONTAINER) ── */\n        .auth-right {\n          flex: 1;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          padding: 64px 48px;\n          position: relative;\n        }\n        .auth-right::before {\n          content: '';\n          position: absolute;\n          top: 32px; right: 32px; bottom: 32px; left: 32px;\n          border: 1px solid var(--line-strong);\n          pointer-events: none;\n          opacity: 0.7;\n          border-radius: 24px;\n        }\n\n        .auth-form-wrap { width: 100%; max-width: 420px; position: relative; z-index: 2; }\n\n        .mobile-logo-wrap {\n          display: none;\n          margin-bottom: 40px;\n          justify-content: center;\n        }\n\n        .auth-form-tag {\n          font-family: var(--mono);\n          font-size: 0.65rem;\n          letter-spacing: 0.25em;\n          text-transform: uppercase;\n          color: var(--accent);\n          margin-bottom: 6px;\n          display: flex;\n          align-items: center;\n          gap: 10px;\n        }\n        .auth-form-tag::before {\n          content: '';\n          display: inline-block;\n          width: 16px; height: 1px;\n          background: var(--accent);\n        }\n\n        .auth-form-sub {\n          font-size: 0.88rem;\n          color: var(--ink-dim);\n          font-weight: 300;\n          margin-bottom: 32px;\n        }\n        .auth-form-sub a { color: var(--accent); text-decoration: none; font-weight: 500; transition: color 0.2s; }\n        .auth-form-sub a:hover { color: var(--ink); text-decoration: underline; }\n\n        .field { margin-bottom: 20px; }\n\n        .field label {\n          display: block;\n          font-family: var(--mono);\n          font-size: 0.65rem;\n          letter-spacing: 0.15em;\n          text-transform: uppercase;\n          color: var(--ink-dim);\n          margin-bottom: 8px;\n        }\n        .field input,\n        .field select {\n          width: 100%;\n          background: var(--surface);\n          border: 1px solid var(--line-strong);\n          padding: 14px 16px;\n          font-family: var(--mono);\n          font-size: 0.88rem;\n          color: var(--ink);\n          outline: none;\n          transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;\n          appearance: none;\n          border-radius: 14px;\n        }\n        .field input::placeholder { color: var(--ink-faint); opacity: 0.8; }\n        .field input:focus,\n        .field select:focus {\n          background: var(--bg);\n          border-color: var(--accent);\n          box-shadow: 0 0 0 3px rgba(0, 214, 138, 0.12);\n        }\n        .field input.error-input { border-color: var(--red); }\n        .field input.error-input:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12); }\n\n        .field-row {\n          display: flex;\n          gap: 16px;\n        }\n        .field-row .field { flex: 1; }\n\n        .select-wrap {\n          position: relative;\n        }\n        .select-wrap::after {\n          content: '▼';\n          position: absolute;\n          right: 16px;\n          top: 50%;\n          transform: translateY(-50%);\n          font-size: 0.6rem;\n          color: var(--ink-dim);\n          pointer-events: none;\n        }\n        .field select {\n          padding-right: 40px;\n          cursor: pointer;\n        }\n        .field select option {\n          background: var(--surface);\n          color: var(--ink);\n        }\n\n        .password-strength { display: flex; gap: 6px; margin-top: 10px; }\n        .strength-bar {\n          flex: 1; height: 3px;\n          background: var(--line-strong);\n          transition: background 0.3s;\n          border-radius: 2px;\n        }\n        .strength-bar.active { background: var(--red); }\n        .strength-bar.medium { background: var(--gold); }\n        .strength-bar.strong { background: var(--green); }\n\n        .error-msg {\n          background: var(--red-l);\n          border-left: 3px solid var(--red);\n          padding: 12px 16px;\n          font-family: var(--mono);\n          font-size: 0.75rem;\n          color: var(--red);\n          letter-spacing: 0.02em;\n          margin-bottom: 24px;\n          border-radius: 0 12px 12px 0;\n        }\n\n        .submit-btn {\n          width: 100%;\n          background: var(--accent);\n          color: var(--bg);\n          border: 1px solid var(--accent);\n          padding: 16px;\n          font-family: var(--mono);\n          font-size: 0.8rem;\n          letter-spacing: 0.18em;\n          text-transform: uppercase;\n          font-weight: 500;\n          cursor: pointer;\n          transition: background 0.2s, opacity 0.2s, color 0.2s, transform 0.15s;\n          display: flex;\n          align-items: center;\n          justify-content: center;\n          gap: 12px;\n          margin-top: 28px;\n          border-radius: 14px;\n        }\n        .submit-btn:hover:not(:disabled) { \n          background: transparent;\n          color: var(--accent);\n          transform: translateY(-1px);\n        }\n        .submit-btn:active:not(:disabled) {\n          transform: translateY(0);\n        }\n        .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }\n\n        .spinner {\n          width: 14px; height: 14px;\n          border: 1.5px solid rgba(0,0,0,0.15);\n          border-top-color: currentColor;\n          border-radius: 50%;\n          animation: spin 0.6s linear infinite;\n        }\n        @keyframes spin { to { transform: rotate(360deg); } }\n\n        .terms-note {\n          margin-top: 24px;\n          font-family: var(--mono);\n          font-size: 0.62rem;\n          letter-spacing: 0.05em;\n          color: var(--ink-faint);\n          text-align: center;\n          line-height: 1.6;\n        }\n        .terms-note a { color: var(--ink-dim); text-decoration: underline; transition: color 0.2s; }\n        .terms-note a:hover { color: var(--accent); }\n\n        /* ── RESPONSIVE OVERRIDES ── */\n        @media (max-width: 960px) {\n          .auth-left { width: 380px; padding: 48px 36px; }\n          .auth-panel-headline { font-size: 2.2rem; }\n        }\n\n        @media (max-width: 768px) {\n          .auth-left { display: none; }\n          .auth-right { padding: 40px 24px; }\n          .auth-right::before { display: none; }\n          .auth-form-wrap { max-width: 100%; }\n          .mobile-logo-wrap { display: flex; }\n          .field-row { flex-direction: column; gap: 0; }\n        }\n      `}</style>\n\n      <div className="auth-shell">\n        {/* Left Side Branding Panel */}\n        <div className="auth-left">\n          <Link href="/" className="auth-brand">\n            <Logo width={150} height={26} />\n          </Link>\n\n          <div className="auth-panel-body">\n            <p className="auth-panel-tag">Get started</p>\n            <h2 className="auth-panel-headline">\n              Join <em>180,000+</em><br />active traders.\n            </h2>\n            <p className="auth-panel-desc">\n              Everything you need to trade professionally — from day one.\n            </p>\n\n            <div className="perks">\n              {[\n                { title: "Free demo account", desc: "$100,000 virtual funds. No risk, real markets." },\n                { title: "180+ instruments", desc: "Crypto, equities, FX, commodities." },\n                { title: "0.2ms execution", desc: "Institutional-grade order routing." },\n                { title: "FCA regulated", desc: "Segregated client funds. Always protected." },\n              ].map((p) => (\n                <div className="perk" key={p.title}>\n                  <div className="perk-icon">\n                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">\n                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" style={{ color: "var(--accent)" }} />\n                    </svg>\n                  </div>\n                  <div className="perk-text">\n                    <strong>{p.title}</strong>\n                    {p.desc}\n                  </div>\n                </div>\n              ))}\n            </div>\n          </div>\n\n          <p className="auth-panel-footer">\n            © 2026 Apex Markets Ltd.<br />\n            FCA Regulated · Funds Segregated · 99.9% Uptime\n          </p>\n        </div>\n\n        {/* Right Side Form Panel */}\n        <div className="auth-right">\n          <div className="auth-form-wrap">\n            {/* Adaptive Mobile Branding Entry */}\n            <div className="mobile-logo-wrap">\n              <Link href="/">\n                <Logo width={185} height={34} />\n              </Link>\n            </div>\n\n            <p className="auth-form-tag">Create account</p>\n            <p className="auth-form-sub">\n              Already have an account?{" "}\n              <Link href="/login">Sign in</Link>\n            </p>\n\n            <form onSubmit={handleSubmit}>\n              {error && <div className="error-msg">{error}</div>}\n\n              <div className="field">\n                <label>Full name</label>\n                <input\n                  type="text"\n                  placeholder="John Smith"\n                  value={form.name}\n                  onChange={(e) => setForm({ ...form, name: e.target.value })}\n                  required\n                  autoComplete="name"\n                />\n              </div>\n\n              <div className="field">\n                <label>Email address</label>\n                <input\n                  type="email"\n                  placeholder="you@example.com"\n                  value={form.email}\n                  onChange={(e) => setForm({ ...form, email: e.target.value })}\n                  required\n                  autoComplete="email"\n                />\n              </div>\n\n              <div className="field-row">\n                <div className="field">\n                  <label>Country</label>\n                  <div className="select-wrap">\n                    <select\n                      value={form.country}\n                      onChange={(e) => setForm({ ...form, country: e.target.value })}\n                      required\n                    >\n                      <option value="" disabled>Select country</option>\n                      <option value="US">United States</option>\n                      <option value="GB">United Kingdom</option>\n                      <option value="CA">Canada</option>\n                      <option value="AU">Australia</option>\n                      <option value="DE">Germany</option>\n                      <option value="FR">France</option>\n                      <option value="JP">Japan</option>\n                      <option value="SG">Singapore</option>\n                      <option value="HK">Hong Kong</option>\n                      <option value="CH">Switzerland</option>\n                      <option value="NL">Netherlands</option>\n                      <option value="SE">Sweden</option>\n                      <option value="NO">Norway</option>\n                      <option value="DK">Denmark</option>\n                      <option value="FI">Finland</option>\n                      <option value="IE">Ireland</option>\n                      <option value="AE">UAE</option>\n                      <option value="IN">India</option>\n                      <option value="BR">Brazil</option>\n                      <option value="MX">Mexico</option>\n                      <option value="ZA">South Africa</option>\n                      <option value="NZ">New Zealand</option>\n                      <option value="AT">Austria</option>\n                      <option value="BE">Belgium</option>\n                      <option value="IT">Italy</option>\n                      <option value="ES">Spain</option>\n                      <option value="PT">Portugal</option>\n                      <option value="PL">Poland</option>\n                      <option value="CZ">Czech Republic</option>\n                      <option value="KR">South Korea</option>\n                      <option value="TW">Taiwan</option>\n                      <option value="MY">Malaysia</option>\n                      <option value="TH">Thailand</option>\n                      <option value="ID">Indonesia</option>\n                      <option value="PH">Philippines</option>\n                      <option value="VN">Vietnam</option>\n                      <option value="TR">Turkey</option>\n                      <option value="SA">Saudi Arabia</option>\n                      <option value="IL">Israel</option>\n                      <option value="GR">Greece</option>\n                      <option value="HU">Hungary</option>\n                      <option value="RO">Romania</option>\n                      <option value="BG">Bulgaria</option>\n                      <option value="HR">Croatia</option>\n                      <option value="SI">Slovenia</option>\n                      <option value="SK">Slovakia</option>\n                      <option value="LT">Lithuania</option>\n                      <option value="LV">Latvia</option>\n                      <option value="EE">Estonia</option>\n                      <option value="LU">Luxembourg</option>\n                      <option value="MT">Malta</option>\n                      <option value="CY">Cyprus</option>\n                      <option value="IS">Iceland</option>\n                      <option value="LI">Liechtenstein</option>\n                      <option value="MC">Monaco</option>\n                      <option value="SM">San Marino</option>\n                      <option value="AD">Andorra</option>\n                      <option value="VA">Vatican City</option>\n                      <option value="BY">Belarus</option>\n                      <option value="UA">Ukraine</option>\n                      <option value="MD">Moldova</option>\n                      <option value="RU">Russia</option>\n                      <option value="KZ">Kazakhstan</option>\n                      <option value="UZ">Uzbekistan</option>\n                      <option value="KG">Kyrgyzstan</option>\n                      <option value="TJ">Tajikistan</option>\n                      <option value="TM">Turkmenistan</option>\n                      <option value="AZ">Azerbaijan</option>\n                      <option value="AM">Armenia</option>\n                      <option value="GE">Georgia</option>\n                      <option value="MN">Mongolia</option>\n                      <option value="CN">China</option>\n                      <option value="PK">Pakistan</option>\n                      <option value="BD">Bangladesh</option>\n                      <option value="LK">Sri Lanka</option>\n                      <option value="NP">Nepal</option>\n                      <option value="BT">Bhutan</option>\n                      <option value="MV">Maldives</option>\n                      <option value="AF">Afghanistan</option>\n                      <option value="IR">Iran</option>\n                      <option value="IQ">Iraq</option>\n                      <option value="SY">Syria</option>\n                      <option value="JO">Jordan</option>\n                      <option value="LB">Lebanon</option>\n                      <option value="KW">Kuwait</option>\n                      <option value="QA">Qatar</option>\n                      <option value="BH">Bahrain</option>\n                      <option value="OM">Oman</option>\n                      <option value="YE">Yemen</option>\n                      <option value="EG">Egypt</option>\n                      <option value="LY">Libya</option>\n                      <option value="TN">Tunisia</option>\n                      <option value="DZ">Algeria</option>\n                      <option value="MA">Morocco</option>\n                      <option value="MR">Mauritania</option>\n                      <option value="ML">Mali</option>\n                      <option value="NE">Niger</option>\n                      <option value="TD">Chad</option>\n                      <option value="SD">Sudan</option>\n                      <option value="ER">Eritrea</option>\n                      <option value="DJ">Djibouti</option>\n                      <option value="ET">Ethiopia</option>\n                      <option value="SO">Somalia</option>\n                      <option value="KE">Kenya</option>\n                      <option value="UG">Uganda</option>\n                      <option value="TZ">Tanzania</option>\n                      <option value="RW">Rwanda</option>\n                      <option value="BI">Burundi</option>\n                      <option value="CD">DR Congo</option>\n                      <option value="CG">Congo</option>\n                      <option value="GA">Gabon</option>\n                      <option value="GQ">Equatorial Guinea</option>\n                      <option value="CM">Cameroon</option>\n                      <option value="CF">Central African Republic</option>\n                      <option value="ST">São Tomé and Príncipe</option>\n                      <option value="CV">Cape Verde</option>\n                      <option value="GW">Guinea-Bissau</option>\n                      <option value="GN">Guinea</option>\n                      <option value="SL">Sierra Leone</option>\n                      <option value="LR">Liberia</option>\n                      <option value="CI">Ivory Coast</option>\n                      <option value="GH">Ghana</option>\n                      <option value="TG">Togo</option>\n                      <option value="BJ">Benin</option>\n                      <option value="NG">Nigeria</option>\n                      <option value="GM">Gambia</option>\n                      <option value="SN">Senegal</option>\n                      <option value="BF">Burkina Faso</option>\n                      <option value="MW">Malawi</option>\n                      <option value="ZM">Zambia</option>\n                      <option value="ZW">Zimbabwe</option>\n                      <option value="BW">Botswana</option>\n                      <option value="NA">Namibia</option>\n                      <option value="AO">Angola</option>\n                      <option value="MZ">Mozambique</option>\n                      <option value="MG">Madagascar</option>\n                      <option value="MU">Mauritius</option>\n                      <option value="SC">Seychelles</option>\n                      <option value="KM">Comoros</option>\n                      <option value="SZ">Eswatini</option>\n                      <option value="LS">Lesotho</option>\n                      <option value="AR">Argentina</option>\n                      <option value="CL">Chile</option>\n                      <option value="UY">Uruguay</option>\n                      <option value="PY">Paraguay</option>\n                      <option value="BO">Bolivia</option>\n                      <option value="PE">Peru</option>\n                      <option value="EC">Ecuador</option>\n                      <option value="CO">Colombia</option>\n                      <option value="VE">Venezuela</option>\n                      <option value="GY">Guyana</option>\n                      <option value="SR">Suriname</option>\n                      <option value="GF">French Guiana</option>\n                      <option value="PA">Panama</option>\n                      <option value="CR">Costa Rica</option>\n                      <option value="NI">Nicaragua</option>\n                      <option value="HN">Honduras</option>\n                      <option value="SV">El Salvador</option>\n                      <option value="GT">Guatemala</option>\n                      <option value="BZ">Belize</option>\n                      <option value="JM">Jamaica</option>\n                      <option value="HT">Haiti</option>\n                      <option value="DO">Dominican Republic</option>\n                      <option value="CU">Cuba</option>\n                      <option value="BS">Bahamas</option>\n                      <option value="TT">Trinidad and Tobago</option>\n                      <option value="BB">Barbados</option>\n                      <option value="GD">Grenada</option>\n                      <option value="LC">Saint Lucia</option>\n                      <option value="VC">Saint Vincent</option>\n                      <option value="AG">Antigua and Barbuda</option>\n                      <option value="DM">Dominica</option>\n                      <option value="KN">Saint Kitts and Nevis</option>\n                    </select>\n                  </div>\n                </div>\n\n                <div className="field">\n                  <label>Phone number</label>\n                  <input\n                    type="tel"\n                    placeholder="+1 (555) 000-0000"\n                    value={form.phone}\n                    onChange={(e) => setForm({ ...form, phone: e.target.value })}\n                    required\n                    autoComplete="tel"\n                  />\n                </div>\n              </div>\n\n              <div className="field">\n                <label>Password</label>\n                <input\n                  type="password"\n                  placeholder="Min. 8 characters"\n                  value={form.password}\n                  onChange={(e) => setForm({ ...form, password: e.target.value })}\n                  required\n                  autoComplete="new-password"\n                />\n                <div className="password-strength">\n                  {[1, 2, 3, 4].map((i) => {\n                    const len = form.password.length;\n                    const cls =\n                      len === 0 ? "" :\n                      len < 6 ? (i === 1 ? "active" : "") :\n                      len < 10 ? (i <= 2 ? "medium" : "") :\n                      len < 14 ? (i <= 3 ? "strong" : "") :\n                      "strong";\n                    return <div key={i} className={`strength-bar ${cls}`} />;\n                  })}\n                </div>\n              </div>\n\n              <div className="field">\n                <label>Confirm password</label>\n                <input\n                  type="password"\n                  placeholder="Repeat password"\n                  value={form.confirm}\n                  onChange={(e) => setForm({ ...form, confirm: e.target.value })}\n                  required\n                  autoComplete="new-password"\n                  className={form.confirm && form.confirm !== form.password ? "error-input" : ""}\n                />\n              </div>\n\n              <button type="submit" className="submit-btn" disabled={loading}>\n                {loading ? (\n                  <><span className="spinner" />Creating account...</>\n                ) : (\n                  <>\n                    Create Account\n                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">\n                      <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" />\n                    </svg>\n                  </>\n                )}\n              </button>\n            </form>\n\n            <p className="terms-note">\n              By creating an account you agree to our{" "}\n              <a href="#">Terms of Service</a> and{" "}\n              <a href="#">Privacy Policy</a>.\n            </p>\n          </div>\n        </div>\n      </div>\n    </>\n  );\n}'''
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
 
-with open('/mnt/agents/output/SignupPage.tsx', 'w') as f:
-    f.write(refined_code)
+        .auth-shell {
+          min-height: 100vh;
+          background: var(--bg);
+          font-family: var(--sans);
+          display: flex;
+        }
 
-print("File saved successfully.")
-print(f"File size: {len(refined_code)} characters")
+        /* ── LEFT PANEL (DESKTOP) ── */
+        .auth-left {
+          width: 460px;
+          flex-shrink: 0;
+          background: var(--bg-3);
+          border-right: 1px solid var(--line-strong);
+          padding: 64px 48px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          position: relative;
+          overflow: hidden;
+        }
+        .auth-left::before {
+          content: '';
+          position: absolute;
+          bottom: -80px; right: -80px;
+          width: 320px; height: 320px;
+          border: 1px solid var(--line-strong);
+          border-radius: 50%;
+          opacity: 0.5;
+        }
+        .auth-left::after {
+          content: '';
+          position: absolute;
+          bottom: -40px; right: -40px;
+          width: 220px; height: 220px;
+          border: 1px solid var(--line);
+          border-radius: 50%;
+          opacity: 0.5;
+        }
+
+        .auth-brand {
+          display: flex;
+          align-items: center;
+          text-decoration: none;
+          flex-shrink: 0;
+          z-index: 2;
+        }
+
+        .auth-panel-body { position: relative; z-index: 1; margin: auto 0; }
+
+        .auth-panel-tag {
+          font-family: var(--mono);
+          font-size: 0.65rem;
+          letter-spacing: 0.25em;
+          text-transform: uppercase;
+          color: var(--accent);
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 24px;
+        }
+        .auth-panel-tag::before {
+          content: '';
+          display: inline-block;
+          width: 24px; height: 1px;
+          background: var(--accent);
+        }
+
+        .auth-panel-headline {
+          font-family: 'Playfair Display', Georgia, serif;
+          font-size: 2.6rem;
+          font-weight: 900;
+          color: var(--ink);
+          line-height: 1.15;
+          margin-bottom: 24px;
+        }
+        .auth-panel-headline em {
+          font-style: italic;
+          color: var(--accent);
+        }
+
+        .auth-panel-desc {
+          font-size: 0.9rem;
+          line-height: 1.8;
+          color: var(--ink-dim);
+          font-weight: 300;
+          margin-bottom: 44px;
+        }
+
+        .perks { display: flex; flex-direction: column; gap: 18px; }
+        .perk { display: flex; align-items: flex-start; gap: 14px; }
+        .perk-icon {
+          width: 24px; height: 24px;
+          background: var(--surface);
+          border: 1px solid var(--line-strong);
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+          margin-top: 2px;
+          border-radius: 6px;
+        }
+        .perk-text {
+          font-size: 0.85rem;
+          color: var(--ink-dim);
+          line-height: 1.5;
+          font-weight: 300;
+        }
+        .perk-text strong {
+          color: var(--ink);
+          font-weight: 500;
+          display: block;
+          font-family: var(--mono);
+          font-size: 0.72rem;
+          letter-spacing: 0.05em;
+          margin-bottom: 2px;
+          text-transform: uppercase;
+        }
+
+        .auth-panel-footer {
+          font-family: var(--mono);
+          font-size: 0.62rem;
+          letter-spacing: 0.08em;
+          color: var(--ink-faint);
+          line-height: 1.7;
+          z-index: 2;
+        }
+
+        /* ── RIGHT PANEL (FORM CONTAINER) ── */
+        .auth-right {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 64px 48px;
+          position: relative;
+        }
+        .auth-right::before {
+          content: '';
+          position: absolute;
+          top: 32px; right: 32px; bottom: 32px; left: 32px;
+          border: 1px solid var(--line-strong);
+          pointer-events: none;
+          opacity: 0.7;
+          border-radius: 24px;
+        }
+
+        .auth-form-wrap { width: 100%; max-width: 420px; position: relative; z-index: 2; }
+
+        .mobile-logo-wrap {
+          display: none;
+          margin-bottom: 40px;
+          justify-content: center;
+        }
+
+        .auth-form-tag {
+          font-family: var(--mono);
+          font-size: 0.65rem;
+          letter-spacing: 0.25em;
+          text-transform: uppercase;
+          color: var(--accent);
+          margin-bottom: 6px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+        }
+        .auth-form-tag::before {
+          content: '';
+          display: inline-block;
+          width: 16px; height: 1px;
+          background: var(--accent);
+        }
+
+        .auth-form-sub {
+          font-size: 0.88rem;
+          color: var(--ink-dim);
+          font-weight: 300;
+          margin-bottom: 32px;
+        }
+        .auth-form-sub a { color: var(--accent); text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        .auth-form-sub a:hover { color: var(--ink); text-decoration: underline; }
+
+        .field { margin-bottom: 20px; }
+
+        .field label {
+          display: block;
+          font-family: var(--mono);
+          font-size: 0.65rem;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: var(--ink-dim);
+          margin-bottom: 8px;
+        }
+        .field input,
+        .field select {
+          width: 100%;
+          background: var(--surface);
+          border: 1px solid var(--line-strong);
+          padding: 14px 16px;
+          font-family: var(--mono);
+          font-size: 0.88rem;
+          color: var(--ink);
+          outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+          appearance: none;
+          border-radius: 14px;
+        }
+        .field input::placeholder { color: var(--ink-faint); opacity: 0.8; }
+        .field input:focus,
+        .field select:focus {
+          background: var(--bg);
+          border-color: var(--accent);
+          box-shadow: 0 0 0 3px rgba(0, 214, 138, 0.12);
+        }
+        .field input.error-input { border-color: var(--red); }
+        .field input.error-input:focus { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12); }
+
+        .field-row {
+          display: flex;
+          gap: 16px;
+        }
+        .field-row .field { flex: 1; }
+
+        .select-wrap {
+          position: relative;
+        }
+        .select-wrap::after {
+          content: '▼';
+          position: absolute;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          font-size: 0.6rem;
+          color: var(--ink-dim);
+          pointer-events: none;
+        }
+        .field select {
+          padding-right: 40px;
+          cursor: pointer;
+        }
+        .field select option {
+          background: var(--surface);
+          color: var(--ink);
+        }
+
+        .password-strength { display: flex; gap: 6px; margin-top: 10px; }
+        .strength-bar {
+          flex: 1; height: 3px;
+          background: var(--line-strong);
+          transition: background 0.3s;
+          border-radius: 2px;
+        }
+        .strength-bar.active { background: var(--red); }
+        .strength-bar.medium { background: var(--gold); }
+        .strength-bar.strong { background: var(--green); }
+
+        .error-msg {
+          background: var(--red-l);
+          border-left: 3px solid var(--red);
+          padding: 12px 16px;
+          font-family: var(--mono);
+          font-size: 0.75rem;
+          color: var(--red);
+          letter-spacing: 0.02em;
+          margin-bottom: 24px;
+          border-radius: 0 12px 12px 0;
+        }
+
+        .submit-btn {
+          width: 100%;
+          background: var(--accent);
+          color: var(--bg);
+          border: 1px solid var(--accent);
+          padding: 16px;
+          font-family: var(--mono);
+          font-size: 0.8rem;
+          letter-spacing: 0.18em;
+          text-transform: uppercase;
+          font-weight: 500;
+          cursor: pointer;
+          transition: background 0.2s, opacity 0.2s, color 0.2s, transform 0.15s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          margin-top: 28px;
+          border-radius: 14px;
+        }
+        .submit-btn:hover:not(:disabled) { 
+          background: transparent;
+          color: var(--accent);
+          transform: translateY(-1px);
+        }
+        .submit-btn:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .spinner {
+          width: 14px; height: 14px;
+          border: 1.5px solid rgba(0,0,0,0.15);
+          border-top-color: currentColor;
+          border-radius: 50%;
+          animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .terms-note {
+          margin-top: 24px;
+          font-family: var(--mono);
+          font-size: 0.62rem;
+          letter-spacing: 0.05em;
+          color: var(--ink-faint);
+          text-align: center;
+          line-height: 1.6;
+        }
+        .terms-note a { color: var(--ink-dim); text-decoration: underline; transition: color 0.2s; }
+        .terms-note a:hover { color: var(--accent); }
+
+        /* ── RESPONSIVE OVERRIDES ── */
+        @media (max-width: 960px) {
+          .auth-left { width: 380px; padding: 48px 36px; }
+          .auth-panel-headline { font-size: 2.2rem; }
+        }
+
+        @media (max-width: 768px) {
+          .auth-left { display: none; }
+          .auth-right { padding: 40px 24px; }
+          .auth-right::before { display: none; }
+          .auth-form-wrap { max-width: 100%; }
+          .mobile-logo-wrap { display: flex; }
+          .field-row { flex-direction: column; gap: 0; }
+        }
+      `}</style>
+
+      <div className="auth-shell">
+        {/* Left Side Branding Panel */}
+        <div className="auth-left">
+          <Link href="/" className="auth-brand">
+            <Logo width={150} height={26} />
+          </Link>
+
+          <div className="auth-panel-body">
+            <p className="auth-panel-tag">Get started</p>
+            <h2 className="auth-panel-headline">
+              Join <em>180,000+</em><br />active traders.
+            </h2>
+            <p className="auth-panel-desc">
+              Everything you need to trade professionally — from day one.
+            </p>
+
+            <div className="perks">
+              {[
+                { title: "Free demo account", desc: "$100,000 virtual funds. No risk, real markets." },
+                { title: "180+ instruments", desc: "Crypto, equities, FX, commodities." },
+                { title: "0.2ms execution", desc: "Institutional-grade order routing." },
+                { title: "FCA regulated", desc: "Segregated client funds. Always protected." },
+              ].map((p) => (
+                <div className="perk" key={p.title}>
+                  <div className="perk-icon">
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" style={{ color: "var(--accent)" }} />
+                    </svg>
+                  </div>
+                  <div className="perk-text">
+                    <strong>{p.title}</strong>
+                    {p.desc}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <p className="auth-panel-footer">
+            © 2026 Apex Markets Ltd.<br />
+            FCA Regulated · Funds Segregated · 99.9% Uptime
+          </p>
+        </div>
+
+        {/* Right Side Form Panel */}
+        <div className="auth-right">
+          <div className="auth-form-wrap">
+            {/* Adaptive Mobile Branding Entry */}
+            <div className="mobile-logo-wrap">
+              <Link href="/">
+                <Logo width={185} height={34} />
+              </Link>
+            </div>
+
+            <p className="auth-form-tag">Create account</p>
+            <p className="auth-form-sub">
+              Already have an account?{" "}
+              <Link href="/login">Sign in</Link>
+            </p>
+
+            <form onSubmit={handleSubmit}>
+              {error && <div className="error-msg">{error}</div>}
+
+              <div className="field">
+                <label>Full name</label>
+                <input
+                  type="text"
+                  placeholder="John Smith"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                  autoComplete="name"
+                />
+              </div>
+
+              <div className="field">
+                <label>Email address</label>
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+
+              <div className="field-row">
+                <div className="field">
+                  <label>Country</label>
+                  <div className="select-wrap">
+                    <select
+                      value={form.country}
+                      onChange={(e) => setForm({ ...form, country: e.target.value })}
+                      required
+                    >
+                      <option value="" disabled>Select country</option>
+                      <option value="US">United States</option>
+                      <option value="GB">United Kingdom</option>
+                      <option value="CA">Canada</option>
+                      <option value="AU">Australia</option>
+                      <option value="DE">Germany</option>
+                      <option value="FR">France</option>
+                      <option value="JP">Japan</option>
+                      <option value="SG">Singapore</option>
+                      <option value="HK">Hong Kong</option>
+                      <option value="CH">Switzerland</option>
+                      <option value="NL">Netherlands</option>
+                      <option value="SE">Sweden</option>
+                      <option value="NO">Norway</option>
+                      <option value="DK">Denmark</option>
+                      <option value="FI">Finland</option>
+                      <option value="IE">Ireland</option>
+                      <option value="AE">UAE</option>
+                      <option value="IN">India</option>
+                      <option value="BR">Brazil</option>
+                      <option value="MX">Mexico</option>
+                      <option value="ZA">South Africa</option>
+                      <option value="NZ">New Zealand</option>
+                      <option value="AT">Austria</option>
+                      <option value="BE">Belgium</option>
+                      <option value="IT">Italy</option>
+                      <option value="ES">Spain</option>
+                      <option value="PT">Portugal</option>
+                      <option value="PL">Poland</option>
+                      <option value="CZ">Czech Republic</option>
+                      <option value="KR">South Korea</option>
+                      <option value="TW">Taiwan</option>
+                      <option value="MY">Malaysia</option>
+                      <option value="TH">Thailand</option>
+                      <option value="ID">Indonesia</option>
+                      <option value="PH">Philippines</option>
+                      <option value="VN">Vietnam</option>
+                      <option value="TR">Turkey</option>
+                      <option value="SA">Saudi Arabia</option>
+                      <option value="IL">Israel</option>
+                      <option value="GR">Greece</option>
+                      <option value="HU">Hungary</option>
+                      <option value="RO">Romania</option>
+                      <option value="BG">Bulgaria</option>
+                      <option value="HR">Croatia</option>
+                      <option value="SI">Slovenia</option>
+                      <option value="SK">Slovakia</option>
+                      <option value="LT">Lithuania</option>
+                      <option value="LV">Latvia</option>
+                      <option value="EE">Estonia</option>
+                      <option value="LU">Luxembourg</option>
+                      <option value="MT">Malta</option>
+                      <option value="CY">Cyprus</option>
+                      <option value="IS">Iceland</option>
+                      <option value="LI">Liechtenstein</option>
+                      <option value="MC">Monaco</option>
+                      <option value="SM">San Marino</option>
+                      <option value="AD">Andorra</option>
+                      <option value="VA">Vatican City</option>
+                      <option value="BY">Belarus</option>
+                      <option value="UA">Ukraine</option>
+                      <option value="MD">Moldova</option>
+                      <option value="RU">Russia</option>
+                      <option value="KZ">Kazakhstan</option>
+                      <option value="UZ">Uzbekistan</option>
+                      <option value="KG">Kyrgyzstan</option>
+                      <option value="TJ">Tajikistan</option>
+                      <option value="TM">Turkmenistan</option>
+                      <option value="AZ">Azerbaijan</option>
+                      <option value="AM">Armenia</option>
+                      <option value="GE">Georgia</option>
+                      <option value="MN">Mongolia</option>
+                      <option value="CN">China</option>
+                      <option value="PK">Pakistan</option>
+                      <option value="BD">Bangladesh</option>
+                      <option value="LK">Sri Lanka</option>
+                      <option value="NP">Nepal</option>
+                      <option value="BT">Bhutan</option>
+                      <option value="MV">Maldives</option>
+                      <option value="AF">Afghanistan</option>
+                      <option value="IR">Iran</option>
+                      <option value="IQ">Iraq</option>
+                      <option value="SY">Syria</option>
+                      <option value="JO">Jordan</option>
+                      <option value="LB">Lebanon</option>
+                      <option value="KW">Kuwait</option>
+                      <option value="QA">Qatar</option>
+                      <option value="BH">Bahrain</option>
+                      <option value="OM">Oman</option>
+                      <option value="YE">Yemen</option>
+                      <option value="EG">Egypt</option>
+                      <option value="LY">Libya</option>
+                      <option value="TN">Tunisia</option>
+                      <option value="DZ">Algeria</option>
+                      <option value="MA">Morocco</option>
+                      <option value="MR">Mauritania</option>
+                      <option value="ML">Mali</option>
+                      <option value="NE">Niger</option>
+                      <option value="TD">Chad</option>
+                      <option value="SD">Sudan</option>
+                      <option value="ER">Eritrea</option>
+                      <option value="DJ">Djibouti</option>
+                      <option value="ET">Ethiopia</option>
+                      <option value="SO">Somalia</option>
+                      <option value="KE">Kenya</option>
+                      <option value="UG">Uganda</option>
+                      <option value="TZ">Tanzania</option>
+                      <option value="RW">Rwanda</option>
+                      <option value="BI">Burundi</option>
+                      <option value="CD">DR Congo</option>
+                      <option value="CG">Congo</option>
+                      <option value="GA">Gabon</option>
+                      <option value="GQ">Equatorial Guinea</option>
+                      <option value="CM">Cameroon</option>
+                      <option value="CF">Central African Republic</option>
+                      <option value="ST">São Tomé and Príncipe</option>
+                      <option value="CV">Cape Verde</option>
+                      <option value="GW">Guinea-Bissau</option>
+                      <option value="GN">Guinea</option>
+                      <option value="SL">Sierra Leone</option>
+                      <option value="LR">Liberia</option>
+                      <option value="CI">Ivory Coast</option>
+                      <option value="GH">Ghana</option>
+                      <option value="TG">Togo</option>
+                      <option value="BJ">Benin</option>
+                      <option value="NG">Nigeria</option>
+                      <option value="GM">Gambia</option>
+                      <option value="SN">Senegal</option>
+                      <option value="BF">Burkina Faso</option>
+                      <option value="MW">Malawi</option>
+                      <option value="ZM">Zambia</option>
+                      <option value="ZW">Zimbabwe</option>
+                      <option value="BW">Botswana</option>
+                      <option value="NA">Namibia</option>
+                      <option value="AO">Angola</option>
+                      <option value="MZ">Mozambique</option>
+                      <option value="MG">Madagascar</option>
+                      <option value="MU">Mauritius</option>
+                      <option value="SC">Seychelles</option>
+                      <option value="KM">Comoros</option>
+                      <option value="SZ">Eswatini</option>
+                      <option value="LS">Lesotho</option>
+                      <option value="AR">Argentina</option>
+                      <option value="CL">Chile</option>
+                      <option value="UY">Uruguay</option>
+                      <option value="PY">Paraguay</option>
+                      <option value="BO">Bolivia</option>
+                      <option value="PE">Peru</option>
+                      <option value="EC">Ecuador</option>
+                      <option value="CO">Colombia</option>
+                      <option value="VE">Venezuela</option>
+                      <option value="GY">Guyana</option>
+                      <option value="SR">Suriname</option>
+                      <option value="GF">French Guiana</option>
+                      <option value="PA">Panama</option>
+                      <option value="CR">Costa Rica</option>
+                      <option value="NI">Nicaragua</option>
+                      <option value="HN">Honduras</option>
+                      <option value="SV">El Salvador</option>
+                      <option value="GT">Guatemala</option>
+                      <option value="BZ">Belize</option>
+                      <option value="JM">Jamaica</option>
+                      <option value="HT">Haiti</option>
+                      <option value="DO">Dominican Republic</option>
+                      <option value="CU">Cuba</option>
+                      <option value="BS">Bahamas</option>
+                      <option value="TT">Trinidad and Tobago</option>
+                      <option value="BB">Barbados</option>
+                      <option value="GD">Grenada</option>
+                      <option value="LC">Saint Lucia</option>
+                      <option value="VC">Saint Vincent</option>
+                      <option value="AG">Antigua and Barbuda</option>
+                      <option value="DM">Dominica</option>
+                      <option value="KN">Saint Kitts and Nevis</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="field">
+                  <label>Phone number</label>
+                  <input
+                    type="tel"
+                    placeholder="+1 (555) 000-0000"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    required
+                    autoComplete="tel"
+                  />
+                </div>
+              </div>
+
+              <div className="field">
+                <label>Password</label>
+                <input
+                  type="password"
+                  placeholder="Min. 8 characters"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  required
+                  autoComplete="new-password"
+                />
+                <div className="password-strength">
+                  {[1, 2, 3, 4].map((i) => {
+                    const len = form.password.length;
+                    const cls =
+                      len === 0 ? "" :
+                      len < 6 ? (i === 1 ? "active" : "") :
+                      len < 10 ? (i <= 2 ? "medium" : "") :
+                      len < 14 ? (i <= 3 ? "strong" : "") :
+                      "strong";
+                    return <div key={i} className={`strength-bar ${cls}`} />;
+                  })}
+                </div>
+              </div>
+
+              <div className="field">
+                <label>Confirm password</label>
+                <input
+                  type="password"
+                  placeholder="Repeat password"
+                  value={form.confirm}
+                  onChange={(e) => setForm({ ...form, confirm: e.target.value })}
+                  required
+                  autoComplete="new-password"
+                  className={form.confirm && form.confirm !== form.password ? "error-input" : ""}
+                />
+              </div>
+
+              <button type="submit" className="submit-btn" disabled={loading}>
+                {loading ? (
+                  <><span className="spinner" />Creating account...</>
+                ) : (
+                  <>
+                    Create Account
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                      <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            </form>
+
+            <p className="terms-note">
+              By creating an account you agree to our{" "}
+              <a href="#">Terms of Service</a> and{" "}
+              <a href="#">Privacy Policy</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
