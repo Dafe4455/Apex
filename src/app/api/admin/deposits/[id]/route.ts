@@ -33,8 +33,9 @@ export async function PATCH(
 
     if (action === 'COMPLETED') {
       const user = await tx.user.findUnique({ where: { id: deposit.userId } });
-      const currentBalance  = Number(user?.portfolioBalance) || 0;
-      const newBalance      = currentBalance + deposit.amount;
+      const currentBalance = Number(user?.portfolioBalance) || 0;
+      const depositAmount  = Number(deposit.amount);
+      const newBalance     = currentBalance + depositAmount;
 
       // Recalculate PnL against all completed deposits including this one
       const depositAgg = await tx.deposit.aggregate({
@@ -61,28 +62,30 @@ export async function PATCH(
       await tx.activityLog.create({
         data: {
           userId:      deposit.userId,
-          description: `Deposit of $${deposit.amount.toLocaleString()} approved`,
+          description: `Deposit of $${depositAmount.toLocaleString()} approved`,
         },
       });
 
       await tx.notification.create({
         data: {
           userId:  deposit.userId,
-          message: `Your deposit of $${deposit.amount.toLocaleString()} has been approved`,
+          message: `Your deposit of $${depositAmount.toLocaleString()} has been approved`,
         },
       });
     } else {
+      const depositAmount = Number(deposit.amount);
+
       await tx.activityLog.create({
         data: {
           userId:      deposit.userId,
-          description: `Deposit of $${deposit.amount.toLocaleString()} rejected`,
+          description: `Deposit of $${depositAmount.toLocaleString()} rejected`,
         },
       });
 
       await tx.notification.create({
         data: {
           userId:  deposit.userId,
-          message: `Your deposit of $${deposit.amount.toLocaleString()} was rejected`,
+          message: `Your deposit of $${depositAmount.toLocaleString()} was rejected`,
         },
       });
     }
