@@ -407,7 +407,7 @@ const CSS = `
   --surface:   rgba(255,255,255,0.035);
   --surface-2: rgba(255,255,255,0.06);
   --surface-3: rgba(255,255,255,0.09);
-  --auth-btn:       #0E2A30;
+  --auth-btn:       #175D68;
   --rim:        rgba(255,255,255,0.07);
   --rim-strong: rgba(255,255,255,0.16);
   
