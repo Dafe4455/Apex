@@ -393,7 +393,7 @@ export default function SignupPage() {
             {/* Adaptive Mobile Branding Entry */}
             <div className="mobile-logo-wrap">
               <Link href="/">
-                <Logo width={140} height={24} />
+                <Logo width={185} height={34} />
               </Link>
             </div>
 
