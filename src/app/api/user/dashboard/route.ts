@@ -14,8 +14,8 @@ export async function GET() {
       where: { email: session.user.email },
       select: {
         id:                     true,
-        name:                   true,
         firstName:              true,
+        lastName:               true,
         email:                  true,
         portfolioBalance:       true,
         portfolioChangePercent: true,
@@ -65,12 +65,22 @@ export async function GET() {
     ]);
 
     const openPositions   = positions.filter(p => p.status === 'OPEN');
-    const profitPositions = openPositions.filter(p => p.currentPnl > 0);
-    const lossPositions   = openPositions.filter(p => p.currentPnl <= 0);
+    const profitPositions = openPositions.filter(p => Number(p.currentPnl) > 0);
+    const lossPositions   = openPositions.filter(p => Number(p.currentPnl) <= 0);
 
     return NextResponse.json({
-      user,
-      transactions,
+      user: {
+        ...user,
+        name: user.firstName ? `${user.firstName} ${user.lastName || ""}`.trim() : user.email,
+        portfolioBalance: Number(user.portfolioBalance),
+        portfolioChangePercent: Number(user.portfolioChangePercent),
+        realisedPnl: Number(user.realisedPnl),
+        volatility: Number(user.volatility),
+      },
+      transactions: transactions.map(t => ({
+        ...t,
+        amount: Number(t.amount),
+      })),
       positions: {
         open:   openPositions.length,
         profit: profitPositions.length,
