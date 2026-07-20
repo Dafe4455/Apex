@@ -388,7 +388,7 @@ const CSS = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --void:      #040a12;
+  --void:      #0f2535;
   --void-2:    #060f1a;
   --surface:   rgba(255,255,255,0.035);
   --surface-2: rgba(255,255,255,0.06);
