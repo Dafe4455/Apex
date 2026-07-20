@@ -11,8 +11,7 @@ const loginSchema = z.object({
   password: z.string().min(6),
 });
 
-// Idle timeout: how long a session survives with no activity.
-const INACTIVITY_LIMIT_SECONDS = 60 * 10; // 10 minutes
+const INACTIVITY_LIMIT_SECONDS = 60 * 10;
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -20,9 +19,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: {
     strategy: "jwt",
     maxAge: INACTIVITY_LIMIT_SECONDS,
-    // How often activity refreshes the expiry clock. Shorter = more
-    // accurate idle detection but more token re-signing/cookie writes.
-    // 2 minutes is a reasonable balance for a 10-minute timeout.
     updateAge: 60 * 2,
   },
   providers: [
@@ -40,7 +36,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (!user || !user.password) return null;
         const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) return null;
-        return { id: user.id, email: user.email, name: user.name, image: user.image, role: user.role };
+
+        // Compute full name from firstName + lastName
+        const fullName = user.firstName
+          ? `${user.firstName} ${user.lastName || ""}`.trim()
+          : user.email.split("@")[0];
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: fullName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          image: user.image,
+          role: user.role,
+        };
       },
     }),
   ],
@@ -49,25 +59,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       const now = Math.floor(Date.now() / 1000);
 
-      // Initial sign-in — stamp the token with identity and a fresh
-      // activity timestamp.
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
+        token.firstName = (user as any).firstName;
+        token.lastName = (user as any).lastName;
         token.lastActive = now;
         return token;
       }
 
-      // Every subsequent request: check idle time since last activity.
       const lastActive = (token.lastActive as number) ?? now;
       if (now - lastActive > INACTIVITY_LIMIT_SECONDS) {
-        // Returning null invalidates the token — auth() will resolve
-        // to no session, effectively logging the user out.
         return null;
       }
 
-      // Still within the idle window — refresh the activity timestamp
-      // so the clock resets on each active request.
       token.lastActive = now;
       return token;
     },
@@ -76,6 +81,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         (session.user as any).id = token.id;
         (session.user as any).role = token.role;
+        (session.user as any).firstName = token.firstName;
+        (session.user as any).lastName = token.lastName;
       }
       return session;
     },
