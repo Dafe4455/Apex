@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { authConfig } from "./auth.config";
+import { INACTIVITY_LIMIT_SECONDS } from '@/lib/session-config';
+
 
 const loginSchema = z.object({
   email: z.string().email(),
