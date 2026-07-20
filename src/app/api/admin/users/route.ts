@@ -13,7 +13,8 @@ export async function GET() {
     orderBy: { createdAt: 'desc' },
     select: {
       id:               true,
-      name:             true,
+      firstName:        true,
+      lastName:         true,
       email:            true,
       role:             true,
       portfolioBalance: true,
@@ -56,12 +57,14 @@ export async function PATCH(req: Request) {
     },
   });
 
+  const balanceNum = Number(updated.portfolioBalance);
+
   await prisma.activityLog.create({
     data: {
       userId,
-      description: `Admin updated portfolio balance to $${updated.portfolioBalance.toLocaleString()}`,
+      description: `Admin updated portfolio balance to $${balanceNum.toLocaleString()}`,
     },
   });
 
-  return NextResponse.json({ success: true, portfolioBalance: updated.portfolioBalance });
+  return NextResponse.json({ success: true, portfolioBalance: balanceNum });
 }
