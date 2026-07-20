@@ -453,7 +453,7 @@ const CSS = `
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   display: flex; align-items: center; gap: 32px;
   padding: 0 48px; height: 68px;
-  background: rgba(7,11,20,0.92);
+  background: rgba(15, 37, 63, 1);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--rim);
 }
