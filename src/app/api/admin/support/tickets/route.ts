@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     where: status ? { status } : undefined,
     orderBy: { updatedAt: 'desc' },
     include: {
-      user: { select: { id: true, name: true, email: true } },
+      user: { select: { id: true, firstName: true, lastName: true, email: true } },
       messages: {
         orderBy: { createdAt: 'asc' },
         select: { id: true, sender: true, body: true, createdAt: true },
