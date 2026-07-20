@@ -9,7 +9,7 @@ export async function GET() {
 
   const submissions = await prisma.kYCSubmission.findMany({
     orderBy: { submittedAt: "desc" },
-    include: { user: { select: { name: true, email: true } } },
+    include: { user: { select: { firstName: true, lastName: true, email: true } } },
   });
 
   return NextResponse.json({ submissions });
