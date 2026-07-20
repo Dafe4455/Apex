@@ -81,11 +81,15 @@ export async function POST(req: NextRequest) {
     1 - elapsedMs / totalPeriodMs
   );
 
-  const unusedOld = currentSub.plan.price * remainingRatio;
-  const proratedNew = newPlan.price * remainingRatio;
+  const oldPrice = Number(currentSub.plan.price);
+  const newPrice = Number(newPlan.price);
+  const unusedOld = oldPrice * remainingRatio;
+  const proratedNew = newPrice * remainingRatio;
   const chargeAmount = Math.max(0, proratedNew - unusedOld);
 
-  if (user.portfolioBalance < chargeAmount) {
+  const currentBalance = Number(user.portfolioBalance);
+
+  if (currentBalance < chargeAmount) {
     return NextResponse.json(
       {
         error: `Insufficient balance. Prorated charge: $${chargeAmount.toFixed(
