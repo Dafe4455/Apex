@@ -27,9 +27,21 @@ export async function GET() {
   ]);
 
   return NextResponse.json({
-    portfolioBalance: user.portfolioBalance,
-    realisedPnl: user.realisedPnl,
-    positions,
-    trades,
+    portfolioBalance: Number(user.portfolioBalance),
+    realisedPnl: Number(user.realisedPnl),
+    positions: positions.map(p => ({
+      ...p,
+      quantity: Number(p.quantity),
+      entryPrice: Number(p.entryPrice),
+      currentPnl: Number(p.currentPnl),
+      leverage: Number(p.leverage),
+    })),
+    trades: trades.map(t => ({
+      ...t,
+      amount: Number(t.amount),
+      price: t.price ? Number(t.price) : null,
+      leverage: t.leverage ? Number(t.leverage) : null,
+      pnl: t.pnl ? Number(t.pnl) : null,
+    })),
   });
 }
