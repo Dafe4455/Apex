@@ -154,10 +154,10 @@ const MoonIcon = () => (
   </svg>
 );
 
-}
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  useSessionExpiry(); // Client-side session expiry detection
+
   const pathname = usePathname();
-  useSessionExpiry;
   const [moreOpen, setMoreOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
