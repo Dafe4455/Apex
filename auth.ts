@@ -1,58 +1,93 @@
-import { NextResponse } from "next/server";
-import { auth } from "@root/auth";
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { authConfig } from "./auth.config";
 
-const publicRoutes = ["/", "/login", "/signup", "/admin/login", "/manifest.json", "/sw.js", "/icon-192.png", "/icon-512.png", "/offline"];
-const authRoutes = ["/login", "/signup"];
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
 
 const INACTIVITY_LIMIT_SECONDS = 60 * 10;
 
-export default auth((req) => {
-  const { nextUrl } = req;
-  const session = req.auth;
-  
-  const now = Math.floor(Date.now() / 1000);
-  const lastActive = (session as any)?.lastActive as number | undefined;
-  const isExpired = !!lastActive && (now - lastActive > INACTIVITY_LIMIT_SECONDS);
-  
-  // Session is valid only if user exists AND not expired
-  const isLoggedIn = !!session?.user && !isExpired;
-  const role = (session?.user as any)?.role as string | undefined;
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
+  adapter: PrismaAdapter(prisma),
+  session: {
+    strategy: "jwt",
+    maxAge: INACTIVITY_LIMIT_SECONDS,
+    updateAge: 60 * 2,
+  },
+  providers: [
+    Credentials({
+      name: "credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" },
+      },
+      async authorize(credentials) {
+        const parsed = loginSchema.safeParse(credentials);
+        if (!parsed.success) return null;
+        const { email, password } = parsed.data;
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.password) return null;
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) return null;
 
-  const pathname = nextUrl.pathname;
+        const fullName = user.firstName
+          ? `${user.firstName} ${user.lastName || ""}`.trim()
+          : user.email.split("@")[0];
 
-  const isPublicRoute = publicRoutes.includes(pathname);
-  const isAuthRoute = authRoutes.includes(pathname);
-  const isAdminRoute = pathname.startsWith("/dashboard/admin");
+        return {
+          id: user.id,
+          email: user.email,
+          name: fullName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          image: user.image,
+          role: user.role,
+        };
+      },
+    }),
+  ],
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user }) {
+      const now = Math.floor(Date.now() / 1000);
 
-  // Logged-in users hitting auth pages → redirect to dashboard
-  if (isAuthRoute && isLoggedIn) {
-    return NextResponse.redirect(new URL("/dashboard", nextUrl));
-  }
+      if (user) {
+        token.id = user.id;
+        token.role = (user as any).role;
+        token.firstName = (user as any).firstName;
+        token.lastName = (user as any).lastName;
+        token.lastActive = now;
+        return token;
+      }
 
-  // Unauthenticated or expired users hitting protected routes → redirect to login
-  if (!isPublicRoute && !isLoggedIn) {
-    const loginUrl = new URL("/login", nextUrl);
-    if (isExpired) {
-      loginUrl.searchParams.set("expired", "true");
-    }
-    const response = NextResponse.redirect(loginUrl);
-    response.headers.set("Cache-Control", "no-store, must-revalidate");
-    return response;
-  }
+      const lastActive = (token.lastActive as number) ?? now;
+      
+      // DON'T return null — let middleware handle expiry detection
+      // Returning null triggers NEXT_REDIRECT throw internally
+      if (now - lastActive > INACTIVITY_LIMIT_SECONDS) {
+        // Keep stale token — middleware will see old lastActive and redirect
+        return token;
+      }
 
-  // Admin route protection
-  if (isAdminRoute && role !== "ADMIN") {
-    return NextResponse.redirect(new URL("/dashboard", nextUrl));
-  }
-
-  // Allow request through
-  const response = NextResponse.next();
-  if (!isPublicRoute) {
-    response.headers.set("Cache-Control", "no-store, must-revalidate");
-  }
-  return response;
+      token.lastActive = now;
+      return token;
+    },
+    async session({ session, token }) {
+      if (!token) return session;
+      if (session.user) {
+        (session.user as any).id = token.id;
+        (session.user as any).role = token.role;
+        (session.user as any).firstName = token.firstName;
+        (session.user as any).lastName = token.lastName;
+      }
+      return session;
+    },
+  },
 });
-
-export const config = {
-  matcher: ["/((?!api/|_next/static|_next/image|favicon.ico|icons/).*)"],
-};
