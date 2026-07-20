@@ -620,7 +620,7 @@ const CSS = `
 
 /* ORDER BOOK Styling */
 .ap-book {
-  background: #080f1d;
+  background: #0f2535;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: var(--radius-m);
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
