@@ -23,7 +23,9 @@ export async function executeTrade(params: TradeParams) {
   });
   if (!user) throw new Error('User not found');
 
-  if (action === 'BUY' && user.portfolioBalance < amount) {
+  const balance = Number(user.portfolioBalance);
+
+  if (action === 'BUY' && balance < amount) {
     throw new Error('Insufficient balance');
   }
 
@@ -35,14 +37,18 @@ export async function executeTrade(params: TradeParams) {
       orderBy: { openedAt: 'asc' },
     });
     if (!openPosForSell) throw new Error(`No open ${asset} position to sell`);
-    const positionValue = openPosForSell.entryPrice * openPosForSell.quantity;
+    const entryPrice = Number(openPosForSell.entryPrice);
+    const posQty = Number(openPosForSell.quantity);
+    const positionValue = entryPrice * posQty;
     if (amount > positionValue) throw new Error(`Sell amount exceeds position value`);
   }
 
   return prisma.$transaction(async (tx) => {
     let sellPnl = null;
     if (action === 'SELL' && openPosForSell) {
-      sellPnl = (price - openPosForSell.entryPrice) * openPosForSell.quantity;
+      const entryPrice = Number(openPosForSell.entryPrice);
+      const posQty = Number(openPosForSell.quantity);
+      sellPnl = (price - entryPrice) * posQty;
     }
 
     const transaction = await tx.transaction.create({
@@ -82,7 +88,9 @@ export async function executeTrade(params: TradeParams) {
         orderBy: { openedAt: 'asc' },
       });
       if (openPos) {
-        const pnl = (price - openPos.entryPrice) * openPos.quantity;
+        const entryPrice = Number(openPos.entryPrice);
+        const posQty = Number(openPos.quantity);
+        const pnl = (price - entryPrice) * posQty;
         await tx.position.update({
           where: { id: openPos.id },
           data: { status: 'CLOSED', currentPnl: pnl, closedAt: new Date() },
@@ -108,6 +116,6 @@ export async function executeTrade(params: TradeParams) {
       },
     });
 
-    return { transaction, newBalance: updatedUser.portfolioBalance };
+    return { transaction, newBalance: Number(updatedUser.portfolioBalance) };
   });
 }
