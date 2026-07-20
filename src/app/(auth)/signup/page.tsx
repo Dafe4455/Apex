@@ -247,7 +247,7 @@ export default function SignupPage() {
           outline: none;
           transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
           appearance: none;
-          border-radius: 6px; /* Softened text element frames */
+          border-radius: 10px; /* Softened text element frames */
         }
         .field input::placeholder { color: var(--ink-faint); opacity: 0.8; }
         .field input:focus {
