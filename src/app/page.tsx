@@ -587,7 +587,7 @@ const CSS = `
   display: flex; align-items: center; gap: 16px;
 }
 .ap-btn-primary {
-  display: inline-block; background: var(--elec); color: #fff;
+  display: inline-block; background: var(--auth-btn); color: #fff;
   font-family: var(--mono); font-size: 0.78rem; font-weight: 500;
   letter-spacing: 0.08em; text-transform: uppercase;
   padding: 14px 28px; text-decoration: none;
