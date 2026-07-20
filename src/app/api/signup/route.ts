@@ -6,6 +6,8 @@ import { NextResponse } from "next/server";
 const signupSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
+  phone: z.string().optional(),
+  country: z.string().optional(),
   password: z.string().min(8),
 });
 
@@ -18,7 +20,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
-    const { name, email, password } = parsed.data;
+    const { name, email, phone, country, password } = parsed.data;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -27,8 +29,20 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Split full name into firstName + lastName
+    const nameParts = name.trim().split(/\s+/);
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(" ") || null;
+
     await prisma.user.create({
-      data: { name, email, password: hashedPassword },
+      data: {
+        firstName,
+        lastName,
+        email,
+        phone: phone || null,
+        country: country || null,
+        password: hashedPassword,
+      },
     });
 
     return NextResponse.json({ success: true }, { status: 201 });
