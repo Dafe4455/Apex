@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { loginAction } from "@/lib/actions";
+import Logo from "@/components/Logo"; // Import the standalone asset
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -23,7 +24,7 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Barlow+Condensed:wght@500;800&display=swap');
 
         .login-shell {
           min-height: 100vh;
@@ -38,7 +39,6 @@ export default function LoginPage() {
           overflow: hidden;
         }
 
-        /* Subtle grid — kept as a login page signature touch */
         .login-shell::before {
           content: '';
           position: absolute;
@@ -50,7 +50,6 @@ export default function LoginPage() {
           pointer-events: none;
         }
 
-        /* Ambient glow — kept for depth */
         .login-shell::after {
           content: '';
           position: absolute;
@@ -60,25 +59,13 @@ export default function LoginPage() {
           pointer-events: none;
         }
 
+        /* Streamlined brand container for the SVG layout */
         .login-brand {
-          font-family: var(--mono);
-          font-size: 0.8rem;
-          font-weight: 700;
-          letter-spacing: 0.22em;
-          text-transform: uppercase;
-          color: var(--ink);
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          margin-bottom: 40px;
+          margin-bottom: 32px;
           position: relative;
           z-index: 1;
-        }
-        .login-brand-dot {
-          width: 7px; height: 7px;
-          border-radius: 50%;
-          background: var(--accent);
-          box-shadow: 0 0 8px var(--accent);
+          display: flex;
+          justify-content: center;
         }
 
         .login-card {
@@ -243,10 +230,9 @@ export default function LoginPage() {
       `}</style>
 
       <div className="login-shell">
+        {/* Render clean, responsive brand logo asset */}
         <div className="login-brand">
-          APEX
-          <span className="login-brand-dot" />
-          MARKETS
+          <Logo width={200} height={62} />
         </div>
 
         <div className="login-card">
