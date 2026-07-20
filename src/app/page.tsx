@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import Logo from '@/components/Logo'; // 1. Imported the clean standalone brand layout
 
 /* ─── Data Generation & Fallbacks ───────────────────────────────── */
 function makeCandles(n = 58) {
@@ -173,9 +174,9 @@ export default function HomePage() {
 
         {/* ── NAV ── */}
         <nav className="ap-nav">
+          {/* 2. Swapped text paths out for single inline responsive component configuration */}
           <a href="/" className="ap-logo">
-            <span className="ap-logo-mark">A</span>
-            <span className="ap-logo-word">Apex<span>·</span>Markets</span>
+            <Logo width={190} height={32} />
           </a>
           <div className="ap-ticker-wrap">
             <div className="ap-ticker-track">
@@ -378,7 +379,10 @@ export default function HomePage() {
 
         {/* ── FOOTER ── */}
         <footer className="ap-footer">
-          <div className="ap-footer-brand">Apex<span>·</span>Markets</div>
+          {/* 3. Updated footer line to match the horizontal aesthetic */}
+          <div className="ap-footer-brand">
+            <Logo width={140} height={24} />
+          </div>
           <ul className="ap-footer-links">
             {['Web Terminal', 'API Access', 'Careers', 'Privacy', 'Terms', 'Risk Disclosure'].map(l => (
               <li key={l}><a href="#">{l}</a></li>
@@ -433,6 +437,11 @@ const CSS = `
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
   
   --radius-m:  8px;
+
+  /* 4. Mapped local tokens to support the new standalone vector asset */
+  --ink:         var(--t1);
+  --ink-dim:     var(--t2);
+  --line-strong: var(--rim-strong);
 }
 
 .ap-root {
@@ -468,24 +477,9 @@ const CSS = `
   border-bottom: 1px solid var(--rim);
 }
 .ap-logo {
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center;
   text-decoration: none; flex-shrink: 0; white-space: nowrap;
 }
-.ap-logo-mark {
-  display: flex; align-items: center; justify-content: center;
-  width: 32px; height: 32px; border-radius: 7px;
-  background: linear-gradient(145deg, var(--elec), #2E7A9C);
-  font-family: var(--disp); font-size: 1.1rem; font-weight: 800;
-  color: #05141f; letter-spacing: 0;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  box-shadow: 0 2px 10px rgba(79,163,196,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
-}
-.ap-logo-word {
-  font-family: var(--disp); font-size: 1.3rem; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--t1); margin-top: 1px;
-}
-.ap-logo-word span { color: var(--elec); }
 
 .ap-nav-cta {
   flex-shrink: 0;
@@ -667,10 +661,11 @@ const CSS = `
 .ap-book-row {
   display: grid; grid-template-columns: 85px 1fr 65px; align-items: center; gap: 12px;
   padding: 4.5px 0; font-family: var(--mono); font-size: 0.72rem;
-  font-variant-numeric: tabular-nums; transition: background 0.15s ease;
+  font-variant-numeric: tabular-nums; transition: background 0.15s ease; cursor: default;
 }
 .ap-book-row:hover { background: rgba(255, 255, 255, 0.02); }
 
+.ap-depth { position: relative; height: 5px; background: rgba(255, 255, 255, 0.02); border-radius: 3px; overflow: hidden; }
 .ap-depth { position: relative; height: 5px; background: rgba(255, 255, 255, 0.02); border-radius: 3px; overflow: hidden; }
 .ap-dfill { position: absolute; top: 0; height: 100%; border-radius: 3px; opacity: 0.45; }
 .ap-dask { right: 0; background: linear-gradient(90deg, transparent, var(--coral)); }
@@ -780,8 +775,6 @@ const CSS = `
 
 /* FOOTER Styling */
 .ap-footer { background: rgba(4,6,12,0.8); border-top: 1px solid var(--rim); padding: 24px 60px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
-.ap-footer-brand { font-family: var(--disp); font-size: 0.92rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--t1); }
-.ap-footer-brand span { color: var(--elec); }
 .ap-footer-links { display: flex; gap: 22px; flex-wrap: wrap; list-style: none; }
 .ap-footer-links a { font-family: var(--mono); font-size: 0.61rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--t2); text-decoration: none; transition: color 0.2s; }
 .ap-footer-links a:hover { color: var(--t1); }
