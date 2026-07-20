@@ -461,7 +461,7 @@ const CSS = `
 /* NAV Styling */
 .ap-nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; gap: 32px;
+  display: flex; align-items: center; justify-content: space-between; gap: 32px;
   padding: 0 48px; height: 68px;
   background: rgba(15, 37, 53, 1);
   backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
@@ -469,20 +469,21 @@ const CSS = `
 }
 .ap-logo {
   display: flex; align-items: center; gap: 10px;
-  text-decoration: none; flex-shrink: 0;
+  text-decoration: none; flex-shrink: 0; white-space: nowrap;
 }
 .ap-logo-mark {
   display: flex; align-items: center; justify-content: center;
-  width: 30px; height: 30px; border-radius: 7px;
+  width: 32px; height: 32px; border-radius: 7px;
   background: linear-gradient(145deg, var(--elec), #2E7A9C);
-  font-family: var(--disp); font-size: 1rem; font-weight: 800;
+  font-family: var(--disp); font-size: 1.1rem; font-weight: 800;
   color: #05141f; letter-spacing: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   box-shadow: 0 2px 10px rgba(79,163,196,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 .ap-logo-word {
-  font-family: var(--disp); font-size: 1.2rem; font-weight: 700;
-  letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--t1);
+  font-family: var(--disp); font-size: 1.3rem; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--t1); margin-top: 1px;
 }
 .ap-logo-word span { color: var(--elec); }
 
