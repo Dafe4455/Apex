@@ -143,6 +143,7 @@ export default function SignupPage() {
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
           margin-top: 2px;
+          border-radius: 4px; /* Softened secondary indicators */
         }
         .perk-text {
           font-size: 0.85rem;
@@ -186,11 +187,11 @@ export default function SignupPage() {
           border: 1px solid var(--line-strong);
           pointer-events: none;
           opacity: 0.7;
+          border-radius: 8px; /* Smooth card perimeter contour */
         }
 
         .auth-form-wrap { width: 100%; max-width: 400px; position: relative; z-index: 2; }
 
-        /* Mobile Logo Display */
         .mobile-logo-wrap {
           display: none;
           margin-bottom: 40px;
@@ -203,7 +204,7 @@ export default function SignupPage() {
           letter-spacing: 0.25em;
           text-transform: uppercase;
           color: var(--accent);
-          margin-bottom: 12px;
+          margin-bottom: 6px;
           display: flex;
           align-items: center;
           gap: 10px;
@@ -215,21 +216,11 @@ export default function SignupPage() {
           background: var(--accent);
         }
 
-        .auth-form-title {
-          font-family: 'Playfair Display', Georgia, serif;
-          font-size: 2.5rem;
-          font-weight: 900;
-          color: var(--ink);
-          line-height: 1.1;
-          margin-bottom: 10px;
-          letter-spacing: -0.01em;
-        }
-
         .auth-form-sub {
           font-size: 0.88rem;
           color: var(--ink-dim);
           font-weight: 300;
-          margin-bottom: 36px;
+          margin-bottom: 32px;
         }
         .auth-form-sub a { color: var(--accent); text-decoration: none; font-weight: 500; transition: color 0.2s; }
         .auth-form-sub a:hover { color: var(--ink); text-decoration: underline; }
@@ -256,7 +247,7 @@ export default function SignupPage() {
           outline: none;
           transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
           appearance: none;
-          border-radius: 0;
+          border-radius: 6px; /* Softened text element frames */
         }
         .field input::placeholder { color: var(--ink-faint); opacity: 0.8; }
         .field input:focus {
@@ -272,6 +263,7 @@ export default function SignupPage() {
           flex: 1; height: 3px;
           background: var(--line-strong);
           transition: background 0.3s;
+          border-radius: 2px;
         }
         .strength-bar.active { background: var(--red); }
         .strength-bar.medium { background: var(--gold); }
@@ -286,6 +278,7 @@ export default function SignupPage() {
           color: var(--red);
           letter-spacing: 0.02em;
           margin-bottom: 24px;
+          border-radius: 0 6px 6px 0;
         }
 
         .submit-btn {
@@ -306,7 +299,7 @@ export default function SignupPage() {
           justify-content: center;
           gap: 12px;
           margin-top: 28px;
-          border-radius: 0;
+          border-radius: 6px; /* Cohesive interactive target radius */
         }
         .submit-btn:hover:not(:disabled) { 
           background: transparent;
@@ -344,10 +337,9 @@ export default function SignupPage() {
         @media (max-width: 768px) {
           .auth-left { display: none; }
           .auth-right { padding: 40px 24px; }
-          .auth-right::before { display: none; } /* Drop frame containment line on crisp mobile views */
+          .auth-right::before { display: none; }
           .auth-form-wrap { max-width: 100%; }
           .mobile-logo-wrap { display: flex; }
-          .auth-form-title { font-size: 2.2rem; }
         }
       `}</style>
 
@@ -406,7 +398,6 @@ export default function SignupPage() {
             </div>
 
             <p className="auth-form-tag">Create account</p>
-            <h1 className="auth-form-title">Start trading.</h1>
             <p className="auth-form-sub">
               Already have an account?{" "}
               <Link href="/login">Sign in</Link>
