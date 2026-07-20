@@ -1,14 +1,14 @@
 // hooks/useSessionExpiry.ts
 'use client'
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
 
-const INACTIVITY_LIMIT_MS = 10 * 60 * 1000 // 10 minutes
+import { useEffect } from 'react'
+import { useSession } from 'next-auth/react'
+import { INACTIVITY_LIMIT_SECONDS } from '@/lib/session-config'
+
+const INACTIVITY_LIMIT_MS = INACTIVITY_LIMIT_SECONDS * 1000
 
 export function useSessionExpiry() {
   const { data: session, status } = useSession()
-  const router = useRouter()
 
   useEffect(() => {
     if (status !== 'authenticated') return
@@ -18,7 +18,7 @@ export function useSessionExpiry() {
 
     const checkExpiry = () => {
       const now = Math.floor(Date.now() / 1000)
-      if (now - lastActive > INACTIVITY_LIMIT_MS / 1000) {
+      if (now - lastActive > INACTIVITY_LIMIT_SECONDS) {
         // Session expired — force reload to hit middleware
         window.location.href = '/login?expired=true'
       }
@@ -37,5 +37,5 @@ export function useSessionExpiry() {
       clearInterval(interval)
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-  }, [session, status, router])
+  }, [session, status])
 }
