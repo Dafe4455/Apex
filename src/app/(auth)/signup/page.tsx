@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { signupAction } from "@/lib/actions";
-import Logo from "@/components/Logo"; // 1. Imported the clean standalone brand layout
+import Logo from "@/components/Logo";
 
 export default function SignupPage() {
   const [loading, setLoading] = useState(false);
@@ -53,13 +53,13 @@ export default function SignupPage() {
           display: flex;
         }
 
-        /* ── LEFT PANEL ── */
+        /* ── LEFT PANEL (DESKTOP) ── */
         .auth-left {
-          width: 420px;
+          width: 460px;
           flex-shrink: 0;
           background: var(--bg-3);
           border-right: 1px solid var(--line-strong);
-          padding: 48px 44px;
+          padding: 64px 48px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
@@ -73,6 +73,7 @@ export default function SignupPage() {
           width: 320px; height: 320px;
           border: 1px solid var(--line-strong);
           border-radius: 50%;
+          opacity: 0.5;
         }
         .auth-left::after {
           content: '';
@@ -81,43 +82,44 @@ export default function SignupPage() {
           width: 220px; height: 220px;
           border: 1px solid var(--line);
           border-radius: 50%;
+          opacity: 0.5;
         }
 
-        /* 2. Adjusted brand wrapper for handling custom SVG logo structure */
         .auth-brand {
           display: flex;
           align-items: center;
           text-decoration: none;
           flex-shrink: 0;
+          z-index: 2;
         }
 
-        .auth-panel-body { position: relative; z-index: 1; }
+        .auth-panel-body { position: relative; z-index: 1; margin: auto 0; }
 
         .auth-panel-tag {
           font-family: var(--mono);
-          font-size: 0.62rem;
-          letter-spacing: 0.2em;
+          font-size: 0.65rem;
+          letter-spacing: 0.25em;
           text-transform: uppercase;
           color: var(--accent);
           display: flex;
           align-items: center;
-          gap: 8px;
-          margin-bottom: 20px;
+          gap: 12px;
+          margin-bottom: 24px;
         }
         .auth-panel-tag::before {
           content: '';
           display: inline-block;
-          width: 20px; height: 1px;
+          width: 24px; height: 1px;
           background: var(--accent);
         }
 
         .auth-panel-headline {
           font-family: 'Playfair Display', Georgia, serif;
-          font-size: 2.2rem;
+          font-size: 2.6rem;
           font-weight: 900;
           color: var(--ink);
-          line-height: 1.1;
-          margin-bottom: 20px;
+          line-height: 1.15;
+          margin-bottom: 24px;
         }
         .auth-panel-headline em {
           font-style: italic;
@@ -125,103 +127,114 @@ export default function SignupPage() {
         }
 
         .auth-panel-desc {
-          font-size: 0.85rem;
-          line-height: 1.75;
+          font-size: 0.9rem;
+          line-height: 1.8;
           color: var(--ink-dim);
           font-weight: 300;
-          margin-bottom: 36px;
+          margin-bottom: 44px;
         }
 
-        .perks { display: flex; flex-direction: column; gap: 14px; }
-        .perk { display: flex; align-items: flex-start; gap: 12px; }
+        .perks { display: flex; flex-direction: column; gap: 18px; }
+        .perk { display: flex; align-items: flex-start; gap: 14px; }
         .perk-icon {
           width: 24px; height: 24px;
           background: var(--surface);
           border: 1px solid var(--line-strong);
           display: flex; align-items: center; justify-content: center;
           flex-shrink: 0;
-          margin-top: 1px;
+          margin-top: 2px;
         }
         .perk-text {
-          font-size: 0.82rem;
+          font-size: 0.85rem;
           color: var(--ink-dim);
           line-height: 1.5;
           font-weight: 300;
         }
         .perk-text strong {
-          color: var(--ink-2);
+          color: var(--ink);
           font-weight: 500;
           display: block;
           font-family: var(--mono);
           font-size: 0.72rem;
-          letter-spacing: 0.06em;
+          letter-spacing: 0.05em;
           margin-bottom: 2px;
+          text-transform: uppercase;
         }
 
         .auth-panel-footer {
           font-family: var(--mono);
-          font-size: 0.6rem;
+          font-size: 0.62rem;
           letter-spacing: 0.08em;
           color: var(--ink-faint);
-          line-height: 1.6;
+          line-height: 1.7;
+          z-index: 2;
         }
 
-        /* ── RIGHT PANEL ── */
+        /* ── RIGHT PANEL (FORM CONTAINER) ── */
         .auth-right {
           flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 48px;
+          padding: 64px 48px;
           position: relative;
         }
         .auth-right::before {
           content: '';
           position: absolute;
-          top: 40px; right: 40px; bottom: 40px; left: 40px;
+          top: 32px; right: 32px; bottom: 32px; left: 32px;
           border: 1px solid var(--line-strong);
           pointer-events: none;
+          opacity: 0.7;
         }
 
-        .auth-form-wrap { width: 100%; max-width: 420px; }
+        .auth-form-wrap { width: 100%; max-width: 400px; position: relative; z-index: 2; }
+
+        /* Mobile Logo Display */
+        .mobile-logo-wrap {
+          display: none;
+          margin-bottom: 40px;
+          justify-content: center;
+        }
 
         .auth-form-tag {
           font-family: var(--mono);
-          font-size: 0.62rem;
-          letter-spacing: 0.2em;
+          font-size: 0.65rem;
+          letter-spacing: 0.25em;
           text-transform: uppercase;
           color: var(--accent);
-          margin-bottom: 10px;
+          margin-bottom: 12px;
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
         }
         .auth-form-tag::before {
           content: '';
           display: inline-block;
-          width: 18px; height: 1px;
+          width: 16px; height: 1px;
           background: var(--accent);
         }
 
         .auth-form-title {
           font-family: 'Playfair Display', Georgia, serif;
-          font-size: 2.2rem;
+          font-size: 2.5rem;
           font-weight: 900;
           color: var(--ink);
           line-height: 1.1;
-          margin-bottom: 8px;
+          margin-bottom: 10px;
+          letter-spacing: -0.01em;
         }
 
         .auth-form-sub {
-          font-size: 0.85rem;
+          font-size: 0.88rem;
           color: var(--ink-dim);
           font-weight: 300;
-          margin-bottom: 32px;
+          margin-bottom: 36px;
         }
-        .auth-form-sub a { color: var(--accent); text-decoration: none; font-weight: 500; }
-        .auth-form-sub a:hover { text-decoration: underline; }
+        .auth-form-sub a { color: var(--accent); text-decoration: none; font-weight: 500; transition: color 0.2s; }
+        .auth-form-sub a:hover { color: var(--ink); text-decoration: underline; }
 
-        .field { margin-bottom: 16px; }
+        .field { margin-bottom: 20px; }
 
         .field label {
           display: block;
@@ -229,31 +242,34 @@ export default function SignupPage() {
           font-size: 0.65rem;
           letter-spacing: 0.15em;
           text-transform: uppercase;
-          color: var(--ink-2);
+          color: var(--ink-dim);
           margin-bottom: 8px;
         }
         .field input {
           width: 100%;
           background: var(--surface);
           border: 1px solid var(--line-strong);
-          padding: 13px 16px;
+          padding: 14px 16px;
           font-family: var(--mono);
-          font-size: 0.85rem;
+          font-size: 0.88rem;
           color: var(--ink);
           outline: none;
-          transition: border-color 0.2s, box-shadow 0.2s;
+          transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
           appearance: none;
+          border-radius: 0;
         }
-        .field input::placeholder { color: var(--ink-faint); }
+        .field input::placeholder { color: var(--ink-faint); opacity: 0.8; }
         .field input:focus {
+          background: var(--bg);
           border-color: var(--accent);
-          box-shadow: 0 0 0 3px rgba(56,189,248,0.1);
+          box-shadow: 0 0 0 1px var(--accent);
         }
         .field input.error-input { border-color: var(--red); }
+        .field input.error-input:focus { box-shadow: 0 0 0 1px var(--red); }
 
-        .password-strength { display: flex; gap: 4px; margin-top: 8px; }
+        .password-strength { display: flex; gap: 6px; margin-top: 10px; }
         .strength-bar {
-          flex: 1; height: 2px;
+          flex: 1; height: 3px;
           background: var(--line-strong);
           transition: background 0.3s;
         }
@@ -263,69 +279,83 @@ export default function SignupPage() {
 
         .error-msg {
           background: var(--red-l);
-          border-left: 2px solid var(--red);
-          padding: 11px 14px;
+          border-left: 3px solid var(--red);
+          padding: 12px 16px;
           font-family: var(--mono);
-          font-size: 0.72rem;
+          font-size: 0.75rem;
           color: var(--red);
-          letter-spacing: 0.04em;
-          margin-bottom: 16px;
+          letter-spacing: 0.02em;
+          margin-bottom: 24px;
         }
 
-        /* Kept sharp/square aesthetic unique to signup CTA */
         .submit-btn {
           width: 100%;
           background: var(--accent);
           color: var(--bg);
-          border: none;
-          padding: 15px;
+          border: 1px solid var(--accent);
+          padding: 16px;
           font-family: var(--mono);
-          font-size: 0.78rem;
-          letter-spacing: 0.15em;
+          font-size: 0.8rem;
+          letter-spacing: 0.18em;
           text-transform: uppercase;
+          font-weight: 500;
           cursor: pointer;
-          transition: opacity 0.2s;
+          transition: background 0.2s, opacity 0.2s, color 0.2s;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 10px;
-          margin-top: 8px;
+          gap: 12px;
+          margin-top: 28px;
+          border-radius: 0;
         }
-        .submit-btn:hover:not(:disabled) { opacity: 0.85; }
-        .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .submit-btn:hover:not(:disabled) { 
+          background: transparent;
+          color: var(--accent);
+        }
+        .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
         .spinner {
           width: 14px; height: 14px;
-          border: 1.5px solid rgba(0,0,0,0.2);
-          border-top-color: var(--bg);
+          border: 1.5px solid rgba(0,0,0,0.15);
+          border-top-color: currentColor;
           border-radius: 50%;
-          animation: spin 0.7s linear infinite;
+          animation: spin 0.6s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .terms-note {
-          margin-top: 16px;
+          margin-top: 24px;
           font-family: var(--mono);
-          font-size: 0.6rem;
+          font-size: 0.62rem;
           letter-spacing: 0.05em;
           color: var(--ink-faint);
           text-align: center;
           line-height: 1.6;
         }
-        .terms-note a { color: var(--ink-dim); text-decoration: underline; }
+        .terms-note a { color: var(--ink-dim); text-decoration: underline; transition: color 0.2s; }
+        .terms-note a:hover { color: var(--accent); }
+
+        /* ── RESPONSIVE OVERRIDES ── */
+        @media (max-width: 960px) {
+          .auth-left { width: 380px; padding: 48px 36px; }
+          .auth-panel-headline { font-size: 2.2rem; }
+        }
 
         @media (max-width: 768px) {
           .auth-left { display: none; }
-          .auth-right { padding: 32px 24px; }
-          .auth-right::before { inset: 20px; }
+          .auth-right { padding: 40px 24px; }
+          .auth-right::before { display: none; } /* Drop frame containment line on crisp mobile views */
+          .auth-form-wrap { max-width: 100%; }
+          .mobile-logo-wrap { display: flex; }
+          .auth-form-title { font-size: 2.2rem; }
         }
       `}</style>
 
       <div className="auth-shell">
+        {/* Left Side Branding Panel */}
         <div className="auth-left">
-          {/* 3. Replaced string header path with dynamic Logo routing */}
           <Link href="/" className="auth-brand">
-            <Logo width={160} height={28} />
+            <Logo width={150} height={26} />
           </Link>
 
           <div className="auth-panel-body">
@@ -347,7 +377,7 @@ export default function SignupPage() {
                 <div className="perk" key={p.title}>
                   <div className="perk-icon">
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" style={{ color: "var(--accent)" }} />
+                      <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" style={{ color: "var(--accent)" }} />
                     </svg>
                   </div>
                   <div className="perk-text">
@@ -365,8 +395,16 @@ export default function SignupPage() {
           </p>
         </div>
 
+        {/* Right Side Form Panel */}
         <div className="auth-right">
           <div className="auth-form-wrap">
+            {/* Adaptive Mobile Branding Entry */}
+            <div className="mobile-logo-wrap">
+              <Link href="/">
+                <Logo width={140} height={24} />
+              </Link>
+            </div>
+
             <p className="auth-form-tag">Create account</p>
             <h1 className="auth-form-title">Start trading.</h1>
             <p className="auth-form-sub">
@@ -445,7 +483,7 @@ export default function SignupPage() {
                   <>
                     Create Account
                     <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                      <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="square" />
+                      <path d="M3 7h8M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="square" />
                     </svg>
                   </>
                 )}
