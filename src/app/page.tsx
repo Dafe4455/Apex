@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import Logo from '@/components/Logo'; // 1. Imported the clean standalone brand layout
+import { useState, useEffect, useMemo, useRef } from 'react';
+import Logo from '@/components/Logo';
 
 /* ─── Data Generation & Fallbacks ───────────────────────────────── */
 function makeCandles(n = 58) {
@@ -44,6 +44,8 @@ const FEATURES = [
   { n: '04', title: 'Institutional-grade API',    desc: 'REST + WebSocket access for algorithmic traders. Co-location options with sub-millisecond data feeds.' },
 ];
 
+const TRUST_CERTS = ['FCA', 'CySEC', 'MiFID II', 'ISO 27001'];
+
 /* ─── Candlestick Chart Component ───────────────────────────────── */
 function CandleChart({ candles }: { candles: { open: number; close: number; high: number; low: number }[] }) {
   const W = 1100, H = 200;
@@ -56,17 +58,17 @@ function CandleChart({ candles }: { candles: { open: number; close: number; high
   const toY = (p: number) => pad.t + ((maxP - p) / range) * (H - pad.t - pad.b);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" preserveAspectRatio="none">
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height="100%" preserveAspectRatio="none" aria-hidden="true" focusable="false">
       <defs>
         <linearGradient id="cfh" x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%"   stopColor="#070B14" stopOpacity="1"/>
-          <stop offset="12%"  stopColor="#070B14" stopOpacity="0"/>
-          <stop offset="88%"  stopColor="#070B14" stopOpacity="0"/>
-          <stop offset="100%" stopColor="#070B14" stopOpacity="1"/>
+          <stop offset="0%"   stopColor="#0f2535" stopOpacity="1"/>
+          <stop offset="12%"  stopColor="#0f2535" stopOpacity="0"/>
+          <stop offset="88%"  stopColor="#0f2535" stopOpacity="0"/>
+          <stop offset="100%" stopColor="#0f2535" stopOpacity="1"/>
         </linearGradient>
         <linearGradient id="cfv" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%"  stopColor="#070B14" stopOpacity="0.85"/>
-          <stop offset="55%" stopColor="#070B14" stopOpacity="0"/>
+          <stop offset="0%"  stopColor="#0f2535" stopOpacity="0.85"/>
+          <stop offset="55%" stopColor="#0f2535" stopOpacity="0"/>
         </linearGradient>
       </defs>
       {candles.map((c, i) => {
@@ -77,7 +79,11 @@ function CandleChart({ candles }: { candles: { open: number; close: number; high
         const bodyB = toY(Math.min(c.open, c.close));
         const bodyH = Math.max(bodyB - bodyT, 1);
         return (
-          <g key={i} opacity="0.82">
+          <g
+            key={i}
+            className="ap-candle"
+            style={{ animationDelay: `${i * 18}ms` }}
+          >
             <line x1={cx} y1={toY(c.high)} x2={cx} y2={toY(c.low)} stroke={col} strokeWidth="1"/>
             <rect x={i * stride + (stride - bw) / 2} y={bodyT} width={bw} height={bodyH} fill={col}/>
           </g>
@@ -123,6 +129,10 @@ function buildBook(mid: number) {
 export default function HomePage() {
   const [candles] = useState(makeCandles);
   const [assets, setAssets] = useState<any[]>([]);
+  const [bookTick, setBookTick] = useState(0);
+  const [priceDir, setPriceDir] = useState<'up' | 'down' | null>(null);
+  const prevMid = useRef<number>(67420.50);
+  const chartRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let active = true;
@@ -137,6 +147,12 @@ export default function HomePage() {
     load();
     const id = setInterval(load, 30000);
     return () => { active = false; clearInterval(id); };
+  }, []);
+
+  /* ── Simulated live book ticks ── */
+  useEffect(() => {
+    const id = setInterval(() => setBookTick(t => t + 1), 2400);
+    return () => clearInterval(id);
   }, []);
 
   const live = assets.length > 0;
@@ -154,8 +170,37 @@ export default function HomePage() {
   const midPrice = btc ? btc.price : 67420.50;
   const midChange = btc ? btc.changePercent : 2.38;
   const btcLogo = btc ? btc.logoUrl : undefined;
-  const book = useMemo(() => buildBook(midPrice), [midPrice]);
+  const book = useMemo(() => buildBook(midPrice), [midPrice, bookTick]);
 
+  /* ── Flash direction on price change ── */
+  useEffect(() => {
+    const current = parseFloat(book.mid.replace(/,/g, ''));
+    if (current > prevMid.current) setPriceDir('up');
+    else if (current < prevMid.current) setPriceDir('down');
+    else setPriceDir(null);
+    prevMid.current = current;
+    const timeout = setTimeout(() => setPriceDir(null), 600);
+    return () => clearTimeout(timeout);
+  }, [book.mid]);
+
+  /* ── Scroll-linked parallax on hero chart ── */
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    let raf: number;
+    const onScroll = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const y = window.scrollY;
+        chart.style.transform = `translateY(${y * 0.15}px)`;
+        chart.style.opacity = String(Math.max(0.42 - y * 0.0004, 0.08));
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf); };
+  }, []);
+
+  /* ── Intersection Observer for reveal animations ── */
   useEffect(() => {
     const io = new IntersectionObserver(
       entries => entries.forEach(e => {
@@ -172,13 +217,15 @@ export default function HomePage() {
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="ap-root">
 
+        {/* ── Skip Link ── */}
+        <a href="#platform" className="ap-skip">Skip to content</a>
+
         {/* ── NAV ── */}
-        <nav className="ap-nav">
-          {/* 2. Swapped text paths out for single inline responsive component configuration */}
-          <a href="/" className="ap-logo">
+        <nav className="ap-nav" role="navigation" aria-label="Main navigation">
+          <a href="/" className="ap-logo" aria-label="Apex Markets home">
             <Logo width={210} height={42} />
           </a>
-          <div className="ap-ticker-wrap">
+          <div className="ap-ticker-wrap" aria-hidden="true">
             <div className="ap-ticker-track">
               {allTickers.map((t, i) => (
                 <span key={i} className="ap-ticker-item">
@@ -187,6 +234,8 @@ export default function HomePage() {
                       src={t.logo}
                       alt=""
                       className="ap-tlogo"
+                      loading="lazy"
+                      decoding="async"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                     />
                   )}
@@ -207,8 +256,8 @@ export default function HomePage() {
 
         {/* ── HERO SECTION ── */}
         <section className="ap-hero">
-          <div className="ap-hero-grid"/>
-          <div className="ap-hero-chart">
+          <div className="ap-hero-grid" aria-hidden="true"/>
+          <div className="ap-hero-chart" ref={chartRef} aria-hidden="true">
             <CandleChart candles={candles}/>
           </div>
           <div className="ap-hero-inner">
@@ -238,12 +287,21 @@ export default function HomePage() {
                           src={btcLogo}
                           alt=""
                           className="ap-book-logo"
+                          loading="lazy"
+                          decoding="async"
                           onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                         />
                       )}
-                      <span className="ap-live-dot"/>BTC / USD
+                      <span className="ap-live-dot" aria-hidden="true"/>BTC / USD
                     </div>
-                    <div className="ap-book-px">{book.mid}</div>
+                    <div
+                      className={`ap-book-px ${priceDir === 'up' ? 'tick-up' : priceDir === 'down' ? 'tick-down' : ''}`}
+                      role="status"
+                      aria-live="polite"
+                      aria-label={`BTC price ${book.mid}`}
+                    >
+                      {book.mid}
+                    </div>
                     <div className={`ap-book-chg ${midChange >= 0 ? 'ap-up' : 'ap-dn'}`}>
                       {midChange >= 0 ? '▲' : '▼'} {fmtChange(midChange)} today
                     </div>
@@ -252,29 +310,33 @@ export default function HomePage() {
                     <div className="ap-meta-item"><span className="ap-ml">Spread</span><span className="ap-mv">{book.spread}</span></div>
                   </div>
                 </div>
-                <div className="ap-book-cols">
+                <div className="ap-book-cols" aria-hidden="true">
                   <span>PRICE</span><span className="ap-tc">DEPTH</span><span className="ap-tr">SIZE</span>
                 </div>
-                {book.asks.map((r, i) => (
-                  <div className="ap-book-row" key={`ask-${i}`}>
-                    <span className="ap-dn">{r.price}</span>
-                    <div className="ap-depth"><div className="ap-dfill ap-dask" style={{ width: `${r.pct}%` }}/></div>
-                    <span className="ap-bsz">{r.size}</span>
-                  </div>
-                ))}
-                <div className="ap-spread">
+                <div role="table" aria-label="Order book asks">
+                  {book.asks.map((r, i) => (
+                    <div className="ap-book-row" key={`ask-${i}`} role="row">
+                      <span className="ap-dn" role="cell">{r.price}</span>
+                      <div className="ap-depth" role="cell" aria-label={`Depth ${r.pct}%`}><div className="ap-dfill ap-dask" style={{ width: `${r.pct}%` }}/></div>
+                      <span className="ap-bsz" role="cell">{r.size}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="ap-spread" aria-label={`Spread ${book.spread}, Mid ${book.mid}`}>
                   <span>SPREAD</span><strong>{book.spread}</strong><span>MID</span><strong>{book.mid}</strong>
                 </div>
-                {book.bids.map((r, i) => (
-                  <div className="ap-book-row" key={`bid-${i}`}>
-                    <span className="ap-up">{r.price}</span>
-                    <div className="ap-depth"><div className="ap-dfill ap-dbid" style={{ width: `${r.pct}%` }}/></div>
-                    <span className="ap-bsz">{r.size}</span>
-                  </div>
-                ))}
+                <div role="table" aria-label="Order book bids">
+                  {book.bids.map((r, i) => (
+                    <div className="ap-book-row" key={`bid-${i}`} role="row">
+                      <span className="ap-up" role="cell">{r.price}</span>
+                      <div className="ap-depth" role="cell" aria-label={`Depth ${r.pct}%`}><div className="ap-dfill ap-dbid" style={{ width: `${r.pct}%` }}/></div>
+                      <span className="ap-bsz" role="cell">{r.size}</span>
+                    </div>
+                  ))}
+                </div>
                 <div className="ap-trade-btns">
-                  <button className="ap-tbtn ap-tbuy">Buy Market</button>
-                  <button className="ap-tbtn ap-tsell">Sell Market</button>
+                  <button className="ap-tbtn ap-tbuy" aria-label="Buy BTC at market price">Buy Market</button>
+                  <button className="ap-tbtn ap-tsell" aria-label="Sell BTC at market price">Sell Market</button>
                 </div>
               </div>
             </div>
@@ -282,41 +344,47 @@ export default function HomePage() {
         </section>
 
         {/* ── MARKETS SECTION ── */}
-        <section className="ap-section ap-mkt-sec" id="markets">
-          <div className="ap-mkt-bg">
+        <section className="ap-section ap-mkt-sec" id="markets" aria-labelledby="markets-heading">
+          <div className="ap-mkt-bg" aria-hidden="true">
             <img
               src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1400&auto=format&fit=crop&q=70"
-              alt="Global market data network map"
+              alt=""
               className="ap-mkt-bg-img"
+              loading="lazy"
+              decoding="async"
             />
           </div>
           <div className="ap-mkt-inner aprx">
             <p className="ap-label">02 · Markets</p>
-            <h2 className="ap-h2">Everything moves.<br/>Capture it.</h2>
+            <h2 className="ap-h2" id="markets-heading">Everything moves.<br/>Capture it.</h2>
             <p className="ap-body" style={{ maxWidth: '380px', marginBottom: '28px' }}>
               180+ instruments across crypto, equities, FX, and commodities.
             </p>
-            <div className="ap-mkt-table">
-              <div className="ap-mkt-head">
-                <span>Symbol</span><span>Name</span>
-                <span className="ap-tr">Price</span><span className="ap-tr">Change</span>
+            <div className="ap-mkt-table" role="table" aria-label="Market prices">
+              <div className="ap-mkt-head" role="row">
+                <span role="columnheader">Symbol</span>
+                <span role="columnheader">Name</span>
+                <span className="ap-tr" role="columnheader">Price</span>
+                <span className="ap-tr" role="columnheader">Change</span>
               </div>
               {marketRows.map(m => (
-                <div className="ap-mkt-row" key={m.sym}>
-                  <span className="ap-mkt-sym">
+                <div className="ap-mkt-row" key={m.sym} role="row">
+                  <span className="ap-mkt-sym" role="cell">
                     {m.logo && (
                       <img
                         src={m.logo}
                         alt=""
                         className="ap-mkt-logo"
+                        loading="lazy"
+                        decoding="async"
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                       />
                     )}
                     {m.sym}
                   </span>
-                  <span className="ap-mkt-name">{m.name}</span>
-                  <span className="ap-mkt-price ap-tr">{m.price}</span>
-                  <span className={`ap-tr ${m.up ? 'ap-up' : 'ap-dn'}`}>{m.chg}</span>
+                  <span className="ap-mkt-name" role="cell">{m.name}</span>
+                  <span className="ap-mkt-price ap-tr" role="cell">{m.price}</span>
+                  <span className={`ap-tr ${m.up ? 'ap-up' : 'ap-dn'}`} role="cell">{m.chg}</span>
                 </div>
               ))}
             </div>
@@ -325,16 +393,16 @@ export default function HomePage() {
         </section>
 
         {/* ── PLATFORM SECTION ── */}
-        <section className="ap-section" id="platform">
+        <section className="ap-section" id="platform" aria-labelledby="platform-heading">
           <div className="ap-platform aprx">
             <div className="ap-plat-text">
               <p className="ap-label">01 · Platform</p>
-              <h2 className="ap-h2">Every edge,<br/>engineered.</h2>
+              <h2 className="ap-h2" id="platform-heading">Every edge,<br/>engineered.</h2>
               <p className="ap-body">Six years of iteration toward a single goal — zero friction between your signal and the market.</p>
-              <div className="ap-feat-list">
+              <div className="ap-feat-list" role="list" aria-label="Platform features">
                 {FEATURES.map(f => (
-                  <div className="ap-feat-row" key={f.n}>
-                    <span className="ap-feat-n">{f.n}</span>
+                  <div className="ap-feat-row" key={f.n} role="listitem">
+                    <span className="ap-feat-n" aria-hidden="true">{f.n}</span>
                     <div>
                       <div className="ap-feat-t">{f.title}</div>
                       <div className="ap-feat-d">{f.desc}</div>
@@ -348,46 +416,72 @@ export default function HomePage() {
                 src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=720&auto=format&fit=crop&q=85"
                 alt="Professional trading terminal overview layout"
                 className="ap-plat-img"
+                loading="lazy"
+                decoding="async"
               />
-              <div className="ap-plat-overlay"/>
+              <div className="ap-plat-overlay" aria-hidden="true"/>
               <div className="ap-plat-badge">
-                <span className="ap-live-dot"/><span>Live execution engine</span>
+                <span className="ap-live-dot" aria-hidden="true"/><span>Live execution engine</span>
               </div>
             </div>
           </div>
         </section>
 
+        {/* ── TRUST STRIP ── */}
+        <section className="ap-trust-strip" aria-label="Regulatory certifications">
+          <div className="ap-trust-inner aprx">
+            {TRUST_CERTS.map(cert => (
+              <div className="ap-trust-badge" key={cert}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M8 1L10 3.5H13L13.5 6.5L16 8L13.5 9.5L13 12.5H10L8 15L6 12.5H3L2.5 9.5L0 8L2.5 6.5L3 3.5H6L8 1Z" fill="currentColor" opacity="0.25"/>
+                  <path d="M6.5 10.5L4.5 8.5L5.2 7.8L6.5 9.1L10.8 4.8L11.5 5.5L6.5 10.5Z" fill="currentColor"/>
+                </svg>
+                <span>{cert}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
         {/* ── CALL TO ACTION SECTION ── */}
-        <section className="ap-section ap-begin-sec" id="begin">
+        <section className="ap-section ap-begin-sec" id="begin" aria-labelledby="begin-heading">
           <div className="ap-begin-inner aprx">
             <p className="ap-label">03 · Begin</p>
-            <h2 className="ap-h2">Your edge starts here.</h2>
+            <h2 className="ap-h2" id="begin-heading">Your edge starts here.</h2>
             <p className="ap-body" style={{ marginBottom: '32px' }}>
               Open a funded account in under 5 minutes. No minimums on demo. Live markets from day one.
             </p>
-            <div className="ap-cta-form">
-              <input className="ap-cta-input" type="email" placeholder="Enter your email address"/>
-              <a href="/signup" className="ap-cta-submit">Get Started</a>
-            </div>
-            <div className="ap-trust-badges">
+            <form className="ap-cta-form" onSubmit={(e) => e.preventDefault()} aria-label="Sign up with email">
+              <label htmlFor="cta-email" className="ap-sr-only">Email address</label>
+              <input
+                id="cta-email"
+                className="ap-cta-input"
+                type="email"
+                placeholder="Enter your email address"
+                autoComplete="email"
+                required
+              />
+              <a href="/signup" className="ap-cta-submit" role="button">Get Started</a>
+            </form>
+            <div className="ap-trust-badges" aria-label="Trust indicators">
               {['FCA & CySEC regulated', 'Negative balance protection', '24/5 desk support', 'Spreads from 0.0 pips'].map((b, i) => (
-                <span key={b}>{i > 0 && <span className="ap-dot">·</span>}{b}</span>
+                <span key={b}>{i > 0 && <span className="ap-dot" aria-hidden="true">·</span>}{b}</span>
               ))}
             </div>
           </div>
         </section>
 
         {/* ── FOOTER ── */}
-        <footer className="ap-footer">
-          {/* 3. Updated footer line to match the horizontal aesthetic */}
+        <footer className="ap-footer" role="contentinfo">
           <div className="ap-footer-brand">
             <Logo width={140} height={24} />
           </div>
-          <ul className="ap-footer-links">
-            {['Web Terminal', 'API Access', 'Careers', 'Privacy', 'Terms', 'Risk Disclosure'].map(l => (
-              <li key={l}><a href="#">{l}</a></li>
-            ))}
-          </ul>
+          <nav aria-label="Footer navigation">
+            <ul className="ap-footer-links">
+              {['Web Terminal', 'API Access', 'Careers', 'Privacy', 'Terms', 'Risk Disclosure'].map(l => (
+                <li key={l}><a href="#">{l}</a></li>
+              ))}
+            </ul>
+          </nav>
           <span className="ap-footer-legal">© 2026 Apex Markets Ltd. CFDs carry risk. Capital at risk.</span>
         </footer>
       </div>
@@ -410,35 +504,34 @@ const CSS = `
   --auth-btn:       #175D68;
   --rim:        rgba(255,255,255,0.07);
   --rim-strong: rgba(255,255,255,0.16);
-  
+
   --elec:      #4FA3C4;
   --elec-hi:   #6FB8D8;
   --elec-lo:   rgba(79,163,196,0.14);
-  
+
   --mint:      #00D68A;
   --mint-lo:   rgba(0,214,138,0.14);
   --coral:     #FF6B6B;
   --amber:     #FFC02A;
-  
+
   --t1:        #F2F4FF;
   --t2:        #8A93B8;
   --t3:        #3A445C;
-  
+
   --glass:     rgba(6,15,26,0.72);
-  
+
   --sans:      'DM Sans', system-ui, sans-serif;
   --disp:      'Barlow Condensed', sans-serif;
   --mono:      'Fira Code', 'Courier New', monospace;
-  
+
   --glow-elec: 0 0 40px rgba(79,163,196,0.12);
   --glow-mint:  0 0 30px rgba(0,214,138,0.10);
-  
+
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   --radius-m:  8px;
 
-  /* 4. Mapped local tokens to support the new standalone vector asset */
   --ink:         var(--t1);
   --ink-dim:     var(--t2);
   --line-strong: var(--rim-strong);
@@ -452,7 +545,35 @@ const CSS = `
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
 }
+
+/* Subtle noise texture overlay */
+.ap-root::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.015'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Screen-reader only utility */
+.ap-sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* Skip link */
+.ap-skip {
+  position: absolute; top: -100%; left: 16px;
+  background: var(--elec); color: #fff; padding: 8px 16px;
+  z-index: 999; border-radius: 0 0 4px 4px;
+  font-family: var(--mono); font-size: 0.75rem;
+  text-decoration: none;
+  transition: top 0.2s var(--ease-soft);
+}
+.ap-skip:focus { top: 0; }
 
 /* Utilities */
 .ap-up  { color: var(--mint); }
@@ -496,6 +617,10 @@ const CSS = `
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(79,163,196,0.3);
 }
+.ap-nav-cta:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: none;
+}
 
 .ap-ticker-wrap {
   flex: 1; overflow: hidden; height: 100%;
@@ -506,6 +631,8 @@ const CSS = `
 .ap-ticker-track {
   display: flex; white-space: nowrap;
   animation: apTicker 50s linear infinite;
+  will-change: transform;
+  contain: layout style;
 }
 .ap-ticker-item {
   display: inline-flex; align-items: center; gap: 8px;
@@ -544,6 +671,7 @@ const CSS = `
 .ap-hero-chart {
   position: absolute; bottom: 0; left: 0; right: 0;
   height: 230px; pointer-events: none; opacity: 0.42; z-index: 1;
+  will-change: transform, opacity;
 }
 .ap-hero-inner {
   position: relative; z-index: 2;
@@ -582,6 +710,8 @@ const CSS = `
   font-size: var(--text-base);
   line-height: 1.75; color: var(--t2); font-weight: 300;
   max-width: 42ch; margin-bottom: 40px;
+  border-left: 2px solid var(--elec-lo);
+  padding-left: 16px;
 }
 .ap-hero-ctas {
   display: flex; align-items: center; gap: 16px;
@@ -599,6 +729,10 @@ const CSS = `
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(79,163,196,0.35);
 }
+.ap-btn-primary:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: none;
+}
 .ap-btn-ghost {
   display: inline-block;
   font-family: var(--mono); font-size: 0.78rem;
@@ -613,8 +747,25 @@ const CSS = `
   background: rgba(255, 255, 255, 0.05);
   border-color: var(--t2);
 }
+.ap-btn-ghost:active {
+  transform: translateY(1px) scale(0.98);
+}
 
 /* ORDER BOOK Styling */
+.ap-hero-right {
+  position: relative;
+}
+.ap-hero-right::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 140%; height: 140%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse at center, rgba(79,163,196,0.06) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
 .ap-book {
   background: #0f2535;
   border: 1px solid rgba(255, 255, 255, 0.06);
@@ -642,6 +793,15 @@ const CSS = `
 .ap-book-px {
   font-family: var(--mono); font-size: 1.6rem; font-weight: 600;
   color: var(--t1); font-variant-numeric: tabular-nums; letter-spacing: -0.02em;
+  transition: color 0.3s var(--ease-soft), text-shadow 0.3s var(--ease-soft);
+}
+.ap-book-px.tick-up {
+  color: var(--mint);
+  text-shadow: 0 0 12px rgba(0,214,138,0.3);
+}
+.ap-book-px.tick-down {
+  color: var(--coral);
+  text-shadow: 0 0 12px rgba(255,107,107,0.3);
 }
 .ap-book-chg { font-family: var(--mono); font-size: 0.65rem; margin-top: 4px; font-weight: 500; }
 .ap-book-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
@@ -666,7 +826,6 @@ const CSS = `
 .ap-book-row:hover { background: rgba(255, 255, 255, 0.02); }
 
 .ap-depth { position: relative; height: 5px; background: rgba(255, 255, 255, 0.02); border-radius: 3px; overflow: hidden; }
-.ap-depth { position: relative; height: 5px; background: rgba(255, 255, 255, 0.02); border-radius: 3px; overflow: hidden; }
 .ap-dfill { position: absolute; top: 0; height: 100%; border-radius: 3px; opacity: 0.45; }
 .ap-dask { right: 0; background: linear-gradient(90deg, transparent, var(--coral)); }
 .ap-dbid { left: 0; background: linear-gradient(90deg, var(--mint), transparent); }
@@ -690,8 +849,10 @@ const CSS = `
 }
 .ap-tbuy { background: rgba(0, 214, 138, 0.08); color: var(--mint); border-color: rgba(0, 214, 138, 0.15); }
 .ap-tbuy:hover { background: var(--mint); color: #021a0f; box-shadow: 0 4px 20px rgba(0, 214, 138, 0.25); }
+.ap-tbuy:active { transform: translateY(1px) scale(0.98); box-shadow: none; }
 .ap-tsell { background: rgba(255, 107, 107, 0.08); color: var(--coral); border-color: rgba(255, 107, 107, 0.15); }
 .ap-tsell:hover { background: var(--coral); color: #200808; box-shadow: 0 4px 20px rgba(255, 107, 107, 0.25); }
+.ap-tsell:active { transform: translateY(1px) scale(0.98); box-shadow: none; }
 
 /* MARKETS Styling */
 .ap-mkt-sec { padding: 40px 60px 80px; border-top: 1px solid var(--rim); position: relative; overflow: hidden; }
@@ -701,16 +862,17 @@ const CSS = `
 .ap-mkt-table { background: rgba(11,21,27,0.78); border: 1px solid var(--rim-strong); backdrop-filter: blur(8px); margin-bottom: 22px; overflow: hidden; border-radius: var(--radius-m); }
 .ap-mkt-head {
   display: grid; grid-template-columns: 80px 1fr 130px 130px;
-  padding: 11px 20px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--rim);
+  padding: 11px 24px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--rim);
   font-family: var(--mono); font-size: 0.54rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--t2);
 }
 .ap-mkt-row {
   display: grid; grid-template-columns: 80px 1fr 130px 130px;
-  padding: 14px 20px; border-bottom: 1px solid var(--rim);
+  padding: 16px 24px; border-bottom: 1px solid var(--rim);
   font-family: var(--mono); font-size: 0.75rem; align-items: center;
   font-variant-numeric: tabular-nums; transition: background 0.15s ease; cursor: default;
 }
 .ap-mkt-row:last-child { border-bottom: none; }
+.ap-mkt-row:nth-child(even) { background: rgba(255,255,255,0.012); }
 .ap-mkt-row:hover { background: rgba(255,255,255,0.025); }
 .ap-mkt-sym   { font-weight: 500; color: var(--t1); display: flex; align-items: center; gap: 8px; }
 .ap-mkt-logo  { width: 18px; height: 18px; border-radius: 50%; object-fit: cover; flex-shrink: 0; background: rgba(255,255,255,0.06); }
@@ -725,7 +887,16 @@ const CSS = `
 
 /* GLOBAL SECTIONS Styling */
 .ap-section { padding: 96px 60px; border-top: 1px solid var(--rim); position: relative; }
-.ap-label { font-family: var(--mono); font-size: 0.61rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--elec); margin-bottom: 14px; }
+.ap-label {
+  font-family: var(--mono); font-size: 0.61rem; letter-spacing: 0.2em;
+  text-transform: uppercase; color: var(--elec); margin-bottom: 14px;
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.ap-label::after {
+  content: '';
+  width: 32px; height: 1px;
+  background: linear-gradient(90deg, var(--elec), transparent);
+}
 .ap-h2 { font-family: var(--disp); font-size: clamp(1.9rem, 3.2vw, 2.8rem); font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; text-transform: uppercase; color: var(--t1); margin-bottom: 16px; }
 .ap-body { font-size: var(--text-base); line-height: 1.75; color: var(--t2); font-weight: 300; max-width: 44ch; margin-bottom: 36px; }
 
@@ -735,7 +906,8 @@ const CSS = `
 .ap-feat-row {
   display: grid; grid-template-columns: 32px 1fr; gap: 16px;
   padding: 18px 0; border-bottom: 1px solid var(--rim);
-  transition: padding-left 0.25s var(--ease-soft), background 0.25s var(--ease-soft); cursor: default;
+  transition: padding-left 0.25s var(--ease-soft), background 0.25s var(--ease-soft), border-left 0.25s var(--ease-soft);
+  cursor: default; border-left: 2px solid transparent;
 }
 .ap-feat-row:hover { padding-left: 6px; background: linear-gradient(90deg, var(--elec-lo), transparent); border-left: 2px solid var(--elec); }
 .ap-feat-n { font-family: var(--mono); font-size: 0.57rem; color: var(--elec); font-weight: 500; padding-top: 3px; }
@@ -751,6 +923,25 @@ const CSS = `
   backdrop-filter: blur(8px); font-family: var(--mono); font-size: 0.61rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--t1); border-radius: 4px;
 }
 
+/* TRUST STRIP */
+.ap-trust-strip {
+  padding: 40px 60px;
+  border-top: 1px solid var(--rim);
+  border-bottom: 1px solid var(--rim);
+}
+.ap-trust-inner {
+  display: flex; justify-content: center; gap: 48px; flex-wrap: wrap;
+}
+.ap-trust-badge {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono); font-size: 0.68rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--t2); opacity: 0.7;
+  transition: opacity 0.2s var(--ease-soft), color 0.2s var(--ease-soft);
+}
+.ap-trust-badge:hover { opacity: 1; color: var(--t1); }
+.ap-trust-badge svg { color: var(--elec); flex-shrink: 0; }
+
 /* BEGIN SECTION Styling */
 .ap-begin-sec { background: linear-gradient(135deg, rgba(79,163,196,0.05) 0%, transparent 60%); border-top: 1px solid rgba(79,163,196,0.18); }
 .ap-begin-inner { max-width: 520px; }
@@ -765,11 +956,12 @@ const CSS = `
 .ap-cta-submit {
   background: var(--elec); color: #fff; border: none; padding: 13px 24px;
   font-family: var(--mono); font-size: 0.69rem; font-weight: 500; letter-spacing: 0.1em;
-  text-transform: uppercase; cursor: pointer; white-space: nowrap; transition: background 0.2s;
+  text-transform: uppercase; cursor: pointer; white-space: nowrap; transition: background 0.2s, transform 0.15s var(--ease-soft);
   display: inline-flex; align-items: center; justify-content: center; text-decoration: none;
   border-top-right-radius: var(--radius-m); border-bottom-right-radius: var(--radius-m);
 }
 .ap-cta-submit:hover { background: var(--elec-hi); }
+.ap-cta-submit:active { transform: scale(0.97); }
 .ap-trust-badges { display: flex; flex-wrap: wrap; gap: 4px 0; font-size: 0.74rem; color: var(--t2); align-items: center; }
 .ap-dot { margin: 0 8px; color: var(--elec); opacity: 0.4; }
 
@@ -780,9 +972,20 @@ const CSS = `
 .ap-footer-links a:hover { color: var(--t1); }
 .ap-footer-legal { font-family: var(--mono); font-size: 0.57rem; color: var(--t3); }
 
+/* CANDLE ANIMATION */
+.ap-candle {
+  opacity: 0;
+  animation: apCandleIn 0.4s var(--ease-expo) forwards;
+  transform-origin: bottom;
+}
+
 /* KEYFRAMES ANIMATIONS */
 @keyframes apFadeUp { from { opacity: 0; transform: translateY(22px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes apFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes apCandleIn {
+  from { opacity: 0; transform: scaleY(0.3); }
+  to   { opacity: 0.82; transform: scaleY(1); }
+}
 @keyframes apPulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,214,138,0.35); }
   45%      { opacity: 0.9; box-shadow: 0 0 0 4px rgba(0,214,138,0); }
@@ -794,6 +997,10 @@ const CSS = `
 .aprx.apv { opacity: 1; transform: translateY(0); }
 
 /* RESPONSIVE MEDIA QUERIES */
+@media (max-width: 1200px) {
+  .ap-platform { gap: 40px; }
+  .ap-plat-media { order: -1; }
+}
 @media (max-width: 1000px) {
   .ap-ticker-wrap { display: none; }
   .ap-hero { min-height: auto; padding-top: 68px; }
@@ -803,6 +1010,7 @@ const CSS = `
   .ap-plat-img { aspect-ratio: 16/9; }
   .ap-mkt-head, .ap-mkt-row { grid-template-columns: 70px 1fr 100px; }
   .ap-mkt-head span:last-child, .ap-mkt-row span:last-child { display: none; }
+  .ap-trust-inner { gap: 28px; }
 }
 @media (max-width: 640px) {
   .ap-nav { padding: 0 20px; gap: 16px; }
@@ -811,10 +1019,17 @@ const CSS = `
   .ap-section, .ap-mkt-sec { padding: 64px 24px; }
   .ap-hero-inner { padding: 56px 24px 100px; }
   .ap-footer { padding: 20px 24px; flex-direction: column; align-items: flex-start; }
+  .ap-trust-strip { padding: 28px 24px; }
+  .ap-trust-inner { gap: 20px; }
+  .ap-cta-form { flex-direction: column; gap: 10px; }
+  .ap-cta-input { border-right: 1px solid var(--rim-strong); border-radius: var(--radius-m); }
+  .ap-cta-submit { border-radius: var(--radius-m); justify-content: center; }
 }
 @media (prefers-reduced-motion: reduce) {
   .ap-eyebrow, .ap-h1, .ap-hero-sub, .ap-hero-ctas, .ap-hero-right, .aprx { animation: none !important; opacity: 1 !important; transform: none !important; }
   .ap-live-dot, .ap-ticker-track { animation: none !important; }
+  .ap-candle { animation: none !important; opacity: 0.82 !important; }
   .ap-feat-row:hover { padding-left: 0 !important; }
+  .ap-hero-chart { transform: none !important; }
 }
 `;
