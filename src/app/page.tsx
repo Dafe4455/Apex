@@ -859,7 +859,7 @@ const CSS = `
 .ap-mkt-bg { position: absolute; inset: 0; z-index: 0; opacity: 0.06; }
 .ap-mkt-bg-img { width: 100%; height: 100%; object-fit: cover; opacity: 0.07; filter: saturate(0) brightness(1.2); }
 .ap-mkt-inner { position: relative; z-index: 1; max-width: 820px; }
-.ap-mkt-table { background: rgba(11,21,27,0.78); border: 1px solid var(--rim-strong); backdrop-filter: blur(8px); margin-bottom: 22px; overflow: hidden; border-radius: var(--radius-m); }
+.ap-mkt-table { background: rgba(15,37,53,0.48); border: 1px solid var(--rim-strong); backdrop-filter: blur(8px); margin-bottom: 22px; overflow: hidden; border-radius: var(--radius-m); }
 .ap-mkt-head {
   display: grid; grid-template-columns: 80px 1fr 130px 130px;
   padding: 11px 24px; background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--rim);
