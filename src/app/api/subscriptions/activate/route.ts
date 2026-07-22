@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  if (user.portfolioBalance < plan.price) {
+  // FIX: Convert Decimal to Number for comparison
+  if (Number(user.portfolioBalance) < Number(plan.price)) {
     return NextResponse.json(
       { error: 'Insufficient balance' },
       { status: 400 }
@@ -87,17 +88,16 @@ export async function POST(req: NextRequest) {
         amount: plan.price,
         userId: user.id,
         status: 'COMPLETED',
-        description: `Activated ${plan.name} plan`,
       },
     });
 
     // Look for an existing subscription for this plan
     const existingSubscription = await tx.subscription.findFirst({
-  where: {
-    userId: user.id,
-    planId: plan.id,
-  },
-});
+      where: {
+        userId: user.id,
+        planId: plan.id,
+      },
+    });
 
     if (existingSubscription) {
       // Reactivate it
