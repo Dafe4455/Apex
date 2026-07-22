@@ -111,22 +111,29 @@ export default function AdminUserDetailPage() {
   };
 
   const fetchUser = useCallback(async () => {
-    if (!id) return;
-    setLoading(true); setError('');
-    try {
-      const res = await fetch(`/api/admin/users/${id}`, { cache: 'no-store' });
-      if (!res.ok) { setError('User not found'); return; }
-      const data = await res.json();
-      const u = data.user ?? data;
-      setUser(u);
-      setName(u.name ?? '');
-      setEmail(u.email ?? '');
-      setPhone(u.phone ?? '');
-      setCountry(u.country ?? '');
-      setKyc(u.kycStatus ?? 'NONE');
-    } catch { setError('Network error'); }
-    finally { setLoading(false); }
-  }, [id]);
+  const fetchUser = useCallback(async () => {
+  if (!id) return;
+  setLoading(true); setError('');
+  try {
+    const res = await fetch(`/api/admin/users/${id}`, { cache: 'no-store' });
+    if (!res.ok) { setError('User not found'); return; }
+    const data = await res.json();
+    const raw = data.user ?? data;
+    // Construct full name from firstName + lastName
+    const u = {
+      ...raw,
+      name: [raw.firstName, raw.lastName].filter(Boolean).join(' ').trim() || null,
+    };
+    setUser(u);
+    setName(u.name ?? '');
+    setEmail(u.email ?? '');
+    setPhone(u.phone ?? '');
+    setCountry(u.country ?? '');
+    setKyc(u.kycStatus ?? 'NONE');
+  } catch { setError('Network error'); }
+  finally { setLoading(false); }
+}, [id]);
+
 
   useEffect(() => { fetchUser(); }, [fetchUser]);
 
