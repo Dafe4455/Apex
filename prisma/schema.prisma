@@ -331,24 +331,27 @@ model Transaction {
 // ── Subscriptions ─────────────────────────────────────────────────────────────
 
 model SubscriptionPlan {
-  id                String   @id @default(cuid())
-  name              String
-  tier              String   @default("basic")
-  description       String?
-  price             Decimal  @db.Decimal(19, 8)
-  minInvestment     Decimal  @default(0) @db.Decimal(19, 8)
-  weeklyReturnRate  Decimal  @default(0) @db.Decimal(5, 4)
-  interval          String   @default("WEEKLY")
-  features          Json?
-  isActive          Boolean  @default(true)
-  highlight         String?
-  sortOrder         Int      @default(0)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id               String   @id @default(cuid())
+  name             String
+  description      String?
+  price            Float
+  interval         String
+  features         Json?
+  isActive         Boolean  @default(true)
+  
+  // Missing fields that exist in your DB:
+  tier             String?
+  minInvestment    Float?
+  weeklyReturnRate Float?
+  sortOrder        Int      @default(0)
+  highlight        String?   // or Boolean? — your DB says "text", check what it stores
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  subscriptions        Subscription[] @relation("ActivePlan")
-  pendingSubscriptions Subscription[] @relation("PendingPlan")
+  subscriptions Subscription[]
 }
+
 
 model Subscription {
   id                     String    @id @default(cuid())
