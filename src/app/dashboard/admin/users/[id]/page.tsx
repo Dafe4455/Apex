@@ -110,7 +110,7 @@ export default function AdminUserDetailPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fetchUser = useCallback(async () => {
+  
   const fetchUser = useCallback(async () => {
   if (!id) return;
   setLoading(true); setError('');
