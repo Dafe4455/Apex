@@ -415,13 +415,19 @@ export default function AdminDashboard() {
     finally { if (!silent) setDL(false); }
   }, []);
 
-  const fetchUsers = useCallback(async () => {
+    const fetchUsers = useCallback(async () => {
     try {
       const res  = await fetch('/api/admin/users', { cache: 'no-store' });
       const data = await res.json();
-      if (Array.isArray(data)) setUsers(data);
+      if (Array.isArray(data)) {
+        setUsers(data.map((u: any) => ({
+          ...u,
+          name: [u.firstName, u.lastName].filter(Boolean).join(' ').trim() || null,
+        })));
+      }
     } catch {} finally { setLUsers(false); }
   }, []);
+
 
   const fetchDeposits = useCallback(async () => {
     try {
