@@ -59,8 +59,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const currentTierIdx = TIER_ORDER.indexOf(currentSub.plan.tier);
-  const newTierIdx = TIER_ORDER.indexOf(newPlan.tier);
+  // FIX: Handle nullable tier fields
+  const currentTierIdx = TIER_ORDER.indexOf(currentSub.plan.tier ?? '');
+  const newTierIdx = TIER_ORDER.indexOf(newPlan.tier ?? '');
 
   if (newTierIdx <= currentTierIdx) {
     return NextResponse.json(
@@ -122,11 +123,10 @@ export async function POST(req: NextRequest) {
     // Record the upgrade transaction
     await tx.transaction.create({
       data: {
-        type: 'SubscriptionUpgrade',
+        type: 'SubscriptionFee',
         amount: chargeAmount,
         userId: user.id,
         status: 'COMPLETED',
-        description: `Upgraded from ${currentSub.plan.name} to ${newPlan.name} (prorated)`,
       },
     });
 
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
         id: currentSub.id,
       },
       data: {
-        status: 'upgraded',
+        status: 'expired',
         autoRenew: false,
         cancelledAt: now,
       },
@@ -156,7 +156,6 @@ export async function POST(req: NextRequest) {
           nextBillingDate: periodEnd,
           autoRenew: true,
           cancelledAt: null,
-          previousSubscriptionId: currentSub.id,
         },
       });
     } else {
@@ -171,7 +170,6 @@ export async function POST(req: NextRequest) {
           currentPeriodEnd: periodEnd,
           nextBillingDate: periodEnd,
           autoRenew: true,
-          previousSubscriptionId: currentSub.id,
         },
       });
     }
