@@ -330,7 +330,7 @@ model Transaction {
 
 // ── Subscriptions ─────────────────────────────────────────────────────────────
 
-model SubscriptionPlan {
+
 model SubscriptionPlan {
   id               String   @id @default(cuid())
   name             String
