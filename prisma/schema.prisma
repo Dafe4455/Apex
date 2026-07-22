@@ -86,6 +86,17 @@ enum TradeSide {
   SELL
 }
 
+enum ActivityLogType {
+  TRADE
+  DEPOSIT
+  WITHDRAWAL
+  KYC
+  SUBSCRIPTION
+  BOT
+  SYSTEM
+  OTHER
+}
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 model User {
@@ -109,18 +120,19 @@ model User {
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 
-  accounts        Account[]
-  sessions        Session[]
-  deposits        Deposit[]
-  withdrawals     Withdrawal[]
-  supportTickets  SupportTicket[]
-  positions       Position[]
-  notifications   Notification[]
-  activityLogs    ActivityLog[]
-  kycSubmission   KYCSubmission?
-  transactions    Transaction[]
-  subscriptions   Subscription[]
-  tradingBots     TradingBot[]
+  accounts           Account[]
+  sessions           Session[]
+  deposits           Deposit[]
+  withdrawals        Withdrawal[]
+  supportTickets     SupportTicket[]
+  positions          Position[]
+  notifications      Notification[]
+  activityLogs       ActivityLog[]
+  portfolioSnapshots PortfolioSnapshot[]
+  kycSubmission      KYCSubmission?
+  transactions       Transaction[]
+  subscriptions      Subscription[]
+  tradingBots        TradingBot[]
 
   @@index([kycStatus, createdAt])
   @@index([role])
@@ -219,15 +231,33 @@ model Notification {
   @@index([userId, read])
 }
 
+// ── UPGRADED: ActivityLog with type, detail, metadata ────────────────────────
 model ActivityLog {
-  id          String   @id @default(cuid())
+  id          String          @id @default(cuid())
   userId      String
+  type        ActivityLogType @default(OTHER)
   description String
-  createdAt   DateTime @default(now())
+  detail      String?
+  metadata    Json?
+  createdAt   DateTime        @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+  @@index([type])
+}
+
+// ── NEW: Portfolio Snapshots for sparkline history ────────────────────────────
+model PortfolioSnapshot {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      DateTime @default(now())
+  balance   Decimal  @default(0) @db.Decimal(19, 8)
+  pnl       Decimal  @default(0) @db.Decimal(19, 8)
+
+  @@unique([userId, date])
+  @@index([userId, date])
 }
 
 model KYCSubmission {
@@ -287,20 +317,23 @@ model MarketPrice {
   createdAt DateTime @default(now())
 }
 
+// ── UPGRADED: Position with currentValue for allocation ───────────────────────
 model Position {
-  id         String         @id @default(cuid())
-  userId     String
-  asset      String
-  symbol     String
-  quantity   Decimal        @default(0) @db.Decimal(19, 8)
-  entryPrice Decimal        @default(0) @db.Decimal(19, 8)
-  currentPnl Decimal        @default(0) @db.Decimal(19, 8)
-  side       PositionSide   @default(LONG)
-  status     PositionStatus @default(OPEN)
-  leverage   Decimal        @default(1) @db.Decimal(5, 2)
-  marketType String         @default("CRYPTO")
-  openedAt   DateTime       @default(now())
-  closedAt   DateTime?
+  id           String         @id @default(cuid())
+  userId       String
+  asset        String
+  symbol       String
+  quantity     Decimal        @default(0) @db.Decimal(19, 8)
+  entryPrice   Decimal        @default(0) @db.Decimal(19, 8)
+  currentPrice Decimal        @default(0) @db.Decimal(19, 8)
+  currentValue Decimal        @default(0) @db.Decimal(19, 8)
+  currentPnl   Decimal        @default(0) @db.Decimal(19, 8)
+  side         PositionSide   @default(LONG)
+  status       PositionStatus @default(OPEN)
+  leverage     Decimal        @default(1) @db.Decimal(5, 2)
+  marketType   String         @default("CRYPTO")
+  openedAt     DateTime       @default(now())
+  closedAt     DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
