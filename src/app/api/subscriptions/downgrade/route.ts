@@ -60,8 +60,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const currentTierIdx = TIER_ORDER.indexOf(currentSub.plan.tier);
-  const newTierIdx = TIER_ORDER.indexOf(newPlan.tier);
+  // FIX: Handle nullable tier fields
+  const currentTierIdx = TIER_ORDER.indexOf(currentSub.plan.tier ?? '');
+  const newTierIdx = TIER_ORDER.indexOf(newPlan.tier ?? '');
 
   if (newTierIdx === -1 || currentTierIdx === -1) {
     return NextResponse.json(
