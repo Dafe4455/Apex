@@ -3,12 +3,15 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
 export async function GET() {
-  const plans = await prisma.subscriptionPlan.findMany({
-    // where: { isActive: true },  // COMMENT THIS OUT TEMPORARILY
-    orderBy: { price: 'asc' },
-  });
+  // Use raw query to bypass any Prisma mapping issues
+  const plans = await prisma.$queryRaw`
+    SELECT id, name, description, price, interval, features, "isActive", tier, "minInvestment", "weeklyReturnRate", "sortOrder", highlight, "createdAt", "updatedAt"
+    FROM "SubscriptionPlan"
+    WHERE "isActive" = true
+    ORDER BY price ASC
+  `;
 
-  console.log('PLANS FROM DB:', plans); // Add this
+  console.log('RAW SQL PLANS:', JSON.stringify(plans, null, 2));
 
   return NextResponse.json(plans);
 }
