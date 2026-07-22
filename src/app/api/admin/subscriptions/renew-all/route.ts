@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
 
     if (!targetPlan) continue;
 
-    if (sub.user.portfolioBalance < targetPlan.price) {
+    if (Number(sub.user.portfolioBalance) < Number(targetPlan.price)) {
       await prisma.subscription.update({
         where: { id: sub.id },
         data: { status: 'expired', autoRenew: false },
@@ -59,7 +59,6 @@ export async function POST(req: NextRequest) {
           amount: targetPlan.price,
           userId: sub.userId,
           status: 'COMPLETED',
-          description: `Admin renewed ${targetPlan.name}`,
         },
       }),
       sub.pendingPlanId
@@ -73,7 +72,6 @@ export async function POST(req: NextRequest) {
               currentPeriodEnd: newPeriodEnd,
               nextBillingDate: newPeriodEnd,
               autoRenew: true,
-              previousSubscriptionId: sub.id,
             },
           })
         : prisma.subscription.update({
