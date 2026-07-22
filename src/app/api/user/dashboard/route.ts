@@ -77,8 +77,9 @@ export async function GET() {
 
     let positionValue = 0;
     for (const pos of openPositions) {
-      // Compute value from quantity * entryPrice (safe fallback, no currentValue needed)
-      const val = Number(pos.quantity) * Number(pos.entryPrice);
+      const val = Number(pos.currentValue) > 0
+        ? Number(pos.currentValue)
+        : Number(pos.quantity) * Number(pos.entryPrice);
       positionValue += val;
       const sym = pos.symbol.replace(/USD$/, '');
       const existing = allocationMap.get(sym);
@@ -123,16 +124,13 @@ export async function GET() {
       select: { balance: true },
     });
 
-    // Fallback: generate synthetic history if no snapshots exist yet
     const portfolioHistory = historyRecords.length > 1
       ? historyRecords.map(r => Number(r.balance))
       : generateSyntheticHistory(balance, 12);
 
     // ── Activity Logs with rich detail ───────────────────────────────────
     const enrichedActivityLogs = activityLogs.map(log => {
-      // @ts-expect-error — type/detail/metadata added in migration, safe at runtime
       const type = log.type?.toLowerCase() || 'other';
-      // @ts-expect-error
       const detail = log.detail || '';
       const timeAgo = getTimeAgo(log.createdAt);
       return {
