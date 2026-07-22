@@ -119,46 +119,79 @@ export default function SubscriptionPage() {
     // ─── Data Loading ────────────────────────────────────────────────────────
 
     const loadPage = useCallback(async (isRefresh = false) => {
-        if (isRefresh) setRefreshing(true);
-        try {
-            const [plansRes, subRes, assetsRes] = await Promise.all([
-                fetch('/api/subscriptions/plans'),
-                fetch('/api/subscriptions/mine'),
-                fetch('/api/assets'),
-            ]);
+    if (isRefresh) setRefreshing(true);
+    try {
+        const [plansRes, subRes, assetsRes] = await Promise.all([
+            fetch('/api/subscriptions/plans'),
+            fetch('/api/subscriptions/mine'),
+            fetch('/api/assets'),
+        ]);
 
-            if (plansRes.ok) {
-                const rawPlans = await plansRes.json();
-                // Normalize tier casing from DB
-                setPlans(rawPlans.map((p: any) => ({
-                    ...p,
-                    tier: normalizeTier(p.tier || 'basic'),
-                    weeklyReturnRate: Number(p.weeklyReturnRate),
-                    features: Array.isArray(p.features) ? p.features : (p.features ? JSON.parse(p.features) : []),
-                })));
-            }
-            if (subRes.ok) {
-                const rawSub = await subRes.json();
-                if (rawSub && rawSub.plan) {
-                    rawSub.plan.tier = normalizeTier(rawSub.plan.tier);
-                    if (rawSub.pendingPlan) {
-                        rawSub.pendingPlan.tier = normalizeTier(rawSub.pendingPlan.tier);
+        if (plansRes.ok) {
+            const rawPlans = await plansRes.json();
+            console.log('RAW PLANS:', JSON.stringify(rawPlans, null, 2));
+            
+            // Safely map plans with fallback defaults
+            const mappedPlans = (rawPlans || []).map((p: any) => {
+                let features: string[] = [];
+                try {
+                    if (Array.isArray(p.features)) {
+                        features = p.features;
+                    } else if (typeof p.features === 'string') {
+                        features = JSON.parse(p.features);
+                    } else if (p.features) {
+                        features = [String(p.features)];
                     }
+                } catch (e) {
+                    features = [];
                 }
-                setSubscription(rawSub);
-            }
-            if (assetsRes.ok) {
-                const data = await assetsRes.json();
-                setPortfolioBalance(data.portfolioBalance ?? 0);
-            }
-        } catch (err) {
-            console.error(err);
-            toast.error('Unable to load subscription data.');
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
+
+                return {
+                    id: p.id || '',
+                    name: p.name || 'Unnamed Plan',
+                    tier: normalizeTier(p.tier || 'basic'),
+                    description: p.description || '',
+                    price: Number(p.price) || 0,
+                    minInvestment: Number(p.minInvestment) || 0,
+                    weeklyReturnRate: Number(p.weeklyReturnRate) || 0,
+                    interval: p.interval || 'MONTHLY',
+                    features,
+                    isActive: p.isActive !== false,
+                    highlight: p.highlight || '',
+                };
+            });
+            
+            console.log('MAPPED PLANS:', mappedPlans);
+            setPlans(mappedPlans);
+        } else {
+            console.error('Plans API failed:', plansRes.status);
         }
-    }, []);
+
+        if (subRes.ok) {
+            const rawSub = await subRes.json();
+            console.log('RAW SUB:', rawSub);
+            if (rawSub && rawSub.plan) {
+                rawSub.plan.tier = normalizeTier(rawSub.plan.tier);
+                if (rawSub.pendingPlan) {
+                    rawSub.pendingPlan.tier = normalizeTier(rawSub.pendingPlan.tier);
+                }
+            }
+            setSubscription(rawSub);
+        }
+
+        if (assetsRes.ok) {
+            const data = await assetsRes.json();
+            setPortfolioBalance(Number(data.portfolioBalance) || 0);
+        }
+    } catch (err) {
+        console.error('Load page error:', err);
+        toast.error('Unable to load subscription data.');
+    } finally {
+        setLoading(false);
+        setRefreshing(false);
+    }
+}, []);
+
 
     useEffect(() => { loadPage(); }, [loadPage]);
 
