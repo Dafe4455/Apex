@@ -50,14 +50,13 @@ export async function ensureSubscriptionActive(userId: string) {
           amount: planPrice,
           userId,
           status: 'COMPLETED',
-          description: `Renewed ${targetPlan.name}`,
         },
       }),
-      // Mark old sub as upgraded/expired
+      // Mark old sub as expired
       prisma.subscription.update({
         where: { id: sub.id },
         data: {
-          status: sub.pendingPlanId ? 'upgraded' : 'expired',
+          status: 'expired',
           autoRenew: false,
           cancelledAt: now,
         },
@@ -73,7 +72,6 @@ export async function ensureSubscriptionActive(userId: string) {
               currentPeriodEnd: newPeriodEnd,
               nextBillingDate: newPeriodEnd,
               autoRenew: true,
-              previousSubscriptionId: sub.id,
               cancelledAt: null,
             },
           })
@@ -87,7 +85,6 @@ export async function ensureSubscriptionActive(userId: string) {
               currentPeriodEnd: newPeriodEnd,
               nextBillingDate: newPeriodEnd,
               autoRenew: true,
-              previousSubscriptionId: sub.id,
             },
           }),
     ]);
