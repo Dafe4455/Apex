@@ -338,18 +338,19 @@ model SubscriptionPlan {
   price            Float
   interval         String
   features         Json?
-  isActive         Boolean  @default(true)
+  isActive         Boolean  @default(true) @map("isActive")
   tier             String?
-  minInvestment    Float?
-  weeklyReturnRate Float?
-  sortOrder        Int      @default(0)
+  minInvestment    Float?   @map("minInvestment")
+  weeklyReturnRate Float?   @map("weeklyReturnRate")
+  sortOrder        Int      @default(0) @map("sortOrder")
   highlight        String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime @default(now()) @map("createdAt")
+  updatedAt        DateTime @updatedAt @map("updatedAt")
 
-  // Match the named relations from Subscription model
   subscriptions  Subscription[] @relation("ActivePlan")
   pendingSubs    Subscription[] @relation("PendingPlan")
+
+  @@map("SubscriptionPlan")
 }
 
 
